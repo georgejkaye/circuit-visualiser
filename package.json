@@ -1,5 +1,5 @@
 {
-  "name": "my-first-app",
+  "name": "circuit-visaliser",
   "version": "0.1.0",
   "scripts": {
     "build": "bsb -make-world",
@@ -9,8 +9,8 @@
   "keywords": [
     "BuckleScript"
   ],
-  "author": "",
-  "license": "MIT",
+  "author": "georgejkaye",
+  "license": "",
   "devDependencies": {
     "bs-platform": "^5.2.1"
   }

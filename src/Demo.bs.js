@@ -22,27 +22,33 @@ function printLattice(lattice) {
 function inputs(_item) {
   while(true) {
     var item = _item;
-    switch (item.tag | 0) {
-      case /* Identity */1 :
-          return item[0];
-      case /* Composition */2 :
-          _item = item[0];
-          continue ;
-      case /* Tensor */3 :
-          return List.fold_left((function (no, comp) {
-                        return no + inputs(comp) | 0;
-                      }), 0, item[0]);
-      case /* Gate */4 :
-          return item[1];
-      case /* Value */0 :
-      case /* Input */5 :
-          return 0;
-      case /* Output */6 :
-          return 1;
-      case /* Link */7 :
-          _item = item[2];
-          continue ;
-      
+    if (typeof item === "number") {
+      return 1;
+    } else {
+      switch (item.tag | 0) {
+        case /* Identity */1 :
+            return item[0];
+        case /* Composition */2 :
+            _item = item[0];
+            continue ;
+        case /* Tensor */3 :
+            return List.fold_left((function (no, comp) {
+                          return no + inputs(comp) | 0;
+                        }), 0, item[0]);
+        case /* Gate */4 :
+            return item[1];
+        case /* Trace */5 :
+            return inputs(item[1]) - item[0] | 0;
+        case /* Value */0 :
+        case /* Input */6 :
+            return 0;
+        case /* Output */7 :
+            return 1;
+        case /* Link */8 :
+            _item = item[2];
+            continue ;
+        
+      }
     }
   };
 }
@@ -50,27 +56,31 @@ function inputs(_item) {
 function outputs(_item) {
   while(true) {
     var item = _item;
-    switch (item.tag | 0) {
-      case /* Identity */1 :
-          return item[0];
-      case /* Composition */2 :
-          _item = item[1];
-          continue ;
-      case /* Tensor */3 :
-          return List.fold_left((function (no, comp) {
-                        return no + outputs(comp) | 0;
-                      }), 0, item[0]);
-      case /* Gate */4 :
-          return item[2];
-      case /* Value */0 :
-      case /* Input */5 :
+    if (typeof item === "number") {
+      return 1;
+    } else {
+      switch (item.tag | 0) {
+        case /* Identity */1 :
+            return item[0];
+        case /* Composition */2 :
+            _item = item[1];
+            continue ;
+        case /* Tensor */3 :
+            return List.fold_left((function (no, comp) {
+                          return no + outputs(comp) | 0;
+                        }), 0, item[0]);
+        case /* Gate */4 :
+            return item[2];
+        case /* Trace */5 :
+            return outputs(item[1]) - item[0] | 0;
+        case /* Output */7 :
+            return 0;
+        case /* Link */8 :
+            _item = item[2];
+            continue ;
+        default:
           return 1;
-      case /* Output */6 :
-          return 0;
-      case /* Link */7 :
-          _item = item[2];
-          continue ;
-      
+      }
     }
   };
 }
@@ -81,7 +91,7 @@ function compose(f, g) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Demo.re",
-            49,
+            55,
             4
           ]
         ];
@@ -100,51 +110,75 @@ function composemany(list) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "Demo.re",
-            53,
+            59,
             32
           ]
         ];
   }
 }
 
+function trace(x, comp) {
+  if (!(inputs(comp) >= x && outputs(comp) >= x)) {
+    throw [
+          Caml_builtin_exceptions.assert_failure,
+          /* tuple */[
+            "Demo.re",
+            66,
+            4
+          ]
+        ];
+  }
+  return /* Trace */Block.__(5, [
+            x,
+            comp
+          ]);
+}
+
 function printCircuit$prime(component) {
-  switch (component.tag | 0) {
-    case /* Value */0 :
-        return printLattice(component[0]);
-    case /* Identity */1 :
-        return String(component[0]);
-    case /* Composition */2 :
-        return printCircuit$prime(component[0]) + (" ⋅ " + printCircuit$prime(component[1]));
-    case /* Tensor */3 :
-        var match = component[0];
-        if (match) {
-          return "[" + (List.fold_left((function (string, comp) {
-                          return string + (" ⊗ " + printCircuit$prime(comp));
-                        }), printCircuit$prime(match[0]), match[1]) + "]");
-        } else {
-          throw [
-                Caml_builtin_exceptions.match_failure,
-                /* tuple */[
-                  "Demo.re",
-                  59,
-                  39
-                ]
-              ];
-        }
-    case /* Gate */4 :
-        return component[0];
-    case /* Input */5 :
-        return ":" + String(component[0]);
-    case /* Output */6 :
-        return String(component[0]) + ":";
-    case /* Link */7 :
-        return "|" + (String(component[0]) + ("-" + (String(component[1]) + ("|" + printCircuit$prime(component[2])))));
-    
+  if (typeof component === "number") {
+    return "ẟ";
+  } else {
+    switch (component.tag | 0) {
+      case /* Value */0 :
+          return printLattice(component[0]);
+      case /* Identity */1 :
+          return String(component[0]);
+      case /* Composition */2 :
+          return printCircuit$prime(component[0]) + (" ⋅ " + printCircuit$prime(component[1]));
+      case /* Tensor */3 :
+          var match = component[0];
+          if (match) {
+            return "[" + (List.fold_left((function (string, comp) {
+                            return string + (" ⊗ " + printCircuit$prime(comp));
+                          }), printCircuit$prime(match[0]), match[1]) + "]");
+          } else {
+            throw [
+                  Caml_builtin_exceptions.match_failure,
+                  /* tuple */[
+                    "Demo.re",
+                    70,
+                    39
+                  ]
+                ];
+          }
+      case /* Gate */4 :
+          return component[0];
+      case /* Trace */5 :
+          return "Tr[" + (String(component[0]) + ("](" + (printCircuit$prime(component[1]) + ")")));
+      case /* Input */6 :
+          return ":" + String(component[0]);
+      case /* Output */7 :
+          return String(component[0]) + ":";
+      case /* Link */8 :
+          return "|" + (String(component[0]) + ("-" + (String(component[1]) + ("|" + printCircuit$prime(component[2])))));
+      
+    }
   }
 }
 
 function printCircuit(circuit) {
-  console.log(printCircuit$prime(circuit[2]));
+  var comp = circuit[2];
+  console.log(circuit[3] + (" : " + (String(inputs(comp)) + (" → " + (String(outputs(comp)) + ("\n" + printCircuit$prime(comp)))))));
   return /* () */0;
 }
 
@@ -205,20 +239,120 @@ printCircuit(/* Circuit */[
       ""
     ]);
 
-var f = /* Value */Block.__(0, [/* False */1]);
+var fork = /* Gate */Block.__(4, [
+    "⋏",
+    1,
+    2
+  ]);
+
+var f = /* Gate */Block.__(4, [
+    "f",
+    1,
+    1
+  ]);
+
+var g = /* Gate */Block.__(4, [
+    "g",
+    1,
+    1
+  ]);
+
+var h = /* Gate */Block.__(4, [
+    "h",
+    2,
+    1
+  ]);
+
+var tensor3 = /* Tensor */Block.__(3, [/* :: */[
+      /* Delay */0,
+      /* :: */[
+        g,
+        /* [] */0
+      ]
+    ]]);
+
+var tensor4 = /* Tensor */Block.__(3, [/* :: */[
+      f,
+      /* :: */[
+        /* Identity */Block.__(1, [1]),
+        /* [] */0
+      ]
+    ]]);
+
+var circuit2 = composemany(/* :: */[
+      fork,
+      /* :: */[
+        tensor3,
+        /* :: */[
+          tensor4,
+          /* :: */[
+            h,
+            /* [] */0
+          ]
+        ]
+      ]
+    ]);
+
+printCircuit(/* Circuit */[
+      /* [] */0,
+      /* [] */0,
+      circuit2,
+      ""
+    ]);
+
+var f$prime = /* Gate */Block.__(4, [
+    "f",
+    3,
+    3
+  ]);
+
+var circuit3 = trace(2, f$prime);
+
+printCircuit(/* Circuit */[
+      /* [] */0,
+      /* [] */0,
+      circuit3,
+      ""
+    ]);
+
+var join = /* Gate */Block.__(4, [
+    "⋎",
+    1,
+    2
+  ]);
+
+var stub = /* Gate */Block.__(4, [
+    "~",
+    1,
+    0
+  ]);
+
+var delay = /* Delay */0;
 
 exports.printLattice = printLattice;
 exports.inputs = inputs;
 exports.outputs = outputs;
 exports.compose = compose;
 exports.composemany = composemany;
+exports.trace = trace;
 exports.printCircuit$prime = printCircuit$prime;
 exports.printCircuit = printCircuit;
 exports.andgate = andgate;
 exports.orgate = orgate;
 exports.t = t;
-exports.f = f;
 exports.tensor1 = tensor1;
 exports.tensor2 = tensor2;
 exports.circuit = circuit;
+exports.fork = fork;
+exports.join = join;
+exports.stub = stub;
+exports.f = f;
+exports.g = g;
+exports.h = h;
+exports.delay = delay;
+exports.tensor3 = tensor3;
+exports.tensor4 = tensor4;
+exports.circuit2 = circuit2;
+exports.f$prime = f$prime;
+exports.circuit3 = circuit3;
 /*  Not a pure module */
