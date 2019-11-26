@@ -16,6 +16,7 @@ type component = Value(lattice)
                | Gate(string, int, int)
                | Delay
                | Trace(int, component)
+               | Iter(int, component)
                | Input(int)
                | Output(int)
                | Link(int, int, component)
@@ -30,6 +31,7 @@ let rec inputs = (item) => {
     | Gate(id, x, y)         => x
     | Delay                  => 1
     | Trace(x, comp)         => inputs(comp) - x
+    | Iter(x, comp)          => inputs(comp) - x
     | Input(int)             => 0   
     | Output(int)            => 1
     | Link(inlink, outlink, circuit) => inputs(circuit)
@@ -45,6 +47,7 @@ let rec outputs = (item) => {
     | Gate(id, x, y)         => y
     | Delay                  => 1
     | Trace(x, comp)         => outputs(comp) - x
+    | Iter(x, comp)          => outputs(comp)
     | Input(int)             => 1   
     | Output(int)            => 0
     | Link(inlink, outlink, circuit) => outputs(circuit)
@@ -62,6 +65,11 @@ let rec composemany = (list) => {
     ;}
 }
 
+/* TODO find out the range function
+let exp = (comp, x) => {
+    Tensor(List.map((_ => comp), List.range(0,x)));
+} */
+
 let trace = (x, comp) => {
     assert(inputs(comp) >= x && outputs(comp) >= x);
     Trace(x, comp);
@@ -76,6 +84,7 @@ let rec printCircuit' = (component) => {
     | Gate(id, x, y)         => id
     | Delay                  => {js|ẟ|js}
     | Trace(x, component)    => "Tr[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
+    | Iter(x, component)     => "iter[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
     | Input(int)             => ":" ++ string_of_int(int)   
     | Output(int)            => string_of_int(int) ++ ":"
     | Link(inlink, outlink, circuit) => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printCircuit'(circuit) 
@@ -93,3 +102,25 @@ let join = Gate({js|⋎|js}, 1, 2);
 let stub = Gate({js|~|js}, 1, 0);
 
 let delay = Delay;
+
+/* TODO figure out where my mismatching brackets are
+let traceAsIteration = (trace) => {
+    switch (trace) {
+    | Trace(x, comp)    =>  composemany([
+                                Iter(
+                                    x + outputs(trace),
+                                    composemany([
+                                        Tensor([
+                                            Identity(x), 
+                                            exp(stub, n), 
+                                            Identity(inputs(trace))
+                                        ]), 
+                                        f
+                                    ]), 
+                                Tensor([
+                                    exp(stub, x), 
+                                    Identity(n)
+                                ])
+;}
+}
+*/

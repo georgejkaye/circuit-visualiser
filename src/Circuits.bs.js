@@ -38,13 +38,14 @@ function inputs(_item) {
         case /* Gate */4 :
             return item[1];
         case /* Trace */5 :
+        case /* Iter */6 :
             return inputs(item[1]) - item[0] | 0;
         case /* Value */0 :
-        case /* Input */6 :
+        case /* Input */7 :
             return 0;
-        case /* Output */7 :
+        case /* Output */8 :
             return 1;
-        case /* Link */8 :
+        case /* Link */9 :
             _item = item[2];
             continue ;
         
@@ -62,9 +63,6 @@ function outputs(_item) {
       switch (item.tag | 0) {
         case /* Identity */1 :
             return item[0];
-        case /* Composition */2 :
-            _item = item[1];
-            continue ;
         case /* Tensor */3 :
             return List.fold_left((function (no, comp) {
                           return no + outputs(comp) | 0;
@@ -73,9 +71,13 @@ function outputs(_item) {
             return item[2];
         case /* Trace */5 :
             return outputs(item[1]) - item[0] | 0;
-        case /* Output */7 :
+        case /* Composition */2 :
+        case /* Iter */6 :
+            _item = item[1];
+            continue ;
+        case /* Output */8 :
             return 0;
-        case /* Link */8 :
+        case /* Link */9 :
             _item = item[2];
             continue ;
         default:
@@ -91,7 +93,7 @@ function compose(f, g) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Circuits.re",
-            55,
+            58,
             4
           ]
         ];
@@ -110,7 +112,7 @@ function composemany(list) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "Circuits.re",
-            59,
+            62,
             32
           ]
         ];
@@ -123,7 +125,7 @@ function trace(x, comp) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Circuits.re",
-            66,
+            74,
             4
           ]
         ];
@@ -156,7 +158,7 @@ function printCircuit$prime(component) {
                   Caml_builtin_exceptions.match_failure,
                   /* tuple */[
                     "Circuits.re",
-                    70,
+                    78,
                     39
                   ]
                 ];
@@ -165,11 +167,13 @@ function printCircuit$prime(component) {
           return component[0];
       case /* Trace */5 :
           return "Tr[" + (String(component[0]) + ("](" + (printCircuit$prime(component[1]) + ")")));
-      case /* Input */6 :
+      case /* Iter */6 :
+          return "iter[" + (String(component[0]) + ("](" + (printCircuit$prime(component[1]) + ")")));
+      case /* Input */7 :
           return ":" + String(component[0]);
-      case /* Output */7 :
+      case /* Output */8 :
           return String(component[0]) + ":";
-      case /* Link */8 :
+      case /* Link */9 :
           return "|" + (String(component[0]) + ("-" + (String(component[1]) + ("|" + printCircuit$prime(component[2])))));
       
     }
