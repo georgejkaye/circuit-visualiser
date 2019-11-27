@@ -1,9 +1,13 @@
 {
-  "name": "circuit-visaliser",
+  "name": "circuit-visualiser",
   "version": "0.1.0",
+  "description": "",
+  "private": true,
   "scripts": {
-    "build": "bsb -make-world",
-    "start": "bsb -make-world -w",
+    "test" : "echo \"Error: no test specified\" && exit 1",
+    "build": "bsb -make-world -clean-world && webpack",
+    "start-bsb": "bsb -make-world -clean-world -w",
+    "start-wp": "webpack -w",
     "clean": "bsb -clean-world"
   },
   "keywords": [
@@ -12,6 +16,13 @@
   "author": "georgejkaye",
   "license": "",
   "devDependencies": {
-    "bs-platform": "^5.2.1"
+    "bs-platform": "^5.2.1",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "lodash": "^4.17.15",
+    "react-hooks": "^1.0.1",
+    "reason-react": "^0.7.0"
   }
 }

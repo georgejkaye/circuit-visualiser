@@ -13,7 +13,7 @@ type component = Value(lattice)
                | Identity(int)
                | Composition(component, component)    
                | Tensor(list(component))
-               | Gate(string, int, int)
+               | Function(string, int, int)
                | Delay
                | Trace(int, component)
                | Iter(int, component)
@@ -28,7 +28,7 @@ let rec inputs = (item) => {
     | Identity(x)            => x
     | Composition(f, g)      => inputs(f)
     | Tensor(fs)             => List.fold_left(((no, comp) => no + inputs(comp)), 0, fs)                        
-    | Gate(id, x, y)         => x
+    | Function(id, x, y)         => x
     | Delay                  => 1
     | Trace(x, comp)         => inputs(comp) - x
     | Iter(x, comp)          => inputs(comp) - x
@@ -44,7 +44,7 @@ let rec outputs = (item) => {
     | Identity(x)            => x
     | Composition(f, g)      => outputs(g)
     | Tensor(fs)             => List.fold_left(((no, comp) => no + outputs(comp)), 0, fs)    
-    | Gate(id, x, y)         => y
+    | Function(id, x, y)         => y
     | Delay                  => 1
     | Trace(x, comp)         => outputs(comp) - x
     | Iter(x, comp)          => outputs(comp)
@@ -52,6 +52,10 @@ let rec outputs = (item) => {
     | Output(int)            => 0
     | Link(inlink, outlink, circuit) => outputs(circuit)
     ;}
+}
+
+let makeCircuit = (component, string) => {
+    Circuit([],[],component,string)
 }
 
 let compose = (f, g) => {
@@ -65,14 +69,21 @@ let rec composemany = (list) => {
     ;}
 }
 
-/* TODO find out the range function
-let exp = (comp, x) => {
-    Tensor(List.map((_ => comp), List.range(0,x)));
-} */
+let rec exp' = (f, x) => {
+    if(x == 0){
+        [];
+    } else {
+        [f, ...exp'(f, x-1)];
+    }
+}
 
-let trace = (x, comp) => {
-    assert(inputs(comp) >= x && outputs(comp) >= x);
-    Trace(x, comp);
+let exp = (f, x) => {
+    Tensor(exp'(f, x));
+}
+
+let trace = (x, f) => {
+    assert(inputs(f) >= x && outputs(f) >= x);
+    Trace(x, f);
 }
 
 let rec printCircuit' = (component) => {
@@ -81,7 +92,7 @@ let rec printCircuit' = (component) => {
     | Identity(x)            => string_of_int(x)
     | Composition(f, g)      => printCircuit'(f) ++ {js| ⋅ |js} ++ printCircuit'(g)
     | Tensor([f, ...tl])     => "[" ++ List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printCircuit'(comp)), printCircuit'(f), tl) ++ "]"
-    | Gate(id, x, y)         => id
+    | Function(id, x, y)         => id
     | Delay                  => {js|ẟ|js}
     | Trace(x, component)    => "Tr[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
     | Iter(x, component)     => "iter[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
@@ -97,30 +108,33 @@ let printCircuit = (circuit) =>
 
 
 /* Special morphisms */
-let fork = Gate({js|⋏|js}, 1, 2);
-let join = Gate({js|⋎|js}, 1, 2);
-let stub = Gate({js|~|js}, 1, 0);
+let fork = Function({js|⋏|js}, 1, 2);
+let join = Function({js|⋎|js}, 1, 2);
+let stub = Function({js|~|js}, 1, 0);
 
 let delay = Delay;
 
-/* TODO figure out where my mismatching brackets are
+/* TODO figure out where my mismatching brackets are */
 let traceAsIteration = (trace) => {
     switch (trace) {
-    | Trace(x, comp)    =>  composemany([
+    | Trace(x, f)    =>  composemany([
                                 Iter(
                                     x + outputs(trace),
                                     composemany([
                                         Tensor([
                                             Identity(x), 
-                                            exp(stub, n), 
+                                            exp(stub, outputs(trace)), 
                                             Identity(inputs(trace))
                                         ]), 
                                         f
-                                    ]), 
+                                    ]),
+                                ), 
                                 Tensor([
                                     exp(stub, x), 
-                                    Identity(n)
+                                    Identity(outputs(trace))
                                 ])
-;}
+                            ])
+    ;}
 }
-*/
+
+let hello = Js.log("hello!");

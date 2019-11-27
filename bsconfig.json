@@ -1,21 +1,23 @@
 {
   "name": "circuit-visualiser",
-  "version": "0.1.0",
+  "reason": {"react-jsx": 3},
+  "bsc-flags": ["-bs-super-errors"],
   "sources": {
     "dir" : "src",
     "subdirs" : true
   },
   "package-specs": {
-    "module": "commonjs",
+    "module": "es6",
     "in-source": true
   },
   "suffix": ".bs.js",
+  "namespace": true,
   "bs-dependencies": [
-
+    "reason-react"
   ],
   "warnings": {
     "error" : "+101"
   },
-  "namespace": true,
+  "ppx-flags": [],
   "refmt": 3
 }
