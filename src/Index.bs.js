@@ -3,15 +3,8 @@
 import * as React from "react";
 import * as ReactDOMRe from "reason-react/src/ReactDOMRe.js";
 import * as Test$CircuitVisualiser from "./Test.bs.js";
-import * as Greeting$CircuitVisualiser from "./Greeting.bs.js";
 
-ReactDOMRe.renderToElementWithId(React.createElement(Greeting$CircuitVisualiser.make, {
-          name: "George"
-        }), "greeting");
-
-ReactDOMRe.renderToElementWithId(React.createElement(Test$CircuitVisualiser.make, {
-          name: "George"
-        }), "test");
+ReactDOMRe.renderToElementWithId(React.createElement(Test$CircuitVisualiser.make, { }), "test");
 
 export {
   

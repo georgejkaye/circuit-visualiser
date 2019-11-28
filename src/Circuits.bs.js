@@ -205,8 +205,7 @@ function printCircuit$prime(component) {
 
 function printCircuit(circuit) {
   var comp = circuit[2];
-  console.log(circuit[3] + (" : " + (String(inputs(comp)) + (" → " + (String(outputs(comp)) + ("\n" + printCircuit$prime(comp)))))));
-  return /* () */0;
+  return circuit[3] + (" : " + (String(inputs(comp)) + (" → " + (String(outputs(comp)) + ("\n" + printCircuit$prime(comp))))));
 }
 
 var stub = /* Function */Block.__(4, [

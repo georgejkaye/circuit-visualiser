@@ -102,6 +102,13 @@ var circuit2 = Circuits$CircuitVisualiser.composemany(/* :: */[
       ]
     ]);
 
+var circ2 = /* Circuit */[
+  /* [] */0,
+  /* [] */0,
+  circuit2,
+  "Second wind"
+];
+
 Circuits$CircuitVisualiser.printCircuit(/* Circuit */[
       /* [] */0,
       /* [] */0,
@@ -144,6 +151,7 @@ export {
   tensor3 ,
   tensor4 ,
   circuit2 ,
+  circ2 ,
   f$prime ,
   circuit3 ,
   circuit4 ,

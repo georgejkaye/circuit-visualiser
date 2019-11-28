@@ -22,6 +22,8 @@ let tensor4 = Tensor([f,Identity(1)]);
 
 let circuit2 = composemany([fork, tensor3, tensor4, h]);
 
+let circ2 = Circuit([],[],circuit2,"Second wind");
+
 printCircuit(Circuit([],[],circuit2,"Second wind"));
 
 let f' = Function("f", 3, 3);

@@ -104,7 +104,7 @@ let rec printCircuit' = (component) => {
 
 let printCircuit = (circuit) => 
     switch(circuit){
-    | Circuit (_,_,comp,name) => Js.log(name ++ " : " ++ string_of_int(inputs(comp)) ++ {js| → |js} ++ string_of_int(outputs(comp)) ++ "\n" ++ printCircuit'(comp));}
+    | Circuit (_,_,comp,name) => name ++ " : " ++ string_of_int(inputs(comp)) ++ {js| → |js} ++ string_of_int(outputs(comp)) ++ "\n" ++ printCircuit'(comp);}
 
 
 /* Special morphisms */
