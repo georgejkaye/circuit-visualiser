@@ -1,4 +1,4 @@
-type lattice = Bottom | False | True | Top;
+type lattice = Bottom | False | True | Top | Placeholder;
 
 let printLattice = (lattice) => {
     switch (lattice) {
@@ -13,7 +13,7 @@ type component = Value(lattice)
                | Identity(int)
                | Composition(component, component)    
                | Tensor(list(component))
-               | Function(string, int, int)
+               | Function(string, int, int, (component) => component)
                | Delay
                | Trace(int, component)
                | Iter(int, component)
@@ -22,13 +22,25 @@ type component = Value(lattice)
                | Link(int, int, component)
 and circuit = Circuit(list(int), list(int), component, string);
 
+let rec compn = (n, component) => {
+    switch(component){
+    | Composition(x,y) =>   (n == 0) ? x :
+                                (switch(component) {
+                                    | Composition(x, y)  => compn(n-1, y)
+                                    | _                  => failwith("not enough composition")
+                                })
+    | _ => (n == 0) ? component : failwith("not enough composition")
+        
+    }
+}
+
 let rec inputs = (item) => {
     switch (item) {
     | Value(x)               => 0
     | Identity(x)            => x
     | Composition(f, g)      => inputs(f)
     | Tensor(fs)             => List.fold_left(((no, comp) => no + inputs(comp)), 0, fs)                        
-    | Function(id, x, y)         => x
+    | Function(id, x, y, func)         => x
     | Delay                  => 1
     | Trace(x, comp)         => inputs(comp) - x
     | Iter(x, comp)          => inputs(comp) - x
@@ -44,7 +56,7 @@ let rec outputs = (item) => {
     | Identity(x)            => x
     | Composition(f, g)      => outputs(g)
     | Tensor(fs)             => List.fold_left(((no, comp) => no + outputs(comp)), 0, fs)    
-    | Function(id, x, y)         => y
+    | Function(id, x, y, func)         => y
     | Delay                  => 1
     | Trace(x, comp)         => outputs(comp) - x
     | Iter(x, comp)          => outputs(comp)
@@ -63,10 +75,25 @@ let compose = (f, g) => {
     Composition(f, g);
 }
 
-let rec composemany = (list) => {
+let rec last = (list) => {
     switch(list){
-    | [f, ...tl] => List.fold_left(((composition, component) => compose(composition, component)), f, tl)
-    ;}
+    | [] => []
+    | [x] => x
+    | [x, ...xs] => last(xs)
+    }
+}
+
+/*let rec composemany = (xs) => {
+    let ys = List.rev(xs);
+    List.fold_right(((component, composition) => compose(component, composition)), xs, )
+}*/
+
+let rec composemany = (xs) => {
+    switch(xs){
+    | []         => failwith("no args")
+    | [x]        => x
+    | [x, ...xs] => Composition(x, composemany(xs))
+    }
 }
 
 let rec exp' = (f, x) => {
@@ -92,7 +119,7 @@ let rec printCircuit' = (component) => {
     | Identity(x)            => string_of_int(x)
     | Composition(f, g)      => printCircuit'(f) ++ {js| ⋅ |js} ++ printCircuit'(g)
     | Tensor([f, ...tl])     => "[" ++ List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printCircuit'(comp)), printCircuit'(f), tl) ++ "]"
-    | Function(id, x, y)         => id
+    | Function(id, x, y, func)         => id
     | Delay                  => {js|ẟ|js}
     | Trace(x, component)    => "Tr[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
     | Iter(x, component)     => "iter[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
@@ -106,15 +133,46 @@ let printCircuit = (circuit) =>
     switch(circuit){
     | Circuit (_,_,comp,name) => name ++ " : " ++ string_of_int(inputs(comp)) ++ {js| → |js} ++ string_of_int(outputs(comp)) ++ "\n" ++ printCircuit'(comp);}
 
+let rec valueList = (v, x) => {
+    switch(x) {
+    | 0 => []
+    | n => [Placeholder, ...valueList(v, x-1)]
+    }
+}
+
+/*let rec split = (n, xs) =>
+    switch(xs) {
+    | [] => []
+    | [x, ...xs] => if (n == 0){
+                            
+    } x :: slice (n-1) xs
+    }*/
+
+let id = (x) => x;
+
 
 /* Special morphisms */
-let fork = Function({js|⋏|js}, 1, 2);
-let join = Function({js|⋎|js}, 1, 2);
-let stub = Function({js|~|js}, 1, 0);
+/* TODO add functions of special morphisms */
+let fork = Function({js|⋏|js}, 1, 2, (comp) => Tensor([comp, comp]));
+let join = Function({js|⋎|js}, 2, 1, id);
+let stub = Function({js|~|js}, 1, 0, id);
+let swap = (x, y) => Function({js|×|js} ++ "[" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "]", x + y, x + y, id);
+
+let rec dfork = (n) => {
+    switch(n) {
+    | 0 => Identity(0)
+    | 1 => fork
+    | n => composemany([
+                Tensor([dfork(n-1), fork]),
+                Tensor([Identity(1), swap(n-1, 1), Identity(1)])
+            ])
+    }
+}
 
 let delay = Delay;
 
-/* TODO figure out where my mismatching brackets are */
+/** Trace rewrites */
+
 let traceAsIteration = (trace) => {
     switch (trace) {
     | Trace(x, f)    =>  composemany([
@@ -137,4 +195,18 @@ let traceAsIteration = (trace) => {
     ;}
 }
 
-let hello = Js.log("hello!");
+let rec evaluateOneStep = (comp) => {
+    switch(comp){
+    | Composition(fst, rest) => Js.log("first = " ++ printCircuit'(fst) ++ " snd = " ++ printCircuit'(compn(0, rest)));
+                                 switch(compn(0,rest)){
+                                 | Function(_,_,_,func) => Js.log(func); func(fst)
+                                 | _ => failwith("not implemented")
+                                 }
+    }
+}
+
+/*let unfoldIteration = (trace) => {
+    switch (trace) {
+    | Iter(x, f)    =>  c
+    }
+}*/
