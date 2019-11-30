@@ -195,6 +195,29 @@ console.log(Circuits$CircuitVisualiser.printCircuit(circ6));
 
 console.log(Circuits$CircuitVisualiser.printCircuit(Circuits$CircuitVisualiser.makeCircuit(Circuits$CircuitVisualiser.evaluateOneStep(circuit6), "Evaluated Fork II")));
 
+var circuit7 = Circuits$CircuitVisualiser.composemany(/* :: */[
+      /* Tensor */Block.__(3, [/* :: */[
+            /* Value */Block.__(0, [/* True */2]),
+            /* :: */[
+              /* Value */Block.__(0, [/* False */1]),
+              /* :: */[
+                /* Value */Block.__(0, [/* Bottom */0]),
+                /* [] */0
+              ]
+            ]
+          ]]),
+      /* :: */[
+        Circuits$CircuitVisualiser.swap(2, 1),
+        /* [] */0
+      ]
+    ]);
+
+var circ7 = Circuits$CircuitVisualiser.makeCircuit(circuit7, "Swap");
+
+console.log(Circuits$CircuitVisualiser.printCircuit(circ7));
+
+console.log(Circuits$CircuitVisualiser.printCircuit(Circuits$CircuitVisualiser.makeCircuit(Circuits$CircuitVisualiser.evaluateOneStep(circuit7), "Evaluated Swap")));
+
 var delay = /* Delay */0;
 
 export {
@@ -220,6 +243,8 @@ export {
   circ5 ,
   circuit6 ,
   circ6 ,
+  circuit7 ,
+  circ7 ,
   
 }
 /*  Not a pure module */

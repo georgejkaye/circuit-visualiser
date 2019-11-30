@@ -29,6 +29,75 @@ function printLattice(lattice) {
   }
 }
 
+function lub(a, b) {
+  if (typeof a === "number" || a.tag || typeof b === "number" || b.tag) {
+    return Pervasives.failwith("Not implemented");
+  } else {
+    var y = b[0];
+    var x = a[0];
+    var exit = 0;
+    switch (x) {
+      case /* False */1 :
+          switch (y) {
+            case /* False */1 :
+            case /* True */2 :
+                return /* Value */Block.__(0, [/* False */1]);
+            case /* Bottom */0 :
+            case /* Top */3 :
+                exit = 2;
+                break;
+            case /* Placeholder */4 :
+                break;
+            
+          }
+          break;
+      case /* True */2 :
+          switch (y) {
+            case /* False */1 :
+            case /* True */2 :
+                return /* Value */Block.__(0, [/* True */2]);
+            case /* Bottom */0 :
+            case /* Top */3 :
+                exit = 2;
+                break;
+            case /* Placeholder */4 :
+                break;
+            
+          }
+          break;
+      case /* Top */3 :
+          return /* Value */Block.__(0, [/* Top */3]);
+      case /* Bottom */0 :
+      case /* Placeholder */4 :
+          exit = 2;
+          break;
+      
+    }
+    if (exit === 2) {
+      if (y !== 3) {
+        if (y !== 0) {
+          if (x < 4) {
+            return /* Value */Block.__(0, [y]);
+          }
+          
+        } else {
+          return /* Value */Block.__(0, [x]);
+        }
+      } else {
+        return /* Value */Block.__(0, [/* Top */3]);
+      }
+    }
+    throw [
+          Caml_builtin_exceptions.match_failure,
+          /* tuple */[
+            "Circuits.re",
+            28,
+            8
+          ]
+        ];
+  }
+}
+
 function compn(_n, _component) {
   while(true) {
     var component = _component;
@@ -137,7 +206,7 @@ function compose(f, g) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Circuits.re",
-            74,
+            91,
             4
           ]
         ];
@@ -203,7 +272,7 @@ function trace(x, f) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Circuits.re",
-            112,
+            129,
             4
           ]
         ];
@@ -236,7 +305,7 @@ function printCircuit$prime(component) {
                   Caml_builtin_exceptions.match_failure,
                   /* tuple */[
                     "Circuits.re",
-                    116,
+                    133,
                     39
                   ]
                 ];
@@ -274,6 +343,51 @@ function valueList(v, x) {
   }
 }
 
+function split$prime(_n, _xs, _ys) {
+  while(true) {
+    var ys = _ys;
+    var xs = _xs;
+    var n = _n;
+    if (ys) {
+      var yss = ys[1];
+      var y = ys[0];
+      var match = n === 0;
+      if (match) {
+        return /* tuple */[
+                xs,
+                /* :: */[
+                  y,
+                  yss
+                ]
+              ];
+      } else {
+        _ys = yss;
+        _xs = List.concat(/* :: */[
+              xs,
+              /* :: */[
+                /* :: */[
+                  y,
+                  /* [] */0
+                ],
+                /* [] */0
+              ]
+            ]);
+        _n = n - 1 | 0;
+        continue ;
+      }
+    } else {
+      return /* tuple */[
+              xs,
+              /* [] */0
+            ];
+    }
+  };
+}
+
+function split(n, xs) {
+  return split$prime(n, /* [] */0, xs);
+}
+
 function id(x) {
   return x;
 }
@@ -299,11 +413,33 @@ var fork = /* Function */Block.__(4, [
 
 var join_000 = "⋎";
 
+function join_003(comp) {
+  if (typeof comp !== "number" && comp.tag === /* Tensor */3) {
+    var match = comp[0];
+    if (match) {
+      var match$1 = match[1];
+      if (match$1 && !match$1[1]) {
+        return lub(match[0], match$1[0]);
+      }
+      
+    }
+    
+  }
+  throw [
+        Caml_builtin_exceptions.match_failure,
+        /* tuple */[
+          "Circuits.re",
+          176,
+          49
+        ]
+      ];
+}
+
 var join = /* Function */Block.__(4, [
     join_000,
     2,
     1,
-    id
+    join_003
   ]);
 
 var stub_000 = "~";
@@ -320,7 +456,36 @@ function swap(x, y) {
             "×" + ("[" + (String(x) + ("," + (String(y) + "]")))),
             x + y | 0,
             x + y | 0,
-            id
+            (function (comp) {
+                if (typeof comp === "number") {
+                  throw [
+                        Caml_builtin_exceptions.match_failure,
+                        /* tuple */[
+                          "Circuits.re",
+                          183,
+                          42
+                        ]
+                      ];
+                } else if (comp.tag === /* Tensor */3) {
+                  var match = split$prime(x, /* [] */0, comp[0]);
+                  return /* Tensor */Block.__(3, [List.concat(/* :: */[
+                                  match[1],
+                                  /* :: */[
+                                    match[0],
+                                    /* [] */0
+                                  ]
+                                ])]);
+                } else {
+                  throw [
+                        Caml_builtin_exceptions.match_failure,
+                        /* tuple */[
+                          "Circuits.re",
+                          183,
+                          42
+                        ]
+                      ];
+                }
+              })
           ]);
 }
 
@@ -363,7 +528,7 @@ function traceAsIteration(trace) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "Circuits.re",
-            176,
+            203,
             34
           ]
         ];
@@ -406,7 +571,7 @@ function traceAsIteration(trace) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "Circuits.re",
-            176,
+            203,
             34
           ]
         ];
@@ -419,7 +584,7 @@ function evaluateOneStep(comp) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "Circuits.re",
-            198,
+            225,
             36
           ]
         ];
@@ -431,16 +596,14 @@ function evaluateOneStep(comp) {
     if (typeof match === "number" || match.tag !== /* Function */4) {
       return Pervasives.failwith("not implemented");
     } else {
-      var func = match[3];
-      console.log(func);
-      return Curry._1(func, fst);
+      return Curry._1(match[3], fst);
     }
   } else {
     throw [
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "Circuits.re",
-            198,
+            225,
             36
           ]
         ];
@@ -451,6 +614,7 @@ var delay = /* Delay */0;
 
 export {
   printLattice ,
+  lub ,
   compn ,
   inputs ,
   outputs ,
@@ -464,6 +628,8 @@ export {
   printCircuit$prime ,
   printCircuit ,
   valueList ,
+  split$prime ,
+  split ,
   id ,
   fork ,
   join ,

@@ -22,6 +22,23 @@ type component = Value(lattice)
                | Link(int, int, component)
 and circuit = Circuit(list(int), list(int), component, string);
 
+let lub = (a,b) => {
+    switch(a, b){
+    | (Value(x), Value(y)) =>
+        switch(x, y){
+        | (Top, _) => Value(Top)
+        | (_, Top) => Value(Top)
+        | (a, Bottom) => Value(a)
+        | (Bottom, b) => Value(b)
+        | (True, True) => Value(True)
+        | (True, False) => Value(True)
+        | (False, True) => Value(False)
+        | (False, False) => Value(False)
+        }
+    | _ => failwith("Not implemented")
+    }
+}
+
 let rec compn = (n, component) => {
     switch(component){
     | Composition(x,y) =>   (n == 0) ? x :
@@ -115,17 +132,17 @@ let trace = (x, f) => {
 
 let rec printCircuit' = (component) => {
     switch (component) {
-    | Value(x)               => printLattice(x) 
-    | Identity(x)            => string_of_int(x)
-    | Composition(f, g)      => printCircuit'(f) ++ {js| ⋅ |js} ++ printCircuit'(g)
-    | Tensor([f, ...tl])     => "[" ++ List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printCircuit'(comp)), printCircuit'(f), tl) ++ "]"
-    | Function(id, x, y, func)         => id
-    | Delay                  => {js|ẟ|js}
-    | Trace(x, component)    => "Tr[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
-    | Iter(x, component)     => "iter[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
-    | Input(int)             => ":" ++ string_of_int(int)   
-    | Output(int)            => string_of_int(int) ++ ":"
-    | Link(inlink, outlink, circuit) => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printCircuit'(circuit) 
+    | Value(x)                          => printLattice(x) 
+    | Identity(x)                       => string_of_int(x)
+    | Composition(f, g)                 => printCircuit'(f) ++ {js| ⋅ |js} ++ printCircuit'(g)
+    | Tensor([f, ...tl])                => "[" ++ List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printCircuit'(comp)), printCircuit'(f), tl) ++ "]"
+    | Function(id, x, y, func)          => id
+    | Delay                             => {js|ẟ|js}
+    | Trace(x, component)               => "Tr[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
+    | Iter(x, component)                => "iter[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
+    | Input(int)                        => ":" ++ string_of_int(int)   
+    | Output(int)                       => string_of_int(int) ++ ":"
+    | Link(inlink, outlink, circuit)    => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printCircuit'(circuit) 
     ;}
 }
 
@@ -140,13 +157,15 @@ let rec valueList = (v, x) => {
     }
 }
 
-/*let rec split = (n, xs) =>
-    switch(xs) {
-    | [] => []
-    | [x, ...xs] => if (n == 0){
+let rec split' = (n, xs, ys) => {
+    switch(ys){
+    | []         => (xs, [])
+    | [y, ...yss] => n == 0 ? (xs, [y, ...yss]) : split'(n-1, List.concat([xs, [y]]), yss)
+    }
+}
+
+let split = (n, xs) => split'(n, [], xs);
                             
-    } x :: slice (n-1) xs
-    }*/
 
 let id = (x) => x;
 
@@ -154,9 +173,17 @@ let id = (x) => x;
 /* Special morphisms */
 /* TODO add functions of special morphisms */
 let fork = Function({js|⋏|js}, 1, 2, (comp) => Tensor([comp, comp]));
-let join = Function({js|⋎|js}, 2, 1, id);
+let join = Function({js|⋎|js}, 2, 1, (comp) => switch(comp){
+                                                | Tensor([a, b]) => lub(a,b)
+                                                });
 let stub = Function({js|~|js}, 1, 0, id);
-let swap = (x, y) => Function({js|×|js} ++ "[" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "]", x + y, x + y, id);
+let swap = (x, y) => Function({js|×|js} ++ "[" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "]", 
+                                x + y, 
+                                x + y, 
+                                (comp) => switch(comp){
+                                | Tensor(xs) => let (top, bot) = split(x, xs); Tensor(List.concat([bot, top]));
+                                }
+                            );
 
 let rec dfork = (n) => {
     switch(n) {
@@ -199,7 +226,7 @@ let rec evaluateOneStep = (comp) => {
     switch(comp){
     | Composition(fst, rest) => Js.log("first = " ++ printCircuit'(fst) ++ " snd = " ++ printCircuit'(compn(0, rest)));
                                  switch(compn(0,rest)){
-                                 | Function(_,_,_,func) => Js.log(func); func(fst)
+                                 | Function(_,_,_,func) => func(fst)
                                  | _ => failwith("not implemented")
                                  }
     }

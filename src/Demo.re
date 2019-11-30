@@ -50,3 +50,8 @@ let circuit6 = compose(t, fork);
 let circ6 = makeCircuit(circuit6, "Fork II");
 Js.log(printCircuit(circ6));
 Js.log(printCircuit(makeCircuit(evaluateOneStep(circuit6), "Evaluated Fork II")));
+
+let circuit7 = composemany([Tensor([Value(True), Value(False), Value(Bottom)]), swap(2,1)]);
+let circ7 = makeCircuit(circuit7, "Swap");
+Js.log(printCircuit(circ7));
+Js.log(printCircuit(makeCircuit(evaluateOneStep(circuit7), "Evaluated Swap")));
