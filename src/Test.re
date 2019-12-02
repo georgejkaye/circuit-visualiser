@@ -10,6 +10,5 @@ let make = () => {
             (str("hello! ")) 
             <button onClick=((_evt) => log())>(str("next circuit"))</button>
         </div>
-        <div id="circuit">(str(Circuits.printCircuit(Demo.circ2)))</div>
     </div>
 }

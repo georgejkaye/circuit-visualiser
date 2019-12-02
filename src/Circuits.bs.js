@@ -6,151 +6,34 @@ import * as Curry from "bs-platform/lib/es6/curry.js";
 import * as Pervasives from "bs-platform/lib/es6/pervasives.js";
 import * as Caml_builtin_exceptions from "bs-platform/lib/es6/caml_builtin_exceptions.js";
 
-function printLattice(lattice) {
-  switch (lattice) {
-    case /* Bottom */0 :
-        return "\xe2\x8a\xa5";
-    case /* False */1 :
-        return "f";
-    case /* True */2 :
-        return "t";
-    case /* Top */3 :
-        return "T";
-    case /* Placeholder */4 :
-        throw [
-              Caml_builtin_exceptions.match_failure,
-              /* tuple */[
-                "Circuits.re",
-                3,
-                32
-              ]
-            ];
-    
-  }
-}
-
-function lub(a, b) {
-  if (typeof a === "number" || a.tag || typeof b === "number" || b.tag) {
-    return Pervasives.failwith("Not implemented");
-  } else {
-    var y = b[0];
-    var x = a[0];
-    var exit = 0;
-    switch (x) {
-      case /* False */1 :
-          switch (y) {
-            case /* False */1 :
-            case /* True */2 :
-                return /* Value */Block.__(0, [/* False */1]);
-            case /* Bottom */0 :
-            case /* Top */3 :
-                exit = 2;
-                break;
-            case /* Placeholder */4 :
-                break;
-            
-          }
-          break;
-      case /* True */2 :
-          switch (y) {
-            case /* False */1 :
-            case /* True */2 :
-                return /* Value */Block.__(0, [/* True */2]);
-            case /* Bottom */0 :
-            case /* Top */3 :
-                exit = 2;
-                break;
-            case /* Placeholder */4 :
-                break;
-            
-          }
-          break;
-      case /* Top */3 :
-          return /* Value */Block.__(0, [/* Top */3]);
-      case /* Bottom */0 :
-      case /* Placeholder */4 :
-          exit = 2;
-          break;
-      
-    }
-    if (exit === 2) {
-      if (y !== 3) {
-        if (y !== 0) {
-          if (x < 4) {
-            return /* Value */Block.__(0, [y]);
-          }
-          
-        } else {
-          return /* Value */Block.__(0, [x]);
-        }
-      } else {
-        return /* Value */Block.__(0, [/* Top */3]);
-      }
-    }
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "Circuits.re",
-            28,
-            8
-          ]
-        ];
-  }
-}
-
-function compn(_n, _component) {
+function inputs(_c) {
   while(true) {
-    var component = _component;
-    var n = _n;
-    if (typeof component !== "number" && component.tag === /* Composition */2) {
-      var match = n === 0;
-      if (match) {
-        return component[0];
-      } else if (typeof component === "number" || component.tag !== /* Composition */2) {
-        return Pervasives.failwith("not enough composition");
-      } else {
-        _component = component[1];
-        _n = n - 1 | 0;
-        continue ;
-      }
-    }
-    var match$1 = n === 0;
-    if (match$1) {
-      return component;
-    } else {
-      return Pervasives.failwith("not enough composition");
-    }
-  };
-}
-
-function inputs(_item) {
-  while(true) {
-    var item = _item;
-    if (typeof item === "number") {
+    var c = _c;
+    if (typeof c === "number") {
       return 1;
     } else {
-      switch (item.tag | 0) {
+      switch (c.tag | 0) {
         case /* Identity */1 :
-            return item[0];
+            return c[0];
         case /* Composition */2 :
-            _item = item[0];
+            _c = c[0];
             continue ;
         case /* Tensor */3 :
             return List.fold_left((function (no, comp) {
                           return no + inputs(comp) | 0;
-                        }), 0, item[0]);
+                        }), 0, c[0]);
         case /* Function */4 :
-            return item[1];
+            return c[1];
         case /* Trace */5 :
         case /* Iter */6 :
-            return inputs(item[1]) - item[0] | 0;
+            return inputs(c[1]) - c[0] | 0;
         case /* Value */0 :
         case /* Input */7 :
             return 0;
         case /* Output */8 :
             return 1;
         case /* Link */9 :
-            _item = item[2];
+            _c = c[2];
             continue ;
         
       }
@@ -158,31 +41,31 @@ function inputs(_item) {
   };
 }
 
-function outputs(_item) {
+function outputs(_c) {
   while(true) {
-    var item = _item;
-    if (typeof item === "number") {
+    var c = _c;
+    if (typeof c === "number") {
       return 1;
     } else {
-      switch (item.tag | 0) {
+      switch (c.tag | 0) {
         case /* Identity */1 :
-            return item[0];
+            return c[0];
         case /* Tensor */3 :
             return List.fold_left((function (no, comp) {
                           return no + outputs(comp) | 0;
-                        }), 0, item[0]);
+                        }), 0, c[0]);
         case /* Function */4 :
-            return item[2];
+            return c[2];
         case /* Trace */5 :
-            return outputs(item[1]) - item[0] | 0;
+            return outputs(c[1]) - c[0] | 0;
         case /* Composition */2 :
         case /* Iter */6 :
-            _item = item[1];
+            _c = c[1];
             continue ;
         case /* Output */8 :
             return 0;
         case /* Link */9 :
-            _item = item[2];
+            _c = c[2];
             continue ;
         default:
           return 1;
@@ -191,47 +74,52 @@ function outputs(_item) {
   };
 }
 
-function makeCircuit(component, string) {
-  return /* Circuit */[
-          /* [] */0,
-          /* [] */0,
-          component,
-          string
-        ];
-}
-
-function compose(f, g) {
-  if (outputs(f) !== inputs(g)) {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Circuits.re",
-            91,
-            4
-          ]
-        ];
-  }
-  return /* Composition */Block.__(2, [
-            f,
-            g
-          ]);
-}
-
-function last(_list) {
-  while(true) {
-    var list = _list;
-    if (list) {
-      var xs = list[1];
-      if (xs) {
-        _list = xs;
-        continue ;
-      } else {
-        return list[0];
-      }
-    } else {
-      return /* [] */0;
+function printComponent(v, c) {
+  if (typeof c === "number") {
+    return "ẟ";
+  } else {
+    switch (c.tag | 0) {
+      case /* Value */0 :
+          return Curry._1(v[/* print */5], c[0]);
+      case /* Identity */1 :
+          return String(c[0]);
+      case /* Composition */2 :
+          return printComponent(v, c[0]) + (" ⋅ " + printComponent(v, c[1]));
+      case /* Tensor */3 :
+          var match = c[0];
+          if (match) {
+            return "[" + (List.fold_left((function (string, comp) {
+                            return string + (" ⊗ " + printComponent(v, comp));
+                          }), printComponent(v, match[0]), match[1]) + "]");
+          } else {
+            throw [
+                  Caml_builtin_exceptions.match_failure,
+                  /* tuple */[
+                    "Circuits.re",
+                    53,
+                    35
+                  ]
+                ];
+          }
+      case /* Function */4 :
+          return c[0];
+      case /* Trace */5 :
+          return "Tr[" + (String(c[0]) + ("](" + (printComponent(v, c[1]) + ")")));
+      case /* Iter */6 :
+          return "iter[" + (String(c[0]) + ("](" + (printComponent(v, c[1]) + ")")));
+      case /* Input */7 :
+          return ":" + String(c[0]);
+      case /* Output */8 :
+          return String(c[0]) + ":";
+      case /* Link */9 :
+          return "|" + (String(c[0]) + ("-" + (String(c[1]) + ("|" + printComponent(v, c[2])))));
+      
     }
-  };
+  }
+}
+
+function printCircuit(param) {
+  return printComponent(param[/* v */0], param[/* c */1]);
 }
 
 function composemany(xs) {
@@ -248,98 +136,6 @@ function composemany(xs) {
     }
   } else {
     return Pervasives.failwith("no args");
-  }
-}
-
-function exp$prime(f, x) {
-  if (x === 0) {
-    return /* [] */0;
-  } else {
-    return /* :: */[
-            f,
-            exp$prime(f, x - 1 | 0)
-          ];
-  }
-}
-
-function exp(f, x) {
-  return /* Tensor */Block.__(3, [exp$prime(f, x)]);
-}
-
-function trace(x, f) {
-  if (!(inputs(f) >= x && outputs(f) >= x)) {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Circuits.re",
-            129,
-            4
-          ]
-        ];
-  }
-  return /* Trace */Block.__(5, [
-            x,
-            f
-          ]);
-}
-
-function printCircuit$prime(component) {
-  if (typeof component === "number") {
-    return "ẟ";
-  } else {
-    switch (component.tag | 0) {
-      case /* Value */0 :
-          return printLattice(component[0]);
-      case /* Identity */1 :
-          return String(component[0]);
-      case /* Composition */2 :
-          return printCircuit$prime(component[0]) + (" ⋅ " + printCircuit$prime(component[1]));
-      case /* Tensor */3 :
-          var match = component[0];
-          if (match) {
-            return "[" + (List.fold_left((function (string, comp) {
-                            return string + (" ⊗ " + printCircuit$prime(comp));
-                          }), printCircuit$prime(match[0]), match[1]) + "]");
-          } else {
-            throw [
-                  Caml_builtin_exceptions.match_failure,
-                  /* tuple */[
-                    "Circuits.re",
-                    133,
-                    39
-                  ]
-                ];
-          }
-      case /* Function */4 :
-          return component[0];
-      case /* Trace */5 :
-          return "Tr[" + (String(component[0]) + ("](" + (printCircuit$prime(component[1]) + ")")));
-      case /* Iter */6 :
-          return "iter[" + (String(component[0]) + ("](" + (printCircuit$prime(component[1]) + ")")));
-      case /* Input */7 :
-          return ":" + String(component[0]);
-      case /* Output */8 :
-          return String(component[0]) + ":";
-      case /* Link */9 :
-          return "|" + (String(component[0]) + ("-" + (String(component[1]) + ("|" + printCircuit$prime(component[2])))));
-      
-    }
-  }
-}
-
-function printCircuit(circuit) {
-  var comp = circuit[2];
-  return circuit[3] + (" : " + (String(inputs(comp)) + (" → " + (String(outputs(comp)) + ("\n" + printCircuit$prime(comp))))));
-}
-
-function valueList(v, x) {
-  if (x !== 0) {
-    return /* :: */[
-            /* Placeholder */4,
-            valueList(v, x - 1 | 0)
-          ];
-  } else {
-    return /* [] */0;
   }
 }
 
@@ -388,17 +184,13 @@ function split(n, xs) {
   return split$prime(n, /* [] */0, xs);
 }
 
-function id(x) {
-  return x;
-}
-
 var fork_000 = "⋏";
 
-function fork_003(comp) {
+function fork_003(v, c) {
   return /* Tensor */Block.__(3, [/* :: */[
-              comp,
+              c,
               /* :: */[
-                comp,
+                c,
                 /* [] */0
               ]
             ]]);
@@ -411,59 +203,19 @@ var fork = /* Function */Block.__(4, [
     fork_003
   ]);
 
-var join_000 = "⋎";
-
-function join_003(comp) {
-  if (typeof comp !== "number" && comp.tag === /* Tensor */3) {
-    var match = comp[0];
-    if (match) {
-      var match$1 = match[1];
-      if (match$1 && !match$1[1]) {
-        return lub(match[0], match$1[0]);
-      }
-      
-    }
-    
-  }
-  throw [
-        Caml_builtin_exceptions.match_failure,
-        /* tuple */[
-          "Circuits.re",
-          176,
-          49
-        ]
-      ];
-}
-
-var join = /* Function */Block.__(4, [
-    join_000,
-    2,
-    1,
-    join_003
-  ]);
-
-var stub_000 = "~";
-
-var stub = /* Function */Block.__(4, [
-    stub_000,
-    1,
-    0,
-    id
-  ]);
-
 function swap(x, y) {
   return /* Function */Block.__(4, [
             "×" + ("[" + (String(x) + ("," + (String(y) + "]")))),
             x + y | 0,
             x + y | 0,
-            (function (comp) {
+            (function (v, comp) {
                 if (typeof comp === "number") {
                   throw [
                         Caml_builtin_exceptions.match_failure,
                         /* tuple */[
                           "Circuits.re",
-                          183,
-                          42
+                          95,
+                          45
                         ]
                       ];
                 } else if (comp.tag === /* Tensor */3) {
@@ -480,8 +232,8 @@ function swap(x, y) {
                         Caml_builtin_exceptions.match_failure,
                         /* tuple */[
                           "Circuits.re",
-                          183,
-                          42
+                          95,
+                          45
                         ]
                       ];
                 }
@@ -522,123 +274,17 @@ function dfork(n) {
   }
 }
 
-function traceAsIteration(trace) {
-  if (typeof trace === "number") {
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "Circuits.re",
-            203,
-            34
-          ]
-        ];
-  } else if (trace.tag === /* Trace */5) {
-    var x = trace[0];
-    var x$1 = outputs(trace);
-    return composemany(/* :: */[
-                /* Iter */Block.__(6, [
-                    x + outputs(trace) | 0,
-                    composemany(/* :: */[
-                          /* Tensor */Block.__(3, [/* :: */[
-                                /* Identity */Block.__(1, [x]),
-                                /* :: */[
-                                  /* Tensor */Block.__(3, [exp$prime(stub, x$1)]),
-                                  /* :: */[
-                                    /* Identity */Block.__(1, [inputs(trace)]),
-                                    /* [] */0
-                                  ]
-                                ]
-                              ]]),
-                          /* :: */[
-                            trace[1],
-                            /* [] */0
-                          ]
-                        ])
-                  ]),
-                /* :: */[
-                  /* Tensor */Block.__(3, [/* :: */[
-                        /* Tensor */Block.__(3, [exp$prime(stub, x)]),
-                        /* :: */[
-                          /* Identity */Block.__(1, [outputs(trace)]),
-                          /* [] */0
-                        ]
-                      ]]),
-                  /* [] */0
-                ]
-              ]);
-  } else {
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "Circuits.re",
-            203,
-            34
-          ]
-        ];
-  }
-}
-
-function evaluateOneStep(comp) {
-  if (typeof comp === "number") {
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "Circuits.re",
-            225,
-            36
-          ]
-        ];
-  } else if (comp.tag === /* Composition */2) {
-    var rest = comp[1];
-    var fst = comp[0];
-    console.log("first = " + (printCircuit$prime(fst) + (" snd = " + printCircuit$prime(compn(0, rest)))));
-    var match = compn(0, rest);
-    if (typeof match === "number" || match.tag !== /* Function */4) {
-      return Pervasives.failwith("not implemented");
-    } else {
-      return Curry._1(match[3], fst);
-    }
-  } else {
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "Circuits.re",
-            225,
-            36
-          ]
-        ];
-  }
-}
-
-var delay = /* Delay */0;
-
 export {
-  printLattice ,
-  lub ,
-  compn ,
   inputs ,
   outputs ,
-  makeCircuit ,
-  compose ,
-  last ,
-  composemany ,
-  exp$prime ,
-  exp ,
-  trace ,
-  printCircuit$prime ,
+  printComponent ,
   printCircuit ,
-  valueList ,
+  composemany ,
   split$prime ,
   split ,
-  id ,
   fork ,
-  join ,
-  stub ,
   swap ,
   dfork ,
-  delay ,
-  traceAsIteration ,
-  evaluateOneStep ,
   
 }
 /* No side effect */

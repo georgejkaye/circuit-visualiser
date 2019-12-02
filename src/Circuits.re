@@ -1,74 +1,41 @@
-type lattice = Bottom | False | True | Top | Placeholder;
+open Helpers;
+open Lattices;
 
-let printLattice = (lattice) => {
-    switch (lattice) {
-    | Bottom => "⊥"
-    | False  => "f"
-    | True   => "t"
-    | Top    => "T"
-    ;}
+type component('element) = 
+    | Value('element)
+    | Identity(int)
+    | Composition(component('element), component('element))    
+    | Tensor(list(component('element)))
+    | Function(string, int, int, (lattice('element), component('element)) => component('element))
+    | Delay
+    | Trace(int, component('element))
+    | Iter(int, component('element))
+    | Input(int)
+    | Output(int)
+    | Link(int, int, component('element))
+and circuit('element) = { 
+    v: lattice('element),
+    c: component('element),
 }
 
-type component = Value(lattice)
-               | Identity(int)
-               | Composition(component, component)    
-               | Tensor(list(component))
-               | Function(string, int, int, (component) => component)
-               | Delay
-               | Trace(int, component)
-               | Iter(int, component)
-               | Input(int)
-               | Output(int)
-               | Link(int, int, component)
-and circuit = Circuit(list(int), list(int), component, string);
-
-let lub = (a,b) => {
-    switch(a, b){
-    | (Value(x), Value(y)) =>
-        switch(x, y){
-        | (Top, _) => Value(Top)
-        | (_, Top) => Value(Top)
-        | (a, Bottom) => Value(a)
-        | (Bottom, b) => Value(b)
-        | (True, True) => Value(True)
-        | (True, False) => Value(True)
-        | (False, True) => Value(False)
-        | (False, False) => Value(False)
-        }
-    | _ => failwith("Not implemented")
-    }
-}
-
-let rec compn = (n, component) => {
-    switch(component){
-    | Composition(x,y) =>   (n == 0) ? x :
-                                (switch(component) {
-                                    | Composition(x, y)  => compn(n-1, y)
-                                    | _                  => failwith("not enough composition")
-                                })
-    | _ => (n == 0) ? component : failwith("not enough composition")
-        
-    }
-}
-
-let rec inputs = (item) => {
-    switch (item) {
-    | Value(x)               => 0
-    | Identity(x)            => x
-    | Composition(f, g)      => inputs(f)
-    | Tensor(fs)             => List.fold_left(((no, comp) => no + inputs(comp)), 0, fs)                        
-    | Function(id, x, y, func)         => x
-    | Delay                  => 1
-    | Trace(x, comp)         => inputs(comp) - x
-    | Iter(x, comp)          => inputs(comp) - x
-    | Input(int)             => 0   
-    | Output(int)            => 1
+let rec inputs = (c) => {
+    switch (c) {
+    | Value(x)                       => 0
+    | Identity(x)                    => x
+    | Composition(f, g)              => inputs(f)
+    | Tensor(fs)                     => List.fold_left(((no, comp) => no + inputs(comp)), 0, fs)                        
+    | Function(id, x, y, func)       => x
+    | Delay                          => 1
+    | Trace(x, comp)                 => inputs(comp) - x
+    | Iter(x, comp)                  => inputs(comp) - x
+    | Input(int)                     => 0   
+    | Output(int)                    => 1
     | Link(inlink, outlink, circuit) => inputs(circuit)
     ;}
 }
 
-let rec outputs = (item) => {
-    switch (item) {
+let rec outputs = (c) => {
+    switch (c) {
     | Value(x)               => 1
     | Identity(x)            => x
     | Composition(f, g)      => outputs(g)
@@ -83,12 +50,83 @@ let rec outputs = (item) => {
     ;}
 }
 
+let rec printComponent = (v, c) => {
+    switch (c) {
+    | Value(x)                          => v.print(x)
+    | Identity(x)                       => string_of_int(x)
+    | Composition(f, g)                 => printComponent(v,f) ++ {js| ⋅ |js} ++ printComponent(v,g)
+    | Tensor([f, ...tl])                => "[" ++ List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent(v,comp)), printComponent(v,f), tl) ++ "]"
+    | Function(id, x, y, func)          => id
+    | Delay                             => {js|ẟ|js}
+    | Trace(x, component)               => "Tr[" ++ string_of_int(x) ++ "](" ++ printComponent(v,component) ++ ")" 
+    | Iter(x, component)                => "iter[" ++ string_of_int(x) ++ "](" ++ printComponent(v,component) ++ ")" 
+    | Input(int)                        => ":" ++ string_of_int(int)   
+    | Output(int)                       => string_of_int(int) ++ ":"
+    | Link(inlink, outlink, circuit)    => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printComponent(v,circuit) 
+    ;}
+}
+
+let printCircuit = ({v,c}) => printComponent(v,c)
+
+let rec composemany = (xs) => {
+    switch(xs){
+    | []         => failwith("no args")
+    | [x]        => x
+    | [x, ...xs] => Composition(x, composemany(xs))
+    }
+}
+
+
+let rec split' = (n, xs, ys) => {
+    switch(ys){
+    | []         => (xs, [])
+    | [y, ...yss] => n == 0 ? (xs, [y, ...yss]) : split'(n-1, List.concat([xs, [y]]), yss)
+    }
+}
+
+let split = (n, xs) => split'(n, [], xs);
+
+/* Special morphisms */
+let fork = Function({js|⋏|js}, 1, 2, (v, c) => Tensor([c, c]));
+
+let swap = (x, y) => Function({js|×|js} ++ "[" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "]", 
+                                x + y, 
+                                x + y, 
+                                (v, comp) => switch(comp){
+                                | Tensor(xs) => let (top, bot) = split(x, xs); Tensor(List.concat([bot, top]));
+                                }
+                            );
+
+let rec dfork = (n) => {
+    switch(n) {
+    | 0 => Identity(0)
+    | 1 => fork
+    | n => composemany([
+                Tensor([dfork(n-1), fork]),
+                Tensor([Identity(1), swap(n-1, 1), Identity(1)])
+            ])
+    }
+}
+
+/*
+let rec compn = (n, component) => {
+    switch(component){
+    | Composition(x,y) =>   (n == 0) ? x :
+                                (switch(component) {
+                                    | Composition(x, y)  => compn(n-1, y)
+                                    | _                  => failwith("not enough composition")
+                                })
+    | _ => (n == 0) ? component : failwith("not enough composition")
+        
+    }
+}
+
 let makeCircuit = (component, string) => {
     Circuit([],[],component,string)
 }
 
 let compose = (f, g) => {
-    assert(outputs(f) == inputs(g));
+    assert'(outputs(f) == inputs(g), "Outputs of circuit " ++ printComponent(f) ++ " do not match inputs of circuit " ++ printComponent(f));
     Composition(f, g);
 }
 
@@ -97,19 +135,6 @@ let rec last = (list) => {
     | [] => []
     | [x] => x
     | [x, ...xs] => last(xs)
-    }
-}
-
-/*let rec composemany = (xs) => {
-    let ys = List.rev(xs);
-    List.fold_right(((component, composition) => compose(component, composition)), xs, )
-}*/
-
-let rec composemany = (xs) => {
-    switch(xs){
-    | []         => failwith("no args")
-    | [x]        => x
-    | [x, ...xs] => Composition(x, composemany(xs))
     }
 }
 
@@ -126,45 +151,10 @@ let exp = (f, x) => {
 }
 
 let trace = (x, f) => {
-    assert(inputs(f) >= x && outputs(f) >= x);
+    assert'(inputs(f) >= x && outputs(f) >= x, "Inputs and outputs of circuit " ++ printComponent(f) ++ " are less than the size of the trace.");
     Trace(x, f);
 }
 
-let rec printCircuit' = (component) => {
-    switch (component) {
-    | Value(x)                          => printLattice(x) 
-    | Identity(x)                       => string_of_int(x)
-    | Composition(f, g)                 => printCircuit'(f) ++ {js| ⋅ |js} ++ printCircuit'(g)
-    | Tensor([f, ...tl])                => "[" ++ List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printCircuit'(comp)), printCircuit'(f), tl) ++ "]"
-    | Function(id, x, y, func)          => id
-    | Delay                             => {js|ẟ|js}
-    | Trace(x, component)               => "Tr[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
-    | Iter(x, component)                => "iter[" ++ string_of_int(x) ++ "](" ++ printCircuit'(component) ++ ")" 
-    | Input(int)                        => ":" ++ string_of_int(int)   
-    | Output(int)                       => string_of_int(int) ++ ":"
-    | Link(inlink, outlink, circuit)    => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printCircuit'(circuit) 
-    ;}
-}
-
-let printCircuit = (circuit) => 
-    switch(circuit){
-    | Circuit (_,_,comp,name) => name ++ " : " ++ string_of_int(inputs(comp)) ++ {js| → |js} ++ string_of_int(outputs(comp)) ++ "\n" ++ printCircuit'(comp);}
-
-let rec valueList = (v, x) => {
-    switch(x) {
-    | 0 => []
-    | n => [Placeholder, ...valueList(v, x-1)]
-    }
-}
-
-let rec split' = (n, xs, ys) => {
-    switch(ys){
-    | []         => (xs, [])
-    | [y, ...yss] => n == 0 ? (xs, [y, ...yss]) : split'(n-1, List.concat([xs, [y]]), yss)
-    }
-}
-
-let split = (n, xs) => split'(n, [], xs);
                             
 
 let id = (x) => x;
@@ -172,29 +162,15 @@ let id = (x) => x;
 
 /* Special morphisms */
 /* TODO add functions of special morphisms */
-let fork = Function({js|⋏|js}, 1, 2, (comp) => Tensor([comp, comp]));
 let join = Function({js|⋎|js}, 2, 1, (comp) => switch(comp){
-                                                | Tensor([a, b]) => lub(a,b)
+                                                | Tensor([Value(x), Value(y)]) => Value(x#lub(x,y))
+                                                | Tensor([x, y]) => failwith("Not implemented")
+                                                | _ => failwith("Join can only take two arguments")
                                                 });
 let stub = Function({js|~|js}, 1, 0, id);
-let swap = (x, y) => Function({js|×|js} ++ "[" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "]", 
-                                x + y, 
-                                x + y, 
-                                (comp) => switch(comp){
-                                | Tensor(xs) => let (top, bot) = split(x, xs); Tensor(List.concat([bot, top]));
-                                }
-                            );
 
-let rec dfork = (n) => {
-    switch(n) {
-    | 0 => Identity(0)
-    | 1 => fork
-    | n => composemany([
-                Tensor([dfork(n-1), fork]),
-                Tensor([Identity(1), swap(n-1, 1), Identity(1)])
-            ])
-    }
-}
+
+
 
 let delay = Delay;
 
@@ -224,7 +200,7 @@ let traceAsIteration = (trace) => {
 
 let rec evaluateOneStep = (comp) => {
     switch(comp){
-    | Composition(fst, rest) => Js.log("first = " ++ printCircuit'(fst) ++ " snd = " ++ printCircuit'(compn(0, rest)));
+    | Composition(fst, rest) => Js.log("first = " ++ printComponent(fst) ++ " snd = " ++ printComponent(compn(0, rest)));
                                  switch(compn(0,rest)){
                                  | Function(_,_,_,func) => func(fst)
                                  | _ => failwith("not implemented")
@@ -236,4 +212,4 @@ let rec evaluateOneStep = (comp) => {
     switch (trace) {
     | Iter(x, f)    =>  c
     }
-}*/
+}*/*/
