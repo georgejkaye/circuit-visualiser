@@ -12,6 +12,11 @@ type lattice('element) = {
 
 type simpleLatticeElems = Bottom | False | True | Top ;
 
+let bot = Bottom;
+let t = True;
+let f = False;
+let top = Top;
+
 let simpleLeq = (a, b) => {
     switch(a, b){
     | (Bottom, _)    => true

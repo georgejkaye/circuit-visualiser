@@ -1,7 +1,12 @@
 open Lattices;
 open Circuits;
+open Rewrites;
 
 let v = simpleLattice;
+let t = value(v,t);
+let f = value(v,f);
+let bot = value(v,bot);
+let top = value(v,top);
 
 let andGate = (v) => {v:v, c:Function({js|AND|js}, 2, 1, (v, c) => 
                                             switch(c){
@@ -24,4 +29,9 @@ let xorGate = (v) => {v:v, c:Function({js|XOR|js}, 2, 1, (v, c) =>
                                      )
                      }
 
-let id = (v, n) => func(v,"id",n,n, (_,c) => c)
+let notGate = (v) => {v:v, c:Function({js|NOT|js}, 1, 1, (v, c) =>
+                                                 switch(c){
+                                                 | Value(a) => Value(v.notOp(a))
+                                                 })}
+
+let id = (v, n) => func(v,"id[" ++ string_of_int(n) ++ "]",n,n, (_,c) => c)

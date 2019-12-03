@@ -14,6 +14,7 @@ type component('element) =
     | Input(int)
     | Output(int)
     | Link(int, int, component('element))
+    | Macro(string, component('element))
 and circuit('element) = { 
     v: lattice('element),
     c: component('element),
@@ -32,6 +33,7 @@ let rec inputs' = (c) => {
     | Input(_)               => 0   
     | Output(_)              => 1
     | Link(_, _, circuit)    => inputs'(circuit)
+    | Macro(_,f)             => inputs'(f)
     ;}
 }
 
@@ -51,6 +53,7 @@ let rec outputs' = (c) => {
     | Input(_)               => 1   
     | Output(_)              => 0
     | Link(_, _, circuit)    => outputs'(circuit)
+    | Macro (_,f)            => outputs'(f)
     ;}
 }
 
@@ -60,20 +63,24 @@ let rec printComponent = (v, c) => {
     switch (c) {
     | Value(x)                          => v.print(x)
     | Identity(x)                       => string_of_int(x)
-    | Composition(f, g)                 => printComponent(v,f) ++ {js| ⋅ |js} ++ printComponent(v,g)
+    | Composition(f, g)                 => "(" ++ printComponent(v,f) ++ {js| ⋅ |js} ++ printComponent(v,g) ++ ")"
     | Tensor([])                        => "[]"
+    | Tensor([x])                       => printComponent(v,x)
     | Tensor([f, ...tl])                => "[" ++ List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent(v,comp)), printComponent(v,f), tl) ++ "]"
-    | Function(id, _, _, _)          => id
+    | Function(id, _, _, _)             => id
     | Delay(x)                          => {js|ẟ[|js} ++ string_of_int(x) ++ "]"
     | Trace(x, component)               => "Tr[" ++ string_of_int(x) ++ "](" ++ printComponent(v,component) ++ ")" 
     | Iter(x, component)                => "iter[" ++ string_of_int(x) ++ "](" ++ printComponent(v,component) ++ ")" 
     | Input(int)                        => ":" ++ string_of_int(int)   
     | Output(int)                       => string_of_int(int) ++ ":"
     | Link(inlink, outlink, circuit)    => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printComponent(v,circuit) 
+    | Macro(id, _)                      => id
     ;}
 }
 
 let printCircuit = ({v,c}) => printComponent(v,c)
+
+let value = (v,v') => {v:v, c:Value(v')}
 
 let identity = (v, n) => {v:v, c:Identity(n)}
 
@@ -118,13 +125,16 @@ let exp = (f, x) => {
 let func = (v, id, ins, outs, f) =>
     {v:v, c: Function(id,ins,outs,f)}
 
+let macro = (v, id, f) =>
+    {v:v, c: Macro(id, f)}
+
 /* Special morphisms */
 
 /* Fork a wire into two wires */
-let fork = (v) => {v:v, c:Function({js|⋏|js}, 1, 2, (_, c) => Tensor([c, c]))};
+let fork = (v) => func(v,{js|⋏|js}, 1, 2, (_, c) => Tensor([c, c]));
 
 /* Join two wires into one, taking the join of their values */
-let join = (v) => {v:v, c:Function({js|⋎|js}, 
+let join = (v) => func(v,{js|⋎|js}, 
                             2, 
                             1, 
                             (v, c) => switch(c){
@@ -133,10 +143,9 @@ let join = (v) => {v:v, c:Function({js|⋎|js},
                                         | _ => failwith("Join can only take two arguments")
                                     }
                         )  
-                  }
 
 /* Swap buses of width x and y */
-let swap = (v, x, y) => {v:v, c:Function({js|×|js} ++ "[" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "]", 
+let swap = (v, x, y) => func(v, {js|×|js} ++ "[" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "]", 
                                 x + y, 
                                 x + y, 
                                 (_, comp) => switch(comp){
@@ -144,33 +153,34 @@ let swap = (v, x, y) => {v:v, c:Function({js|×|js} ++ "[" ++ string_of_int(x) +
                                 | _ => failwith("Swap can only swap a tensor")
                                 }
                             )
-                        }
 
 /* Stub a wire, leading to the unique identity on 0 */
-let stub = (v) => {v:v, c:Function({js|~|js}, 1, 0, (_, _) => Identity(0))};
+let stub = (v) => func(v, {js|~|js}, 1, 0, (_, _) => Identity(0));
 
 /* Fork all wires in a bus */
 let rec dfork = (v,n) => {
-    switch(n) {
-        | 0 => {v:v, c:Identity(0)}
-        | 1 => fork(v)
+    let comp = switch(n){
+        | 0 => Identity(0)
+        | 1 => fork(v).c
         | n => composemany([
-                    tensor([dfork(v,n-1), fork(v)]),
-                    tensor([identity(v,1), swap(v, n-1, 1), identity(v,1)])
-                ])
-        }
+                        tensor([dfork(v,n-1), fork(v)]),
+                        tensor([identity(v,n-1), swap(v, n-1, 1), identity(v,1)])
+                        ]).c
+        };
+    macro(v, {js|Δ[|js} ++ string_of_int(n) ++ "]", comp)
 }
 
 /* Join all wires in a bus */
 let rec djoin = (v,n) => {
-    switch(n) {
-        | 0 => {v:v, c:Identity(0)}
-        | 1 => join(v)
+    let comp = switch(n){
+        | 0 => Identity(0)
+        | 1 => fork(v).c
         | n => composemany([
-                    tensor([identity(v,1), swap(v, 1, n-1), identity(v,1)]),
-                    tensor([djoin(v,n-1), join(v)])
-                ])
-        }
+                        tensor([identity(v,n-1), swap(v, 1, n-1), identity(v,1)]),
+                        tensor([djoin(v,n-1), join(v)])
+                        ]).c
+        };
+    macro(v, {js|Δ[|js} ++ string_of_int(n) ++ "]", comp)
 }
 
 /* Create a delay */
@@ -182,33 +192,12 @@ let trace = (x, f) => {
     {v:f.v, c:Trace(x, f.c)}
 }
 
+/* Create an iteration */
 let iter = (f) => {
     assert'(inputs(f) >= outputs(f), "Not enough inputs of circuit " ++ printCircuit(f) ++ " to iterate.");
     {v:f.v, c:Iter(outputs(f), f.c)}
 }
 
-/* Trace rewrites */
-let traceAsIteration = (trace) => {
-    switch (trace.c) {
-    | Trace(x, f)    =>  composemany([
-                                iter(
-                                    composemany([
-                                        tensor([
-                                            identity(trace.v,x),
-                                            exp(stub(trace.v),outputs(trace)),
-                                            identity(trace.v, inputs'(f))
-                                        ]),
-                                        {v:trace.v,c:trace.c}
-                                    ])
-                                ),
-                                tensor([
-                                    exp(stub(trace.v),
-                                    outputs(trace))
-                                ]),
-                            ])
-    | _ => failwith("This is not a trace")
-    }
-}
 
 /*
 let rec compn = (n, component) => {

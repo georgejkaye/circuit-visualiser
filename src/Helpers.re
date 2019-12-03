@@ -15,3 +15,10 @@ let rec split' = (n, xs, ys) => {
 
 /* Split a list into two lists at position n, with n in the second list */
 let split = (n, xs) => split'(n, [], xs);
+
+let rec printList = (xs, print) => {
+    switch(xs){
+    | [] => ""
+    | [x,...xs] => print(x) ++ ", " ++ printList(xs,print) 
+    }
+}
