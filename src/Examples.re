@@ -1,6 +1,8 @@
 open Lattices;
 open Circuits;
 
+let v = simpleLattice;
+
 let andGate = Function({js|∧|js}, 2, 1, (v, c) => 
                                             switch(c){
                                             | Tensor([Value(a),Value(b)]) => Value(v.andOp(a,b))
@@ -16,9 +18,9 @@ let xorGate = Function({js|xor|js}, 2, 1, (v, c) =>
                         )
 
 let halfAdder = (a, b) => {
-    composemany([
-        Tensor([a, b]),
-        dfork(2),
-        Tensor([andGate, xorGate])
+    composemany(v,[
+        tensor(v,[a, b]),
+        dfork(v,2),
+        tensor(v,[andGate, xorGate])
     ])
 }

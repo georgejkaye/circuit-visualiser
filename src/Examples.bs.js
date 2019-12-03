@@ -4,26 +4,25 @@ import * as Block from "bs-platform/lib/es6/block.js";
 import * as Curry from "bs-platform/lib/es6/curry.js";
 import * as Pervasives from "bs-platform/lib/es6/pervasives.js";
 import * as Circuits$CircuitVisualiser from "./Circuits.bs.js";
+import * as Lattices$CircuitVisualiser from "./Lattices.bs.js";
 
 var andGate_000 = "∧";
 
 function andGate_003(v, c) {
-  if (typeof c === "number" || c.tag !== /* Tensor */3) {
-    return Pervasives.failwith("Bad input");
-  } else {
+  if (c.tag === /* Tensor */3) {
     var match = c[0];
     if (match) {
       var match$1 = match[0];
-      if (typeof match$1 === "number" || match$1.tag) {
+      if (match$1.tag) {
         return Pervasives.failwith("Bad input");
       } else {
         var match$2 = match[1];
         if (match$2) {
           var match$3 = match$2[0];
-          if (typeof match$3 === "number" || match$3.tag || match$2[1]) {
+          if (match$3.tag || match$2[1]) {
             return Pervasives.failwith("Bad input");
           } else {
-            return /* Value */Block.__(0, [Curry._2(v[/* andOp */2], match$1[0], match$3[0])]);
+            return /* Value */Block.__(0, [Curry._2(v[/* andOp */3], match$1[0], match$3[0])]);
           }
         } else {
           return Pervasives.failwith("Bad input");
@@ -32,6 +31,8 @@ function andGate_003(v, c) {
     } else {
       return Pervasives.failwith("Bad input");
     }
+  } else {
+    return Pervasives.failwith("Bad input");
   }
 }
 
@@ -45,24 +46,22 @@ var andGate = /* Function */Block.__(4, [
 var xorGate_000 = "xor";
 
 function xorGate_003(v, c) {
-  if (typeof c === "number" || c.tag !== /* Tensor */3) {
-    return Pervasives.failwith("Bad input");
-  } else {
+  if (c.tag === /* Tensor */3) {
     var match = c[0];
     if (match) {
       var match$1 = match[0];
-      if (typeof match$1 === "number" || match$1.tag) {
+      if (match$1.tag) {
         return Pervasives.failwith("Bad input");
       } else {
         var match$2 = match[1];
         if (match$2) {
           var match$3 = match$2[0];
-          if (typeof match$3 === "number" || match$3.tag || match$2[1]) {
+          if (match$3.tag || match$2[1]) {
             return Pervasives.failwith("Bad input");
           } else {
             var b = match$3[0];
             var a = match$1[0];
-            return /* Value */Block.__(0, [Curry._2(v[/* andOp */2], Curry._1(v[/* notOp */4], Curry._2(v[/* andOp */2], a, b)), Curry._2(v[/* orOp */3], a, b))]);
+            return /* Value */Block.__(0, [Curry._2(v[/* andOp */3], Curry._1(v[/* notOp */5], Curry._2(v[/* andOp */3], a, b)), Curry._2(v[/* orOp */4], a, b))]);
           }
         } else {
           return Pervasives.failwith("Bad input");
@@ -71,6 +70,8 @@ function xorGate_003(v, c) {
     } else {
       return Pervasives.failwith("Bad input");
     }
+  } else {
+    return Pervasives.failwith("Bad input");
   }
 }
 
@@ -82,34 +83,37 @@ var xorGate = /* Function */Block.__(4, [
   ]);
 
 function halfAdder(a, b) {
-  return Circuits$CircuitVisualiser.composemany(/* :: */[
-              /* Tensor */Block.__(3, [/* :: */[
+  return Circuits$CircuitVisualiser.composemany(Lattices$CircuitVisualiser.simpleLattice, /* :: */[
+              Circuits$CircuitVisualiser.tensor(Lattices$CircuitVisualiser.simpleLattice, /* :: */[
                     a,
                     /* :: */[
                       b,
                       /* [] */0
                     ]
-                  ]]),
+                  ]),
               /* :: */[
-                Circuits$CircuitVisualiser.dfork(2),
+                Circuits$CircuitVisualiser.dfork(Lattices$CircuitVisualiser.simpleLattice, 2),
                 /* :: */[
-                  /* Tensor */Block.__(3, [/* :: */[
+                  Circuits$CircuitVisualiser.tensor(Lattices$CircuitVisualiser.simpleLattice, /* :: */[
                         andGate,
                         /* :: */[
                           xorGate,
                           /* [] */0
                         ]
-                      ]]),
+                      ]),
                   /* [] */0
                 ]
               ]
             ]);
 }
 
+var v = Lattices$CircuitVisualiser.simpleLattice;
+
 export {
+  v ,
   andGate ,
   xorGate ,
   halfAdder ,
   
 }
-/* No side effect */
+/* Lattices-CircuitVisualiser Not a pure module */

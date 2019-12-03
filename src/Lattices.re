@@ -1,10 +1,11 @@
 type lattice('element) = {
-    leq   : ('element, 'element) => bool,       /* The order relation less than */
-    lubOp : ('element, 'element) => 'element,   /* The least upper bound */
-    andOp : ('element, 'element) => 'element,   /* And operation */
-    orOp  : ('element, 'element) => 'element,   /* Or operation */
-    notOp : 'element => 'element,               /* Not operation */
-    print : 'element => string                  /* Print operation */
+    leq    : ('element, 'element) => bool,       /* The order relation less than */
+    joinOp : ('element, 'element) => 'element,   /* The least upper bound */
+    meetOp : ('element, 'element) => 'element,   /* The greatest lower bound */
+    andOp  : ('element, 'element) => 'element,   /* And operation */
+    orOp   : ('element, 'element) => 'element,   /* Or operation */
+    notOp  : 'element => 'element,               /* Not operation */
+    print  : 'element => string                  /* Print operation */
 }
 
 /* A simple lattice containing four elements with the order Bottom < True, False < Top */
@@ -33,14 +34,25 @@ let printSimpleLattice = (lattice) => {
     }
 }
 
-let simpleLub = (a,b) => {
+let simpleJoin = (a,b) => {
     switch(a, b){
     | (Top, _)      => Top
     | (_, Top)      => Top
+    | (Bottom, a)   => a
     | (a, Bottom)   => a
-    | (Bottom, b)   => b
     | (True, _)     => True
     | (False, _)    => False
+    }
+}
+
+let simpleMeet = (a,b) => {
+    switch(a, b){
+    | (Bottom, _) => Bottom
+    | (_, Bottom) => Bottom
+    | (Top, a)    => a
+    | (a, Top)    => a
+    | (True, _)   => True
+    | (False, _)  => False
     }
 }
 
@@ -79,7 +91,8 @@ let simpleNot = a => {
 
 let simpleLattice: lattice(simpleLatticeElems) = {
     leq:   simpleLeq,
-    lubOp: simpleLub,
+    joinOp: simpleJoin,
+    meetOp: simpleMeet,
     andOp: simpleAnd,
     orOp:  simpleOr,
     notOp: simpleNot,

@@ -32,25 +32,37 @@ function printSimpleLattice(lattice) {
   }
 }
 
-function simpleLub(a, b) {
-  if (a >= 3) {
+function simpleJoin(a, b) {
+  if (a >= 3 || b >= 3) {
     return /* Top */3;
-  } else if (b !== 0) {
-    if (b >= 3) {
-      return /* Top */3;
-    } else {
-      switch (a) {
-        case /* Bottom */0 :
-            return b;
-        case /* False */1 :
-            return /* False */1;
-        case /* True */2 :
-            return /* True */2;
-        
+  } else if (a !== 0) {
+    if (b !== 0) {
+      if (a >= 2) {
+        return /* True */2;
+      } else {
+        return /* False */1;
       }
+    } else {
+      return a;
     }
   } else {
-    return a;
+    return b;
+  }
+}
+
+function simpleMeet(a, b) {
+  if (a !== 0 && b !== 0) {
+    if (a >= 3) {
+      return b;
+    } else if (b >= 3) {
+      return a;
+    } else if (a >= 2) {
+      return /* True */2;
+    } else {
+      return /* False */1;
+    }
+  } else {
+    return /* Bottom */0;
   }
 }
 
@@ -147,7 +159,8 @@ function simpleNot(a) {
 
 var simpleLattice = /* record */[
   /* leq */simpleLeq,
-  /* lubOp */simpleLub,
+  /* joinOp */simpleJoin,
+  /* meetOp */simpleMeet,
   /* andOp */simpleAnd,
   /* orOp */simpleOr,
   /* notOp */simpleNot,
@@ -163,7 +176,8 @@ console.log(simpleLeq(/* False */1, /* True */2));
 export {
   simpleLeq ,
   printSimpleLattice ,
-  simpleLub ,
+  simpleJoin ,
+  simpleMeet ,
   simpleAnd ,
   simpleOr ,
   simpleNot ,

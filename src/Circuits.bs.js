@@ -4,39 +4,36 @@ import * as List from "bs-platform/lib/es6/list.js";
 import * as Block from "bs-platform/lib/es6/block.js";
 import * as Curry from "bs-platform/lib/es6/curry.js";
 import * as Pervasives from "bs-platform/lib/es6/pervasives.js";
-import * as Caml_builtin_exceptions from "bs-platform/lib/es6/caml_builtin_exceptions.js";
+import * as Helpers$CircuitVisualiser from "./Helpers.bs.js";
 
 function inputs(_c) {
   while(true) {
     var c = _c;
-    if (typeof c === "number") {
-      return 1;
-    } else {
-      switch (c.tag | 0) {
-        case /* Identity */1 :
-            return c[0];
-        case /* Composition */2 :
-            _c = c[0];
-            continue ;
-        case /* Tensor */3 :
-            return List.fold_left((function (no, comp) {
-                          return no + inputs(comp) | 0;
-                        }), 0, c[0]);
-        case /* Function */4 :
-            return c[1];
-        case /* Trace */5 :
-        case /* Iter */6 :
-            return inputs(c[1]) - c[0] | 0;
-        case /* Value */0 :
-        case /* Input */7 :
-            return 0;
-        case /* Output */8 :
-            return 1;
-        case /* Link */9 :
-            _c = c[2];
-            continue ;
-        
-      }
+    switch (c.tag | 0) {
+      case /* Identity */1 :
+          return c[0];
+      case /* Composition */2 :
+          _c = c[0];
+          continue ;
+      case /* Tensor */3 :
+          return List.fold_left((function (no, comp) {
+                        return no + inputs(comp) | 0;
+                      }), 0, c[0]);
+      case /* Function */4 :
+          return c[1];
+      case /* Trace */6 :
+      case /* Iter */7 :
+          return inputs(c[1]) - c[0] | 0;
+      case /* Value */0 :
+      case /* Input */8 :
+          return 0;
+      case /* Delay */5 :
+      case /* Output */9 :
+          return 1;
+      case /* Link */10 :
+          _c = c[2];
+          continue ;
+      
     }
   };
 }
@@ -44,77 +41,64 @@ function inputs(_c) {
 function outputs(_c) {
   while(true) {
     var c = _c;
-    if (typeof c === "number") {
-      return 1;
-    } else {
-      switch (c.tag | 0) {
-        case /* Identity */1 :
-            return c[0];
-        case /* Tensor */3 :
-            return List.fold_left((function (no, comp) {
-                          return no + outputs(comp) | 0;
-                        }), 0, c[0]);
-        case /* Function */4 :
-            return c[2];
-        case /* Trace */5 :
-            return outputs(c[1]) - c[0] | 0;
-        case /* Composition */2 :
-        case /* Iter */6 :
-            _c = c[1];
-            continue ;
-        case /* Output */8 :
-            return 0;
-        case /* Link */9 :
-            _c = c[2];
-            continue ;
-        default:
-          return 1;
-      }
+    switch (c.tag | 0) {
+      case /* Identity */1 :
+          return c[0];
+      case /* Tensor */3 :
+          return List.fold_left((function (no, comp) {
+                        return no + outputs(comp) | 0;
+                      }), 0, c[0]);
+      case /* Function */4 :
+          return c[2];
+      case /* Trace */6 :
+          return outputs(c[1]) - c[0] | 0;
+      case /* Composition */2 :
+      case /* Iter */7 :
+          _c = c[1];
+          continue ;
+      case /* Output */9 :
+          return 0;
+      case /* Link */10 :
+          _c = c[2];
+          continue ;
+      default:
+        return 1;
     }
   };
 }
 
 function printComponent(v, c) {
-  if (typeof c === "number") {
-    return "ẟ";
-  } else {
-    switch (c.tag | 0) {
-      case /* Value */0 :
-          return Curry._1(v[/* print */5], c[0]);
-      case /* Identity */1 :
-          return String(c[0]);
-      case /* Composition */2 :
-          return printComponent(v, c[0]) + (" ⋅ " + printComponent(v, c[1]));
-      case /* Tensor */3 :
-          var match = c[0];
-          if (match) {
-            return "[" + (List.fold_left((function (string, comp) {
-                            return string + (" ⊗ " + printComponent(v, comp));
-                          }), printComponent(v, match[0]), match[1]) + "]");
-          } else {
-            throw [
-                  Caml_builtin_exceptions.match_failure,
-                  /* tuple */[
-                    "Circuits.re",
-                    53,
-                    35
-                  ]
-                ];
-          }
-      case /* Function */4 :
-          return c[0];
-      case /* Trace */5 :
-          return "Tr[" + (String(c[0]) + ("](" + (printComponent(v, c[1]) + ")")));
-      case /* Iter */6 :
-          return "iter[" + (String(c[0]) + ("](" + (printComponent(v, c[1]) + ")")));
-      case /* Input */7 :
-          return ":" + String(c[0]);
-      case /* Output */8 :
-          return String(c[0]) + ":";
-      case /* Link */9 :
-          return "|" + (String(c[0]) + ("-" + (String(c[1]) + ("|" + printComponent(v, c[2])))));
-      
-    }
+  switch (c.tag | 0) {
+    case /* Value */0 :
+        return Curry._1(v[/* print */6], c[0]);
+    case /* Identity */1 :
+        return String(c[0]);
+    case /* Composition */2 :
+        return printComponent(v, c[0]) + (" ⋅ " + printComponent(v, c[1]));
+    case /* Tensor */3 :
+        var match = c[0];
+        if (match) {
+          return "[" + (List.fold_left((function (string, comp) {
+                          return string + (" ⊗ " + printComponent(v, comp));
+                        }), printComponent(v, match[0]), match[1]) + "]");
+        } else {
+          return "[]";
+        }
+    case /* Function */4 :
+        return c[0];
+    case /* Delay */5 :
+        return "ẟ[" + (String(c[0]) + "]");
+    case /* Trace */6 :
+        return "Tr[" + (String(c[0]) + ("](" + (printComponent(v, c[1]) + ")")));
+    case /* Iter */7 :
+        return "iter[" + (String(c[0]) + ("](" + (printComponent(v, c[1]) + ")")));
+    case /* Input */8 :
+        return ":" + String(c[0]);
+    case /* Output */9 :
+        return String(c[0]) + ":";
+    case /* Link */10 :
+        return "|" + (String(c[0]) + ("-" + (String(c[1]) + ("|" + printComponent(v, c[2])))));
+    
   }
 }
 
@@ -122,15 +106,32 @@ function printCircuit(param) {
   return printComponent(param[/* v */0], param[/* c */1]);
 }
 
-function composemany(xs) {
+function compose(param, param$1) {
+  var c$prime = param$1[1];
+  var c = param[1];
+  var v = param[0];
+  Helpers$CircuitVisualiser.assert$prime(outputs(c) === inputs(c$prime), "Outputs of circuit " + (printComponent(v, c) + (" do not match inputs of circuit " + printComponent(param$1[0], c$prime))));
+  return /* record */[
+          /* v */v,
+          /* c : Composition */Block.__(2, [
+              c,
+              c$prime
+            ])
+        ];
+}
+
+function composemany(v, xs) {
   if (xs) {
     var xs$1 = xs[1];
     var x = xs[0];
     if (xs$1) {
-      return /* Composition */Block.__(2, [
-                x,
-                composemany(xs$1)
-              ]);
+      return /* record */[
+              /* v */v,
+              /* c : Composition */Block.__(2, [
+                  x[/* c */1],
+                  composemany(v, xs$1)[/* c */1]
+                ])
+            ];
     } else {
       return x;
     }
@@ -139,138 +140,164 @@ function composemany(xs) {
   }
 }
 
-function split$prime(_n, _xs, _ys) {
-  while(true) {
-    var ys = _ys;
-    var xs = _xs;
-    var n = _n;
-    if (ys) {
-      var yss = ys[1];
-      var y = ys[0];
-      var match = n === 0;
-      if (match) {
-        return /* tuple */[
-                xs,
-                /* :: */[
-                  y,
-                  yss
-                ]
-              ];
+function tensor(v, xs) {
+  return /* record */[
+          /* v */v,
+          /* c : Tensor */Block.__(3, [xs])
+        ];
+}
+
+function fork(v) {
+  return /* record */[
+          /* v */v,
+          /* c : Function */Block.__(4, [
+              "⋏",
+              1,
+              2,
+              (function (param, c) {
+                  return /* Tensor */Block.__(3, [/* :: */[
+                              c,
+                              /* :: */[
+                                c,
+                                /* [] */0
+                              ]
+                            ]]);
+                })
+            ])
+        ];
+}
+
+function swap(v, x, y) {
+  return /* record */[
+          /* v */v,
+          /* c : Function */Block.__(4, [
+              "×" + ("[" + (String(x) + ("," + (String(y) + "]")))),
+              x + y | 0,
+              x + y | 0,
+              (function (param, comp) {
+                  if (comp.tag === /* Tensor */3) {
+                    var match = Helpers$CircuitVisualiser.split(x, comp[0]);
+                    return /* Tensor */Block.__(3, [List.concat(/* :: */[
+                                    match[1],
+                                    /* :: */[
+                                      match[0],
+                                      /* [] */0
+                                    ]
+                                  ])]);
+                  } else {
+                    return Pervasives.failwith("Swap can only swap a tensor");
+                  }
+                })
+            ])
+        ];
+}
+
+var join_000 = "⋎";
+
+function join_003(v, c) {
+  if (c.tag === /* Tensor */3) {
+    var match = c[0];
+    if (match) {
+      var x = match[0];
+      if (!x.tag) {
+        var match$1 = match[1];
+        if (match$1) {
+          var match$2 = match$1[0];
+          if (!match$2.tag) {
+            if (match$1[1]) {
+              return Pervasives.failwith("Join can only take two arguments");
+            } else {
+              return /* Value */Block.__(0, [Curry._2(v[/* joinOp */1], x[0], match$2[0])]);
+            }
+          }
+          
+        } else {
+          return Pervasives.failwith("Join can only take two arguments");
+        }
+      }
+      var match$3 = match[1];
+      if (match$3 && !match$3[1]) {
+        return Pervasives.failwith("Not implemented");
       } else {
-        _ys = yss;
-        _xs = List.concat(/* :: */[
-              xs,
-              /* :: */[
-                /* :: */[
-                  y,
-                  /* [] */0
-                ],
-                /* [] */0
-              ]
-            ]);
-        _n = n - 1 | 0;
-        continue ;
+        return Pervasives.failwith("Join can only take two arguments");
       }
     } else {
-      return /* tuple */[
-              xs,
-              /* [] */0
-            ];
+      return Pervasives.failwith("Join can only take two arguments");
     }
-  };
+  } else {
+    return Pervasives.failwith("Join can only take two arguments");
+  }
 }
 
-function split(n, xs) {
-  return split$prime(n, /* [] */0, xs);
-}
-
-var fork_000 = "⋏";
-
-function fork_003(v, c) {
-  return /* Tensor */Block.__(3, [/* :: */[
-              c,
-              /* :: */[
-                c,
-                /* [] */0
-              ]
-            ]]);
-}
-
-var fork = /* Function */Block.__(4, [
-    fork_000,
-    1,
+var join = /* Function */Block.__(4, [
+    join_000,
     2,
-    fork_003
+    1,
+    join_003
   ]);
 
-function swap(x, y) {
-  return /* Function */Block.__(4, [
-            "×" + ("[" + (String(x) + ("," + (String(y) + "]")))),
-            x + y | 0,
-            x + y | 0,
-            (function (v, comp) {
-                if (typeof comp === "number") {
-                  throw [
-                        Caml_builtin_exceptions.match_failure,
-                        /* tuple */[
-                          "Circuits.re",
-                          95,
-                          45
-                        ]
-                      ];
-                } else if (comp.tag === /* Tensor */3) {
-                  var match = split$prime(x, /* [] */0, comp[0]);
-                  return /* Tensor */Block.__(3, [List.concat(/* :: */[
-                                  match[1],
-                                  /* :: */[
-                                    match[0],
-                                    /* [] */0
-                                  ]
-                                ])]);
-                } else {
-                  throw [
-                        Caml_builtin_exceptions.match_failure,
-                        /* tuple */[
-                          "Circuits.re",
-                          95,
-                          45
-                        ]
-                      ];
-                }
-              })
-          ]);
+var stub_000 = "~";
+
+function stub_003(param, param$1) {
+  return /* Identity */Block.__(1, [0]);
 }
 
-function dfork(n) {
+var stub = /* Function */Block.__(4, [
+    stub_000,
+    1,
+    0,
+    stub_003
+  ]);
+
+function delay(n) {
+  return /* Delay */Block.__(5, [n]);
+}
+
+function dfork(v, n) {
   if (n !== 0) {
     if (n !== 1) {
-      return composemany(/* :: */[
-                  /* Tensor */Block.__(3, [/* :: */[
-                        dfork(n - 1 | 0),
-                        /* :: */[
-                          fork,
-                          /* [] */0
-                        ]
-                      ]]),
+      var xs_000 = dfork(v, n - 1 | 0)[/* c */1];
+      var xs_001 = /* :: */[
+        fork(v)[/* c */1],
+        /* [] */0
+      ];
+      var xs = /* :: */[
+        xs_000,
+        xs_001
+      ];
+      var xs_000$1 = /* Identity */Block.__(1, [1]);
+      var xs_001$1 = /* :: */[
+        swap(v, n - 1 | 0, 1)[/* c */1],
+        /* :: */[
+          /* Identity */Block.__(1, [1]),
+          /* [] */0
+        ]
+      ];
+      var xs$1 = /* :: */[
+        xs_000$1,
+        xs_001$1
+      ];
+      return composemany(v, /* :: */[
+                  /* record */[
+                    /* v */v,
+                    /* c : Tensor */Block.__(3, [xs])
+                  ],
                   /* :: */[
-                    /* Tensor */Block.__(3, [/* :: */[
-                          /* Identity */Block.__(1, [1]),
-                          /* :: */[
-                            swap(n - 1 | 0, 1),
-                            /* :: */[
-                              /* Identity */Block.__(1, [1]),
-                              /* [] */0
-                            ]
-                          ]
-                        ]]),
+                    /* record */[
+                      /* v */v,
+                      /* c : Tensor */Block.__(3, [xs$1])
+                    ],
                     /* [] */0
                   ]
                 ]);
     } else {
-      return fork;
+      return fork(v);
     }
   } else {
-    return /* Identity */Block.__(1, [0]);
+    return /* record */[
+            /* v */v,
+            /* c : Identity */Block.__(1, [0])
+          ];
   }
 }
 
@@ -279,11 +306,14 @@ export {
   outputs ,
   printComponent ,
   printCircuit ,
+  compose ,
   composemany ,
-  split$prime ,
-  split ,
+  tensor ,
   fork ,
   swap ,
+  join ,
+  stub ,
+  delay ,
   dfork ,
   
 }
