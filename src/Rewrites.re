@@ -31,13 +31,11 @@ let rec applyTensor = (v,lhs, rhs) => {
     | f          => Composition(f, Tensor(rhs))
     }
 } and applyTensor' = (v, xs, nx, ys, ny, xs', ys') => {
-    Js.log("doing " ++ printList(xs,printComponent(v)) ++ "@ " ++ printList(ys,printComponent(v)));
     switch(xs, ys){
     | ([], []) => []
     | (_, []) => failwith("bad arguments a" ++ printList(xs, printComponent(v)))
     | ([], _) => failwith("bad arguments b" ++ printList(ys, printComponent(v)))
-    | ([x, ...xs], [y, ...ys]) =>  Js.log(string_of_int(nx) ++ ", " ++ string_of_int(ny)); 
-                                    if(outputs'(x) - nx == inputs'(y) - ny){
+    | ([x, ...xs], [y, ...ys]) => if(outputs'(x) - nx == inputs'(y) - ny){
                                         let lhs =   switch(xs',ys'){
                                                     | ([], []) => Composition(x, y)
                                                     | (xs, []) => Composition(Tensor(List.concat([xs', [x]])), y)
@@ -47,10 +45,8 @@ let rec applyTensor = (v,lhs, rhs) => {
                                                     [lhs, ...applyTensor'(v,xs,0,ys,0,[],[])]
                                     } else {
                                         if(outputs'(x) - nx < inputs'(y) - ny) {
-                                            Js.log(printComponent(v,x) ++ " is smaller than " ++ printComponent(v,y));
                                             applyTensor'(v, xs, 0, [y,...ys], ny + outputs'(x), List.concat([xs', [x]]), ys')
                                         } else {
-                                            Js.log(printComponent(v,x) ++ " is bigger than " ++ printComponent(v,y));
                                             applyTensor'(v, [x,...xs], nx + inputs'(x), ys, 0, xs', List.concat([ys', [y]]))
                                         }
                                     }
@@ -58,6 +54,7 @@ let rec applyTensor = (v,lhs, rhs) => {
 }
 
 let rec evaluateOneStepTensor = (v,xs) => {
+    Js.log("evaluateOneStepTensor " ++ printList(xs, printComponent(v)));
     switch(xs){
     | []         => []
     | [x, ...xs] => if (normalForm(x)){
@@ -67,13 +64,14 @@ let rec evaluateOneStepTensor = (v,xs) => {
                     }
     };
 } and evaluateOneStepComposition = (v, x, y) => {
+    Js.log("evaluateOneStepComposition " ++ printComponent(v,x) ++ " --- " ++ printComponent(v,y));
     if(normalForm(x)){
         switch(y){
         | Function(_,_,_,f) =>  f(v,x)
         | Tensor(ys)        =>  if(normalForm(Tensor(ys))){
                                     applyTensor(v, x, ys)
                                 } else {
-                                    Tensor(evaluateOneStepTensor(v,ys))
+                                    Composition(x, Tensor(evaluateOneStepTensor(v,ys)))
                                 }
         | Composition(a,b)  => Composition(evaluateOneStepComposition(v,x,a),b)
         | f                 => Composition(x, evaluateOneStep({v:v, c:f}).c)
@@ -82,6 +80,7 @@ let rec evaluateOneStepTensor = (v,xs) => {
         Composition(evaluateOneStep({v:v,c:x}).c, y)
     }
 } and evaluateOneStep = ({v, c}) => {
+    Js.log("evaluateOneStep " ++ printComponent(v,c));
     let eval = {
         if(normalForm(c)){
             c;

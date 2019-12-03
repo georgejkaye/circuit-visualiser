@@ -20,8 +20,7 @@ let make = () => {
             <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_2)))</p>
             <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_3)))</p>
             <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_4)))</p>
-            <p>(str(Circuits.printCircuit(Demo.test2)))</p>
-            <p>(str(Circuits.printCircuit(Demo.test2Reduced)))</p>
+            <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_5)))</p>
             <button onClick=((_evt) => log())>(str("next circuit"))</button>
         </div>
     </div>

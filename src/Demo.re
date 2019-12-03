@@ -40,3 +40,4 @@ let halfAdderReduced_1 = evaluateOneStep(halfAdderApplied);
 let halfAdderReduced_2 = evaluateOneStep(halfAdderReduced_1);
 let halfAdderReduced_3 = evaluateOneStep(halfAdderReduced_2);
 let halfAdderReduced_4 = evaluateOneStep(halfAdderReduced_3);
+let halfAdderReduced_5 = evaluateOneStep(halfAdderReduced_4);
