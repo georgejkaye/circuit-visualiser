@@ -197,40 +197,4 @@ let iter = (f) => {
     assert'(inputs(f) >= outputs(f), "Not enough inputs of circuit " ++ printCircuit(f) ++ " to iterate.");
     {v:f.v, c:Iter(outputs(f), f.c)}
 }
-
-
-/*
-let rec compn = (n, component) => {
-    switch(component){
-    | Composition(x,y) =>   (n == 0) ? x :
-                                (switch(component) {
-                                    | Composition(x, y)  => compn(n-1, y)
-                                    | _                  => failwith("not enough composition")
-                                })
-    | _ => (n == 0) ? component : failwith("not enough composition")
-        
-    }
-}
-
-                            
-
-let id = (x) => x;
-
-
-/** Trace rewrites */
-
-let rec evaluateOneStep = (comp) => {
-    switch(comp){
-    | Composition(fst, rest) => Js.log("first = " ++ printComponent(fst) ++ " snd = " ++ printComponent(compn(0, rest)));
-                                 switch(compn(0,rest)){
-                                 | Function(_,_,_,func) => func(fst)
-                                 | _ => failwith("not implemented")
-                                 }
-    }
-}
-
-/*let unfoldIteration = (trace) => {
-    switch (trace) {
-    | Iter(x, f)    =>  c
-    }
-}*/*/
+                  

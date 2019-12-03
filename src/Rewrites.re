@@ -33,7 +33,6 @@ let rec simplifyTensor = (v,c) => {
     | _                          => c
     };
 } and simplifyTensor' = (v,xs) => {
-    Js.log("simplifyTensor " ++ printList(xs, printComponent(v)));
     switch(xs){
     | [] => []
     | [Tensor(ys), ...xs] => simplifyTensor'(v,List.concat([ys, xs]))
@@ -48,17 +47,15 @@ let rec simplifyTensor = (v,c) => {
  */
 let rec applyTensor = (v, arg, ys) => {
     switch(arg) {
-    | Tensor(xs) => Js.log("appTensor " ++ printList(xs,printComponent(v)));Tensor(applyTensor'(v, xs, 0, ys, 0,[],[]))
+    | Tensor(xs) => Tensor(applyTensor'(v, xs, 0, ys, 0,[],[]))
     | f          => Composition(f, Tensor(ys))
     }
 } and applyTensor' = (v, xs, nx, ys, ny, xs', ys') => {
-    Js.log("applyTensor " ++ printList(xs, printComponent(v)) ++ "--- " ++ printList(ys,printComponent(v)));
     switch(xs, ys){
     | ([], []) => []
     | (_, []) => failwith("bad arguments a" ++ printList(xs, printComponent(v)))
     | ([], _) => failwith("bad arguments b" ++ printList(ys, printComponent(v)))
-    | ([x, ...xs], [y, ...ys]) => Js.log("    " ++ printComponent(v,x) ++ " --- " ++ printComponent(v,y));
-                                    if(outputs'(x) - nx == inputs'(y) - ny){
+    | ([x, ...xs], [y, ...ys]) => if(outputs'(x) - nx == inputs'(y) - ny){
                                         let lhs =   switch(xs',ys'){
                                                     | ([], []) => Composition(x, y)
                                                     | (xs, []) => Composition(Tensor(List.concat([xs', [x]])), y)
@@ -92,11 +89,11 @@ let rec evaluateOneStepTensor = (v,xs) => {
         switch(y){
         | Identity(n)       =>  x
         | Function(_,_,_,f) =>  f(v,x)
-        | Tensor(ys)        =>  if(normalForm(Tensor(ys))){
+        | Tensor(ys)        =>  applyTensor(v,x,ys)/*if(normalForm(Tensor(ys))){
                                     applyTensor(v, x, ys)
                                 } else {
                                     Composition(x, Tensor(evaluateOneStepTensor(v,ys)))
-                                }
+                                }*/
         | Composition(a,b)  => Composition(evaluateOneStepComposition(v,x,a),b)
         | f                 => Composition(x, evaluateOneStep({v:v, c:f}).c)
         }        

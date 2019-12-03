@@ -1,37 +1,48 @@
-open Lattices;
 open Circuits;
 open Rewrites;
+open Constructs;
 
-let v = simpleLattice;
-let t = value(v,t);
-let f = value(v,f);
-let bot = value(v,bot);
-let top = value(v,top);
+/* v = Bottom, (False, True), Top */
 
-let andGate = (v) => {v:v, c:Function({js|AND|js}, 2, 1, (v, c) => 
-                                            switch(c){
-                                            | Tensor([Value(a),Value(b)]) => Value(v.andOp(a,b)) 
-                                            | Tensor([a, b])                => Function(printComponent(v,a) ++ " AND " ++ printComponent(v,b), 
-                                                                                        inputs'(a) + inputs'(b), 
-                                                                                        1, 
-                                                                                        (_,_) => failwith("not implemented")
-                                                                             ) 
-                                            | _ => failwith("Bad input")
-                                            }
-                                     )
-                     }
+let halfAdder = {
+    composemany([
+        dfork(v,2),
+        tensor([xorGate(v), andGate(v)])
+    ])
+}
 
-let xorGate = (v) => {v:v, c:Function({js|XOR|js}, 2, 1, (v, c) =>     
-                                            switch(c){
-                                            | Tensor([Value(a),Value(b)]) => Value(v.andOp(v.notOp(v.andOp(a, b)), v.orOp(a,b)))
-                                            | _ => failwith("Bad input");
-                                            }
-                                     )
-                     }
+let halfAdderApplied = composemany([
+                            tensor([t, f]),
+                            halfAdder
+                       ])
 
-let notGate = (v) => {v:v, c:Function({js|NOT|js}, 1, 1, (v, c) =>
-                                                 switch(c){
-                                                 | Value(a) => Value(v.notOp(a))
-                                                 })}
+let halfAdderReduced_1 = evaluateOneStep(halfAdderApplied);
+let halfAdderReduced_2 = evaluateOneStep(halfAdderReduced_1);
+let halfAdderReduced_3 = evaluateOneStep(halfAdderReduced_2);
+let halfAdderReduced_4 = evaluateOneStep(halfAdderReduced_3);
+let halfAdderReduced_5 = evaluateOneStep(halfAdderReduced_4);
+let halfAdderReduced_6 = evaluateOneStep(halfAdderReduced_5);
+let halfAdderReduced_7 = evaluateOneStep(halfAdderReduced_6);
+let halfAdderReduced_8 = evaluateOneStep(halfAdderReduced_7);
+let halfAdderReduced_9 = evaluateOneStep(halfAdderReduced_8);
+let halfAdderReduced_10 = evaluateOneStep(halfAdderReduced_9);
+let halfAdderReduced_11 = evaluateOneStep(halfAdderReduced_10);
+let halfAdderReduced_12 = evaluateOneStep(halfAdderReduced_11);
 
-let id = (v, n) => func(v,"id[" ++ string_of_int(n) ++ "]",n,n, (_,c) => c)
+let fullAdder = {
+    composemany([
+        tensor([dfork(v,2), identity(v,1)]),
+        swap(v,2,1),
+        tensor([xorGate(v), identity(v,3)]),
+        tensor([dfork(v,2), identity(v,2)]),
+        tensor([xorGate(v), andGate(v), andGate(v)]),
+        tensor([identity(v,1), orGate(v)])
+    ])
+}
+
+let fullAdderApplied = composemany([
+                            tensor([t,f,f]),
+                            fullAdder
+                        ])
+
+let fullAdderReduced = evaluate(fullAdderApplied)
