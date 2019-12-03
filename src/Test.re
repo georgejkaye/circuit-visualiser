@@ -21,6 +21,10 @@ let make = () => {
             <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_3)))</p>
             <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_4)))</p>
             <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_5)))</p>
+            <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_6)))</p>
+            <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_7)))</p>
+            <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_8)))</p>
+            <p>(str(Circuits.printCircuit(Demo.halfAdderReduced_9)))</p>
             <button onClick=((_evt) => log())>(str("next circuit"))</button>
         </div>
     </div>

@@ -26,18 +26,17 @@ let rec normalForm = (c) => {
  */
 
 /* Flatten a tensor of tensors into one big tensor */
-let rec simplifyTensor = (c) => {
+let rec simplifyTensor = (v,c) => {
     switch(c){
-    | Tensor(xs) => Tensor(simplifyTensor'(xs))
-    | Composition(Tensor(xs), y) => Composition(Tensor(simplifyTensor'(xs)), y)
+    | Tensor(xs) => Tensor(simplifyTensor'(v,xs))
+    | Composition(Tensor(xs), y) => Composition(Tensor(simplifyTensor'(v,xs)), y)
     | _                          => c
     };
-
-} and simplifyTensor' = (xs) => {
+} and simplifyTensor' = (v,xs) => {
     switch(xs){
     | [] => []
-    | [Tensor(ys), Tensor(zs), ...xs] => simplifyTensor'([Tensor(List.concat([ys,zs])), ...xs])
-    | [x, ...xs] => [x, ...simplifyTensor'(xs)]
+    | [Tensor(ys), Tensor(zs), ...xs] => simplifyTensor'(v, List.concat([ys,zs,xs]))
+    | [x, ...xs] => [x, ...simplifyTensor'(v,xs)]
     }
 }
 
@@ -48,15 +47,17 @@ let rec simplifyTensor = (c) => {
  */
 let rec applyTensor = (v, arg, ys) => {
     switch(arg) {
-    | Tensor(xs) => Tensor(applyTensor'(v, xs, 0, ys, 0,[],[]))
+    | Tensor(xs) => Js.log("appTensor " ++ printList(xs,printComponent(v)));Tensor(applyTensor'(v, xs, 0, ys, 0,[],[]))
     | f          => Composition(f, Tensor(ys))
     }
 } and applyTensor' = (v, xs, nx, ys, ny, xs', ys') => {
+    Js.log("applyTensor " ++ printList(xs, printComponent(v)) ++ "--- " ++ printList(ys,printComponent(v)));
     switch(xs, ys){
     | ([], []) => []
     | (_, []) => failwith("bad arguments a" ++ printList(xs, printComponent(v)))
     | ([], _) => failwith("bad arguments b" ++ printList(ys, printComponent(v)))
-    | ([x, ...xs], [y, ...ys]) => if(outputs'(x) - nx == inputs'(y) - ny){
+    | ([x, ...xs], [y, ...ys]) => Js.log("    " ++ printComponent(v,x) ++ " --- " ++ printComponent(v,y));
+                                    if(outputs'(x) - nx == inputs'(y) - ny){
                                         let lhs =   switch(xs',ys'){
                                                     | ([], []) => Composition(x, y)
                                                     | (xs, []) => Composition(Tensor(List.concat([xs', [x]])), y)
@@ -116,7 +117,7 @@ let rec evaluateOneStepTensor = (v,xs) => {
             }
         }
     };
-    {v:v, c:simplifyTensor(eval)}
+    {v:v, c:simplifyTensor(v,eval)}
 }
 
 
