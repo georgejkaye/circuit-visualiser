@@ -25,10 +25,31 @@ let rec normalForm = (c) => {
  * 
  */
 
-let rec applyTensor = (v,lhs, rhs) => {
-    switch(lhs) {
-    | Tensor(xs) => Tensor(applyTensor'(v,xs, 0, rhs, 0,[],[]))
-    | f          => Composition(f, Tensor(rhs))
+/* Flatten a tensor of tensors into one big tensor */
+let rec simplifyTensor = (c) => {
+    switch(c){
+    | Tensor(xs) => Tensor(simplifyTensor'(xs))
+    | Composition(Tensor(xs), y) => Composition(Tensor(simplifyTensor'(xs)), y)
+    | _                          => c
+    };
+
+} and simplifyTensor' = (xs) => {
+    switch(xs){
+    | [] => []
+    | [Tensor(ys), Tensor(zs), ...xs] => simplifyTensor'([Tensor(List.concat([ys,zs])), ...xs])
+    | [x, ...xs] => [x, ...simplifyTensor'(xs)]
+    }
+}
+
+/* Apply a tensor to some arguments 
+ *   v: lattice
+ *   lhs: the argument to the apply to the tensor
+ *   rhs: the elements of the tensor
+ */
+let rec applyTensor = (v, arg, ys) => {
+    switch(arg) {
+    | Tensor(xs) => Tensor(applyTensor'(v, xs, 0, ys, 0,[],[]))
+    | f          => Composition(f, Tensor(ys))
     }
 } and applyTensor' = (v, xs, nx, ys, ny, xs', ys') => {
     switch(xs, ys){
@@ -95,14 +116,15 @@ let rec evaluateOneStepTensor = (v,xs) => {
             }
         }
     };
-    {v:v, c:eval}
+    {v:v, c:simplifyTensor(eval)}
 }
+
 
 /* Evaluate until a normal form is reached */
 let rec evaluate = (orig) => {
     let eval = evaluateOneStep(orig);
     if(eval == orig){
-        eval
+        eval    
     } else {
         evaluate(eval)
     }
