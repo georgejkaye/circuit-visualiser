@@ -1,23 +1,21 @@
+
 {
-  "name": "circuit-visualiser",
-  "reason": {"react-jsx": 3},
-  "bsc-flags": ["-bs-super-errors"],
+  "name": "react-hooks-template",
+  "reason": {
+    "react-jsx": 3
+  },
   "sources": {
     "dir" : "src",
     "subdirs" : true
   },
-  "package-specs": {
-    "module": "es6",
-    "in-source": true
-  },
+  "package-specs": [{
+    "module": "commonjs",
+    "in-source": false
+  }],
   "suffix": ".bs.js",
   "namespace": true,
   "bs-dependencies": [
     "reason-react"
   ],
-  "warnings": {
-    "error" : "+101"
-  },
-  "ppx-flags": [],
   "refmt": 3
 }

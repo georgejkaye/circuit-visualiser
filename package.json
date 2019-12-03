@@ -1,29 +1,30 @@
 {
   "name": "circuit-visualiser",
   "version": "0.1.0",
-  "description": "",
-  "private": true,
-  "type": "module",
   "scripts": {
+    "build": "bsb -make-world",
+    "start": "bsb -make-world -w",
+    "clean": "bsb -clean-world",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "bsb -make-world -clean-world && webpack",
-    "start-bsb": "bsb -make-world -clean-world -w",
-    "start-wp": "webpack -w",
-    "clean": "bsb -clean-world"
+    "webpack": "webpack -w",
+    "webpack:production": "NODE_ENV=production webpack",
+    "server": "webpack-dev-server"
   },
   "keywords": [
     "BuckleScript"
   ],
-  "author": "georgejkaye",
-  "license": "",
-  "devDependencies": {
-    "bs-platform": "^5.2.1",
-    "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.10"
-  },
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "lodash": "^4.17.15",
-    "react-hooks": "^1.0.1",
-    "reason-react": "^0.7.0"
+    "react": "^16.8.1",
+    "react-dom": "^16.8.1",
+    "reason-react": ">=0.7.0"
+  },
+  "devDependencies": {
+    "bs-platform": "^5.0.1",
+    "html-webpack-plugin": "^3.2.0",
+    "webpack": "^4.0.1",
+    "webpack-cli": "^3.1.1",
+    "webpack-dev-server": "^3.1.8"
   }
 }

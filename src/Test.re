@@ -1,3 +1,5 @@
+open Demo;
+
 let str = React.string;
 
 let log = () =>
@@ -7,7 +9,7 @@ let log = () =>
 let make = () => {
     <div className="app">
         <div className="title"> 
-            (str("hello! ")) 
+            (str(Circuits.printCircuit(Demo.halfAdder)))
             <button onClick=((_evt) => log())>(str("next circuit"))</button>
         </div>
     </div>

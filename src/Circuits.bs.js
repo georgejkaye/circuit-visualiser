@@ -3,10 +3,11 @@
 import * as List from "bs-platform/lib/es6/list.js";
 import * as Block from "bs-platform/lib/es6/block.js";
 import * as Curry from "bs-platform/lib/es6/curry.js";
+import * as Caml_obj from "bs-platform/lib/es6/caml_obj.js";
 import * as Pervasives from "bs-platform/lib/es6/pervasives.js";
 import * as Helpers$CircuitVisualiser from "./Helpers.bs.js";
 
-function inputs(_c) {
+function inputs$prime(_c) {
   while(true) {
     var c = _c;
     switch (c.tag | 0) {
@@ -17,13 +18,13 @@ function inputs(_c) {
           continue ;
       case /* Tensor */3 :
           return List.fold_left((function (no, comp) {
-                        return no + inputs(comp) | 0;
+                        return no + inputs$prime(comp) | 0;
                       }), 0, c[0]);
       case /* Function */4 :
           return c[1];
       case /* Trace */6 :
       case /* Iter */7 :
-          return inputs(c[1]) - c[0] | 0;
+          return inputs$prime(c[1]) - c[0] | 0;
       case /* Value */0 :
       case /* Input */8 :
           return 0;
@@ -38,7 +39,11 @@ function inputs(_c) {
   };
 }
 
-function outputs(_c) {
+function inputs(param) {
+  return inputs$prime(param[/* c */1]);
+}
+
+function outputs$prime(_c) {
   while(true) {
     var c = _c;
     switch (c.tag | 0) {
@@ -46,12 +51,12 @@ function outputs(_c) {
           return c[0];
       case /* Tensor */3 :
           return List.fold_left((function (no, comp) {
-                        return no + outputs(comp) | 0;
+                        return no + outputs$prime(comp) | 0;
                       }), 0, c[0]);
       case /* Function */4 :
           return c[2];
       case /* Trace */6 :
-          return outputs(c[1]) - c[0] | 0;
+          return outputs$prime(c[1]) - c[0] | 0;
       case /* Composition */2 :
       case /* Iter */7 :
           _c = c[1];
@@ -65,6 +70,10 @@ function outputs(_c) {
         return 1;
     }
   };
+}
+
+function outputs(param) {
+  return outputs$prime(param[/* c */1]);
 }
 
 function printComponent(v, c) {
@@ -106,30 +115,42 @@ function printCircuit(param) {
   return printComponent(param[/* v */0], param[/* c */1]);
 }
 
-function compose(param, param$1) {
-  var c$prime = param$1[1];
-  var c = param[1];
-  var v = param[0];
-  Helpers$CircuitVisualiser.assert$prime(outputs(c) === inputs(c$prime), "Outputs of circuit " + (printComponent(v, c) + (" do not match inputs of circuit " + printComponent(param$1[0], c$prime))));
+function identity(v, n) {
   return /* record */[
           /* v */v,
+          /* c : Identity */Block.__(1, [n])
+        ];
+}
+
+function compose(c, c$prime) {
+  Helpers$CircuitVisualiser.assert$prime(outputs(c) === inputs(c$prime), "Outputs of circuit " + (printCircuit(c) + (" do not match inputs of circuit " + printCircuit(c$prime))));
+  Helpers$CircuitVisualiser.assert$prime(Caml_obj.caml_equal(c[/* v */0], c$prime[/* v */0]), "Circuits use different lattices!");
+  return /* record */[
+          /* v */c[/* v */0],
           /* c : Composition */Block.__(2, [
-              c,
-              c$prime
+              c[/* c */1],
+              c$prime[/* c */1]
             ])
         ];
 }
 
-function composemany(v, xs) {
+function composemany(xs) {
+  Helpers$CircuitVisualiser.assert$prime(List.fold_left((function (x, y) {
+              if (x) {
+                return Caml_obj.caml_equal(y[/* v */0], List.hd(xs)[/* v */0]);
+              } else {
+                return false;
+              }
+            }), true, xs), "Not all circuits use the same lattice!");
   if (xs) {
     var xs$1 = xs[1];
     var x = xs[0];
     if (xs$1) {
       return /* record */[
-              /* v */v,
+              /* v */List.hd(xs$1)[/* v */0],
               /* c : Composition */Block.__(2, [
                   x[/* c */1],
-                  composemany(v, xs$1)[/* c */1]
+                  composemany(xs$1)[/* c */1]
                 ])
             ];
     } else {
@@ -140,10 +161,47 @@ function composemany(v, xs) {
   }
 }
 
-function tensor(v, xs) {
+function tensor(xs) {
+  Helpers$CircuitVisualiser.assert$prime(List.fold_left((function (x, y) {
+              if (x) {
+                return Caml_obj.caml_equal(y[/* v */0], List.hd(xs)[/* v */0]);
+              } else {
+                return false;
+              }
+            }), true, xs), "Not all circuits use the same lattice!");
+  var ys = List.map((function (x) {
+          return x[/* c */1];
+        }), xs);
+  return /* record */[
+          /* v */List.hd(xs)[/* v */0],
+          /* c : Tensor */Block.__(3, [ys])
+        ];
+}
+
+function exp$prime(f, x) {
+  if (x === 0) {
+    return /* [] */0;
+  } else {
+    return /* :: */[
+            f,
+            exp$prime(f, x - 1 | 0)
+          ];
+  }
+}
+
+function exp(f, x) {
+  return tensor(exp$prime(f, x));
+}
+
+function func(v, id, ins, outs, f) {
   return /* record */[
           /* v */v,
-          /* c : Tensor */Block.__(3, [xs])
+          /* c : Function */Block.__(4, [
+              id,
+              ins,
+              outs,
+              f
+            ])
         ];
 }
 
@@ -162,6 +220,51 @@ function fork(v) {
                                 /* [] */0
                               ]
                             ]]);
+                })
+            ])
+        ];
+}
+
+function join(v) {
+  return /* record */[
+          /* v */v,
+          /* c : Function */Block.__(4, [
+              "⋎",
+              2,
+              1,
+              (function (v, c) {
+                  if (c.tag === /* Tensor */3) {
+                    var match = c[0];
+                    if (match) {
+                      var x = match[0];
+                      if (!x.tag) {
+                        var match$1 = match[1];
+                        if (match$1) {
+                          var match$2 = match$1[0];
+                          if (!match$2.tag) {
+                            if (match$1[1]) {
+                              return Pervasives.failwith("Join can only take two arguments");
+                            } else {
+                              return /* Value */Block.__(0, [Curry._2(v[/* joinOp */1], x[0], match$2[0])]);
+                            }
+                          }
+                          
+                        } else {
+                          return Pervasives.failwith("Join can only take two arguments");
+                        }
+                      }
+                      var match$3 = match[1];
+                      if (match$3 && !match$3[1]) {
+                        return Pervasives.failwith("Not implemented");
+                      } else {
+                        return Pervasives.failwith("Join can only take two arguments");
+                      }
+                    } else {
+                      return Pervasives.failwith("Join can only take two arguments");
+                    }
+                  } else {
+                    return Pervasives.failwith("Join can only take two arguments");
+                  }
                 })
             ])
         ];
@@ -192,101 +295,48 @@ function swap(v, x, y) {
         ];
 }
 
-var join_000 = "⋎";
-
-function join_003(v, c) {
-  if (c.tag === /* Tensor */3) {
-    var match = c[0];
-    if (match) {
-      var x = match[0];
-      if (!x.tag) {
-        var match$1 = match[1];
-        if (match$1) {
-          var match$2 = match$1[0];
-          if (!match$2.tag) {
-            if (match$1[1]) {
-              return Pervasives.failwith("Join can only take two arguments");
-            } else {
-              return /* Value */Block.__(0, [Curry._2(v[/* joinOp */1], x[0], match$2[0])]);
-            }
-          }
-          
-        } else {
-          return Pervasives.failwith("Join can only take two arguments");
-        }
-      }
-      var match$3 = match[1];
-      if (match$3 && !match$3[1]) {
-        return Pervasives.failwith("Not implemented");
-      } else {
-        return Pervasives.failwith("Join can only take two arguments");
-      }
-    } else {
-      return Pervasives.failwith("Join can only take two arguments");
-    }
-  } else {
-    return Pervasives.failwith("Join can only take two arguments");
-  }
-}
-
-var join = /* Function */Block.__(4, [
-    join_000,
-    2,
-    1,
-    join_003
-  ]);
-
-var stub_000 = "~";
-
-function stub_003(param, param$1) {
-  return /* Identity */Block.__(1, [0]);
-}
-
-var stub = /* Function */Block.__(4, [
-    stub_000,
-    1,
-    0,
-    stub_003
-  ]);
-
-function delay(n) {
-  return /* Delay */Block.__(5, [n]);
+function stub(v) {
+  return /* record */[
+          /* v */v,
+          /* c : Function */Block.__(4, [
+              "~",
+              1,
+              0,
+              (function (param, param$1) {
+                  return /* Identity */Block.__(1, [0]);
+                })
+            ])
+        ];
 }
 
 function dfork(v, n) {
   if (n !== 0) {
     if (n !== 1) {
-      var xs_000 = dfork(v, n - 1 | 0)[/* c */1];
-      var xs_001 = /* :: */[
-        fork(v)[/* c */1],
-        /* [] */0
-      ];
-      var xs = /* :: */[
-        xs_000,
-        xs_001
-      ];
-      var xs_000$1 = /* Identity */Block.__(1, [1]);
-      var xs_001$1 = /* :: */[
-        swap(v, n - 1 | 0, 1)[/* c */1],
-        /* :: */[
-          /* Identity */Block.__(1, [1]),
-          /* [] */0
-        ]
-      ];
-      var xs$1 = /* :: */[
-        xs_000$1,
-        xs_001$1
-      ];
-      return composemany(v, /* :: */[
-                  /* record */[
-                    /* v */v,
-                    /* c : Tensor */Block.__(3, [xs])
-                  ],
+      return composemany(/* :: */[
+                  tensor(/* :: */[
+                        dfork(v, n - 1 | 0),
+                        /* :: */[
+                          fork(v),
+                          /* [] */0
+                        ]
+                      ]),
                   /* :: */[
-                    /* record */[
-                      /* v */v,
-                      /* c : Tensor */Block.__(3, [xs$1])
-                    ],
+                    tensor(/* :: */[
+                          /* record */[
+                            /* v */v,
+                            /* c : Identity */Block.__(1, [1])
+                          ],
+                          /* :: */[
+                            swap(v, n - 1 | 0, 1),
+                            /* :: */[
+                              /* record */[
+                                /* v */v,
+                                /* c : Identity */Block.__(1, [1])
+                              ],
+                              /* [] */0
+                            ]
+                          ]
+                        ]),
                     /* [] */0
                   ]
                 ]);
@@ -301,20 +351,145 @@ function dfork(v, n) {
   }
 }
 
+function djoin(v, n) {
+  if (n !== 0) {
+    if (n !== 1) {
+      return composemany(/* :: */[
+                  tensor(/* :: */[
+                        /* record */[
+                          /* v */v,
+                          /* c : Identity */Block.__(1, [1])
+                        ],
+                        /* :: */[
+                          swap(v, 1, n - 1 | 0),
+                          /* :: */[
+                            /* record */[
+                              /* v */v,
+                              /* c : Identity */Block.__(1, [1])
+                            ],
+                            /* [] */0
+                          ]
+                        ]
+                      ]),
+                  /* :: */[
+                    tensor(/* :: */[
+                          djoin(v, n - 1 | 0),
+                          /* :: */[
+                            join(v),
+                            /* [] */0
+                          ]
+                        ]),
+                    /* [] */0
+                  ]
+                ]);
+    } else {
+      return join(v);
+    }
+  } else {
+    return /* record */[
+            /* v */v,
+            /* c : Identity */Block.__(1, [0])
+          ];
+  }
+}
+
+function delay(n) {
+  return /* Delay */Block.__(5, [n]);
+}
+
+function trace(x, f) {
+  Helpers$CircuitVisualiser.assert$prime(inputs(f) >= x && outputs(f) >= x, "Inputs and outputs of circuit " + (printCircuit(f) + " are less than the size of the trace."));
+  return /* record */[
+          /* v */f[/* v */0],
+          /* c : Trace */Block.__(6, [
+              x,
+              f[/* c */1]
+            ])
+        ];
+}
+
+function iter(f) {
+  Helpers$CircuitVisualiser.assert$prime(inputs(f) >= outputs(f), "Not enough inputs of circuit " + (printCircuit(f) + " to iterate."));
+  return /* record */[
+          /* v */f[/* v */0],
+          /* c : Iter */Block.__(7, [
+              outputs(f),
+              f[/* c */1]
+            ])
+        ];
+}
+
+function traceAsIteration(trace) {
+  var match = trace[/* c */1];
+  if (match.tag === /* Trace */6) {
+    var x = outputs(trace);
+    var f = stub(trace[/* v */0]);
+    var n = inputs$prime(match[1]);
+    var x$1 = outputs(trace);
+    var f$1 = stub(trace[/* v */0]);
+    return composemany(/* :: */[
+                iter(composemany(/* :: */[
+                          tensor(/* :: */[
+                                /* record */[
+                                  /* v */trace[/* v */0],
+                                  /* c : Identity */Block.__(1, [match[0]])
+                                ],
+                                /* :: */[
+                                  tensor(exp$prime(f, x)),
+                                  /* :: */[
+                                    /* record */[
+                                      /* v */trace[/* v */0],
+                                      /* c : Identity */Block.__(1, [n])
+                                    ],
+                                    /* [] */0
+                                  ]
+                                ]
+                              ]),
+                          /* :: */[
+                            /* record */[
+                              /* v */trace[/* v */0],
+                              /* c */trace[/* c */1]
+                            ],
+                            /* [] */0
+                          ]
+                        ])),
+                /* :: */[
+                  tensor(/* :: */[
+                        tensor(exp$prime(f$1, x$1)),
+                        /* [] */0
+                      ]),
+                  /* [] */0
+                ]
+              ]);
+  } else {
+    return Pervasives.failwith("This is not a trace");
+  }
+}
+
 export {
+  inputs$prime ,
   inputs ,
+  outputs$prime ,
   outputs ,
   printComponent ,
   printCircuit ,
+  identity ,
   compose ,
   composemany ,
   tensor ,
+  exp$prime ,
+  exp ,
+  func ,
   fork ,
-  swap ,
   join ,
+  swap ,
   stub ,
-  delay ,
   dfork ,
+  djoin ,
+  delay ,
+  trace ,
+  iter ,
+  traceAsIteration ,
   
 }
 /* No side effect */
