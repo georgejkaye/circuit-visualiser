@@ -9,27 +9,9 @@ open Helpers;
 let halfAdder = {
     composemany([
         dfork(v,2),
-        tensor([andGate(v), xorGate(v)])
+        tensor([xorGate(v), andGate(v)])
     ])
 }
-
-let test1 = composemany([
-               tensor([t,f,bot]),
-               dfork(v,3),
-               id(v,6)
-            ])
-
-let test2 = composemany([
-                tensor([t,f]),
-                tensor([notGate(v),notGate(v)])
-])
-
-let test2Reduced = evaluateOneStep(test2)
-
-let basicTrace = trace(1,id(v,2))
-let traceTwo = trace(2, id(v,3))
-let basicTraceAsIteration = traceAsIteration(basicTrace);
-let traceTwoAsIteration = traceAsIteration(traceTwo);
 
 let halfAdderApplied = composemany([
                             tensor([t, f]),
@@ -45,3 +27,6 @@ let halfAdderReduced_6 = evaluateOneStep(halfAdderReduced_5);
 let halfAdderReduced_7 = evaluateOneStep(halfAdderReduced_6);
 let halfAdderReduced_8 = evaluateOneStep(halfAdderReduced_7);
 let halfAdderReduced_9 = evaluateOneStep(halfAdderReduced_8);
+let halfAdderReduced_10 = evaluateOneStep(halfAdderReduced_9);
+let halfAdderReduced_11 = evaluateOneStep(halfAdderReduced_10);
+let halfAdderReduced_12 = evaluateOneStep(halfAdderReduced_11);

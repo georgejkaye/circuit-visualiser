@@ -33,9 +33,10 @@ let rec simplifyTensor = (v,c) => {
     | _                          => c
     };
 } and simplifyTensor' = (v,xs) => {
+    Js.log("simplifyTensor " ++ printList(xs, printComponent(v)));
     switch(xs){
     | [] => []
-    | [Tensor(ys), Tensor(zs), ...xs] => simplifyTensor'(v, List.concat([ys,zs,xs]))
+    | [Tensor(ys), ...xs] => simplifyTensor'(v,List.concat([ys, xs]))
     | [x, ...xs] => [x, ...simplifyTensor'(v,xs)]
     }
 }
@@ -89,6 +90,7 @@ let rec evaluateOneStepTensor = (v,xs) => {
     Js.log("evaluateOneStepComposition " ++ printComponent(v,x) ++ " --- " ++ printComponent(v,y));
     if(normalForm(x)){
         switch(y){
+        | Identity(n)       =>  x
         | Function(_,_,_,f) =>  f(v,x)
         | Tensor(ys)        =>  if(normalForm(Tensor(ys))){
                                     applyTensor(v, x, ys)

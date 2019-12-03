@@ -22,3 +22,12 @@ let rec printList = (xs, print) => {
     | [x,...xs] => print(x) ++ ", " ++ printList(xs,print) 
     }
 }
+
+/* Generate a list ranging from 0 to a number (non-inclusive) */
+let rec range = (n) => {
+    let xs = switch(n){
+    | 0 => []
+    | n => [n, ...range(n-1)]
+    };
+    List.rev(xs)
+}
