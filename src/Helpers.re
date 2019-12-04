@@ -50,3 +50,19 @@ and range' = (n) => {
 let addToEnd = (n, xs) => {
     List.concat([xs, [n]]);
 }
+
+let rec slice = (xs, a, b) => slice'(xs, a, b, 0)
+and slice' = (xs, a, b, n) => {
+    switch(xs){
+    | [] => failwith("not enough list!")
+    | [x,...xs] => n < a ? slice'(xs, a, b, n+1) : ((n < b) ? [x,...slice'(xs, a, b, n+1)] : [x])               
+    }
+}
+
+let rec trim = (xs, b) => trim'(xs, b, 0)
+and trim' = (xs, b, n) => {
+    switch(xs){
+    | [] => failwith("not enough list!")
+    | [x,...xs] => n < b ? [x,...trim'(xs, b, n+1)] : [x]         
+    }
+}

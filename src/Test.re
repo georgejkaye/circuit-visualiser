@@ -30,7 +30,7 @@ let make = () => {
             <p>(str(Circuits.printCircuit(Examples.fullAdderReduced)))</p>
         </div>
         <div className="parsing">
-            <p>(str(Helpers.printList(Parser.tokenise("(t * f * t * f) . (F * F)"), (x) => x)))</p>
+            <p>(str(Helpers.printList(Parser.tokenise("(t * f * (t . id) * f) . (F * F) . (F * F)"), (x) => x)))</p>
         </div>
     </div>
 }
