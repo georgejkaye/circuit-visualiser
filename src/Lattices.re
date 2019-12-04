@@ -5,7 +5,8 @@ type lattice('element) = {
     andOp  : ('element, 'element) => 'element,   /* And operation */
     orOp   : ('element, 'element) => 'element,   /* Or operation */
     notOp  : 'element => 'element,               /* Not operation */
-    print  : 'element => string                  /* Print operation */
+    print  : 'element => string,                 /* Print operation */
+    chars  : list((char, 'element))              /* List of chars reserved for value names */
 }
 
 /* A simple lattice containing four elements with the order Bottom < True, False < Top */
@@ -102,6 +103,7 @@ let simpleLattice: lattice(simpleLatticeElems) = {
     orOp:  simpleOr,
     notOp: simpleNot,
     print: printSimpleLattice,
+    chars: [('T', Top), ('t', True), ('f', False), ('B', Bottom)]
 }
 
 Js.log(simpleLattice.print(simpleLattice.andOp(True, True)));

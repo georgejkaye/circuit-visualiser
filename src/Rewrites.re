@@ -5,7 +5,7 @@ let rec normalForm = (c) => {
     switch(c){
     | Value(_)          => true
     | Identity(_)       => true
-    | Composition(x, y) => false
+    | Composition(_, _) => false
     | Tensor(xs)        => List.fold_left((&&), true, List.map(normalForm, xs))
     | Function(_,_,_,_) => true
     | Delay(_)          => true
@@ -14,7 +14,7 @@ let rec normalForm = (c) => {
     | Output(_)         => true
     | Iter(_,f)         => normalForm(f)
     | Link(_,_,f)       => normalForm(f)
-    | Macro(_,f)        => false
+    | Macro(_,_)        => false
     }
 }
 
@@ -58,9 +58,9 @@ let rec applyTensor = (v, arg, ys) => {
     | ([x, ...xs], [y, ...ys]) => if(outputs'(x) - nx == inputs'(y) - ny){
                                         let lhs =   switch(xs',ys'){
                                                     | ([], []) => Composition(x, y)
-                                                    | (xs, []) => Composition(Tensor(List.concat([xs', [x]])), y)
-                                                    | ([], ys) => Composition(x, Tensor(List.concat([ys', [y]])))
-                                                    | (xs, ys) => Composition(Tensor(List.concat([xs', [x]])), Tensor(List.concat([ys', [y]])))
+                                                    | (_, []) => Composition(Tensor(List.concat([xs', [x]])), y)
+                                                    | ([], _) => Composition(x, Tensor(List.concat([ys', [y]])))
+                                                    | (_, _) => Composition(Tensor(List.concat([xs', [x]])), Tensor(List.concat([ys', [y]])))
                                                     };
                                                     [lhs, ...applyTensor'(v,xs,0,ys,0,[],[])]
                                     } else {
@@ -87,7 +87,7 @@ let rec evaluateOneStepTensor = (v,xs) => {
     Js.log("evaluateOneStepComposition " ++ printComponent(v,x) ++ " --- " ++ printComponent(v,y));
     if(normalForm(x)){
         switch(y){
-        | Identity(n)       =>  x
+        | Identity(_)       =>  x
         | Function(_,_,_,f) =>  f(v,x)
         | Tensor(ys)        =>  applyTensor(v,x,ys)/*if(normalForm(Tensor(ys))){
                                     applyTensor(v, x, ys)

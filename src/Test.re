@@ -29,5 +29,8 @@ let make = () => {
             <p>(str(Circuits.printCircuit(Examples.fullAdderApplied)))</p>
             <p>(str(Circuits.printCircuit(Examples.fullAdderReduced)))</p>
         </div>
+        <div className="parsing">
+            <p>(str(Helpers.printList(Parser.tokenise("x * x2 * x1 . (x3343 * x567890)"), (x) => x)))</p>
+        </div>
     </div>
 }
