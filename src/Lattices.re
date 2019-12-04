@@ -1,12 +1,12 @@
 type lattice('element) = {
-    leq    : ('element, 'element) => bool,       /* The order relation less than */
-    joinOp : ('element, 'element) => 'element,   /* The least upper bound */
-    meetOp : ('element, 'element) => 'element,   /* The greatest lower bound */
-    andOp  : ('element, 'element) => 'element,   /* And operation */
-    orOp   : ('element, 'element) => 'element,   /* Or operation */
-    notOp  : 'element => 'element,               /* Not operation */
-    print  : 'element => string,                 /* Print operation */
-    chars  : list((char, 'element))              /* List of chars reserved for value names */
+    leq     : ('element, 'element) => bool,       /* The order relation less than */
+    joinOp  : ('element, 'element) => 'element,   /* The least upper bound */
+    meetOp  : ('element, 'element) => 'element,   /* The greatest lower bound */
+    andOp   : ('element, 'element) => 'element,   /* And operation */
+    orOp    : ('element, 'element) => 'element,   /* Or operation */
+    notOp   : 'element => 'element,               /* Not operation */
+    print   : 'element => string,                 /* Print operation */
+    parse   : string => (bool, 'element)          /* Parse a string and determine if it is a value, and if so which one */
 }
 
 /* A simple lattice containing four elements with the order Bottom < True, False < Top */
@@ -95,6 +95,17 @@ let simpleNot = a => {
     }
 }
 
+let simpleParse = (str) => {
+    switch(str) {
+    | "T" => (true, Top)
+    | "t" => (true, True)
+    | "f" => (true, False)
+    | "B" => (true, Bottom)
+    | _   => (false, Top)
+    };
+    
+}
+
 let simpleLattice: lattice(simpleLatticeElems) = {
     leq:   simpleLeq,
     joinOp: simpleJoin,
@@ -103,7 +114,7 @@ let simpleLattice: lattice(simpleLatticeElems) = {
     orOp:  simpleOr,
     notOp: simpleNot,
     print: printSimpleLattice,
-    chars: [('T', Top), ('t', True), ('f', False), ('B', Bottom)]
+    parse: simpleParse
 }
 
 Js.log(simpleLattice.print(simpleLattice.andOp(True, True)));

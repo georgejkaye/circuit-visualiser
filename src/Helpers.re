@@ -30,7 +30,7 @@ let split = (n, xs) => split'(n, [], xs);
 let rec printList = (xs, print) => {
     switch(xs){
     | [] => ""
-    | [x,...xs] => print(x) ++ ", " ++ printList(xs,print) 
+    | [x,...xs] => let elem = print(x) == "" ? "_" : print(x); elem ++ ", " ++ printList(xs,print) 
     }
 }
 
