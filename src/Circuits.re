@@ -69,8 +69,8 @@ let rec printComponent = (v, c) => {
     | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent(v,comp)), printComponent(v,f), tl)
     | Function(id, _, _, _)             => id
     | Delay(x)                          => {js|ẟ[|js} ++ string_of_int(x) ++ "]"
-    | Trace(x, component)               => "Tr[" ++ string_of_int(x) ++ "](" ++ printComponent(v,component) ++ ")" 
-    | Iter(x, component)                => "iter[" ++ string_of_int(x) ++ "](" ++ printComponent(v,component) ++ ")" 
+    | Trace(x, component)               => "Tr{" ++ string_of_int(x) ++ "}(" ++ printComponent(v,component) ++ ")" 
+    | Iter(x, component)                => "iter{" ++ string_of_int(x) ++ "}(" ++ printComponent(v,component) ++ ")" 
     | Input(int)                        => ":" ++ string_of_int(int)   
     | Output(int)                       => string_of_int(int) ++ ":"
     | Link(inlink, outlink, circuit)    => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printComponent(v,circuit) 
@@ -89,6 +89,11 @@ let compose = (c, c') => {
     assert'(outputs(c) == inputs(c'), "Outputs of circuit " ++ printCircuit(c) ++ " do not match inputs of circuit " ++ printCircuit(c'));
     assert'(c.v == c'.v, "Circuits use different lattices!");
     {v:c.v, c:Composition(c.c, c'.c)};
+}
+
+let compose' = (v, c, c') => {
+    assert'(outputs'(c) == inputs'(c'), "Outputs of circuit " ++ printComponent(v, c) ++ " do not match inputs of circuit " ++ printComponent(v, c'));
+    Composition(c, c')
 }
 
 /* Compose many circuits at once */
@@ -144,8 +149,13 @@ let join = (v) => func(v,{js|⋎|js},
                                     }
                         )  
 
+/* Stub a wire, leading to the unique identity on 0 */
+let stub = (v) => func(v, {js|~|js}, 1, 0, (_, _) => Identity(0));
+
+let specialMorphisms = (v) => [fork(v).c, join(v).c, stub(v).c];
+
 /* Swap buses of width x and y */
-let swap = (v, x, y) => func(v, {js|×|js} ++ "[" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "]", 
+let swap = (v, x, y) => func(v, {js|×|js} ++ "{" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "}", 
                                 x + y, 
                                 x + y, 
                                 (_, comp) => switch(comp){
@@ -154,8 +164,7 @@ let swap = (v, x, y) => func(v, {js|×|js} ++ "[" ++ string_of_int(x) ++ "," ++ 
                                 }
                             )
 
-/* Stub a wire, leading to the unique identity on 0 */
-let stub = (v) => func(v, {js|~|js}, 1, 0, (_, _) => Identity(0));
+
 
 /* Fork all wires in a bus */
 let rec dfork = (v,n) => {
@@ -167,7 +176,7 @@ let rec dfork = (v,n) => {
                         tensor([identity(v,n-1), swap(v, n-1, 1), identity(v,1)])
                         ]).c
         };
-    macro(v, {js|Δ[|js} ++ string_of_int(n) ++ "]", comp)
+    macro(v, {js|Δ{|js} ++ string_of_int(n) ++ "}", comp)
 }
 
 /* Join all wires in a bus */
@@ -180,8 +189,12 @@ let rec djoin = (v,n) => {
                         tensor([djoin(v,n-1), join(v)])
                         ]).c
         };
-    macro(v, {js|Δ[|js} ++ string_of_int(n) ++ "]", comp)
+    macro(v, {js|Δ{|js} ++ string_of_int(n) ++ "}", comp)
 }
+
+let djoinRegEx = [%bs.re "/\\\\\/\{([0-9]+)\}/"];
+let swapRegEx = [%bs.re "/x\{([0-9]+),([0-9]+)\}/"];
+let dforkRegEx = [%bs.re "/\/\\\{([0-9]+)\}/"];
 
 /* Create a delay */
 let delay = (n) => Delay(n);

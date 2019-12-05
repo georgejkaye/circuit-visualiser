@@ -16,6 +16,10 @@ let rec split' = (n, xs, ys) => {
 /* Split a list into two lists at position n, with n in the second list */
 let split = (n, xs) => split'(n, [], xs);
 
+/* Print a list of elements
+ *  xs: list('a)
+ *  print : 'a -> string
+ */ 
 let rec printList = (xs, print) => { 
     let string = printList'(xs, print); 
     string == "" ? "[]" : "[ " ++ String.sub(string, 0, String.length(string) - 1) ++ " ]"
