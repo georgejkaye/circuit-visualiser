@@ -1,17 +1,6 @@
 let assert' = (condition, message) =>
     condition ? () : failwith(message);
 
-let rec slice = (string, n) => slice'(string, n, 0)
-and slice' = (string, n, x) => {
-    switch(string){
-    | "" => ""
-    | st => switch(n){
-            | 0 => (String.make(1, st.[n])) ++ slice'(string, 0, x+1) 
-            | n => slice'(string, n-1, x+1)
-            }
-    }
-}
-
 /******************/
 /* List functions */
 /******************/
@@ -29,11 +18,11 @@ let split = (n, xs) => split'(n, [], xs);
 
 let rec printList = (xs, print) => { 
     let string = printList'(xs, print); 
-    string == "" ? "[]" : "[" ++ String.sub(string, 0, String.length(string) - 1) ++ "]]"
+    string == "" ? "[]" : "[ " ++ String.sub(string, 0, String.length(string) - 1) ++ " ]"
 } and printList' = (xs, print) => {
     switch(xs){
     | [] => ""
-    | [x,...xs] => let elem = print(x) == "" ? "_" : print(x); elem ++ " :: " ++ printList(xs,print) 
+    | [x,...xs] => let elem = print(x) == "" ? "_" : print(x); elem ++ " :: " ++ printList'(xs,print) 
     }
 }
 
@@ -50,10 +39,12 @@ and range' = (n) => {
     };
 }
 
+/* Add an element to the end of a list */
 let addToEnd = (n, xs) => {
     List.concat([xs, [n]]);
 }
 
+/* Take a slice of a list between elements a (inclusive) and b (exclusive) */ 
 let rec slice = (xs, a, b) => slice'(xs, a, b, 0)
 and slice' = (xs, a, b, n) => {
     switch(xs){
@@ -70,7 +61,6 @@ and drop' = (xs, b, n) => {
     | [x,...xs] => n == b ? [] : [x,...drop'(xs, b, n + 1)]
     }
 }
-
 
 /* Trim the first b elements of a list */
 let rec trim = (xs, b) => trim'(xs, b-1, 0)
