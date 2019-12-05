@@ -18,13 +18,6 @@ let rec normalForm = (c) => {
     }
 }
 
-/* Evaluation strategy:
- *      1) 
- *         
- * 
- * 
- */
-
 /* Flatten a tensor of tensors into one big tensor */
 let rec simplifyTensor = (v,c) => {
     switch(c){

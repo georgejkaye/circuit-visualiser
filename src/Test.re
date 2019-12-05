@@ -34,6 +34,7 @@ let make = () => {
         <div className="parsing">
             <p>(str(Helpers.printStringList(Examples.exampleTokenised)))</p>
             <p>(str(Circuits.printComponent(Constructs.v, Examples.exampleParsed)))</p>
+            <p>(str(Circuits.printCircuit(Examples.exampleReduced)))</p>
         </div>
     </div>
 }

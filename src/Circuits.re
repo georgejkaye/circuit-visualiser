@@ -183,13 +183,13 @@ let rec dfork = (v,n) => {
 let rec djoin = (v,n) => {
     let comp = switch(n){
         | 0 => Identity(0)
-        | 1 => fork(v).c
+        | 1 => join(v).c
         | n => composemany([
                         tensor([identity(v,n-1), swap(v, 1, n-1), identity(v,1)]),
                         tensor([djoin(v,n-1), join(v)])
                         ]).c
         };
-    macro(v, {js|Δ{|js} ++ string_of_int(n) ++ "}", comp)
+    macro(v, {js|∇{|js} ++ string_of_int(n) ++ "}", comp)
 }
 
 let djoinRegEx = [%bs.re "/\\\\\/\{([0-9]+)\}/"];
