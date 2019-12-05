@@ -1,6 +1,8 @@
 open Circuits;
 open Rewrites;
 open Constructs;
+open Parser;
+open Helpers;
 
 /* v = Bottom, (False, True), Top */
 
@@ -46,3 +48,9 @@ let fullAdderApplied = composemany([
                         ])
 
 let fullAdderReduced = evaluate(fullAdderApplied)
+
+let exampleString = "(t * f * (t . id) * f) . (F * F) . (F * F)"
+let exampleTokenised = tokenise(exampleString);
+let exampleParsed = parse(v, exampleTokenised);
+
+let printComponentList = (xs) => printList(xs, (x) => printComponent(v,x));

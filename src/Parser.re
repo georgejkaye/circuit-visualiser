@@ -29,31 +29,67 @@ and tokenise' = (chars, current) => {
 let rec scanForClosingBracket = (xs, i, bracket) => scanForClosingBracket'(xs,i,0,bracket,[bracket])
 and scanForClosingBracket' = (xs, i, j, bracket, brackstack) => {
     switch(xs) {
-    | []              => failwith("Parse error, char " ++ string_of_int(i) ++ ": " ++ bracket ++ " expected")
-    | [bracket,...xs] => List.length(brackstack) == 1 && List.hd(brackstack) == bracket ? j : scanForClosingBracket'(xs,i+1,j+1,bracket,List.tl(brackstack))
-    | ["(",...xs]     => scanForClosingBracket'(xs,i+1,j+1,bracket,[")",...brackstack])
-    | ["[",...xs]     => scanForClosingBracket'(xs,i+1,j+1,bracket,["]",...brackstack])
-    | [x,...xs]       => scanForClosingBracket'(xs,i+1,j+1,bracket,brackstack)
+    | []             => failwith("Parse error, char " ++ string_of_int(i) ++ ": " ++ bracket ++ " expected")
+    | ["(",...xs]    => scanForClosingBracket'(xs,i+1,j+1,bracket,[")",...brackstack])
+    | ["[",...xs]    => scanForClosingBracket'(xs,i+1,j+1,bracket,["]",...brackstack])
+    | [x,...xs]      => if(x == bracket) { 
+                            if(List.length(brackstack) == 1 && List.hd(brackstack) == bracket){ 
+                                j
+                            } else { 
+                                List.length(brackstack) == 0 ? failwith("parse error, char " ++ string_of_int(i) ++ ": unexpected " ++ bracket ++ " encountered") 
+                                                             : scanForClosingBracket'(xs,i+1,j+1,bracket,List.tl(brackstack))
+                            }
+                        } else {
+                            scanForClosingBracket'(xs,i+1,j+1,bracket,brackstack)
+                        }
     }
 }
 
-let rec parse = (v, tokens) => { parse'(v, 0, tokens, []) }
-and parse' = (v, i, tokens, stack) => {
+/* Find the index of the next composition 'dot', to determine the end of the tensor */
+let rec scanForNextComposition = (xs, i) => scanForNextComposition'(xs, i, 0)
+and scanForNextComposition' = (xs, i, bracks) => {
+    switch(xs){
+    | [] => i
+    | ["(",...xs] => scanForNextComposition'(xs, i+1, bracks+1)
+    | ["[",...xs] => scanForNextComposition'(xs, i+1, bracks+1)
+    | [")",...xs] => scanForNextComposition'(xs, i+1, bracks-1)
+    | ["]",...xs] => scanForNextComposition'(xs, i+1, bracks-1)
+    | [".",...xs] => bracks == 0 ? i : scanForNextComposition'(xs, i+1, bracks)
+    | [x,...xs]   => scanForNextComposition'(xs, i+1, bracks)
+    }
+}
+
+let rec parse = (v, tokens) => parse'(v, 0, tokens, [], false)
+and parse' = (v, i, tokens, stack, tensor) => {
+    Js.log("stack: " ++ printList(stack, (x) => printComponent(v,x)))
     switch(tokens){
-        | [] => failwith("erm...") 
+        | [] => tensor ? Tensor(stack) : (List.length(stack) == 1 ? List.hd(stack) : failwith("parse error, char " ++ string_of_int(i) ++ ": unexpected end of term"))
         | [x, ...xs] => switch(x){
-                                | "(" => let j = scanForClosingBracket(xs, i, ")"); 
-                                                    let parsedSubterm = parse(v,slice(xs,i,j));
-                                                    parse'(v, j, trim(xs,j), stack @ [parsedSubterm])
-                                | "(" => let j = scanForClosingBracket(xs, i, "]"); 
-                                                    let parsedSubterm = parse(v,slice(xs,i,j));
-                                                    parse'(v, j, trim(xs,j), stack @ [parsedSubterm])
-                                | ")" => failwith("parse error, char " ++ string_of_int(i) ++ " unexpected ) encountered")
-                                | "]" => failwith("parse error, char " ++ string_of_int(i) ++ " unexpected ] encountered")
-                                | "*" => failwith("todo composition")
-                                | "." => failwith("todo tensor")
-                                | a   => let sym = v.parse(a); fst(sym) ? Value(snd(sym)) : functionLookup(a)
-                                }
+                                | "(" => let j = scanForClosingBracket(xs, 1, ")"); 
+                                                    let parsedSubterm = parse'(v, i+1, slice(xs, 0, j-1), [], false);
+                                                    parse'(v, j+1, trim(xs,j+1), stack @ [parsedSubterm], tensor)
+                                | "(" => let j = scanForClosingBracket(xs, 1, "]"); 
+                                                    let parsedSubterm = parse'(v, i+1, slice(xs, 0, j-1), [], false);
+                                                    parse'(v, j+1, trim(xs,j+1), stack @ [parsedSubterm], tensor)
+                                | ")" => failwith("parse error, char " ++ string_of_int(i) ++ ": unexpected ) encountered")
+                                | "]" => failwith("parse error, char " ++ string_of_int(i) ++ ": unexpected ] encountered")
+                                | "." => List.length(stack) == 0 ? failwith("parse error, char " ++ string_of_int(i) ++ ": unexpected * encountered")
+                                                                 : Composition(List.hd(stack), parse'(v, i+1, xs, List.tl(stack), tensor))
+                                | "*" => if(tensor){
+                                            parse'(v, i+1, xs, stack, tensor)
+                                         } else {
+                                            let j = scanForNextComposition(xs, 0);
+                                                    let parsedTensor = parse'(v, i+1, slice(xs,0,j-1),stack, true);
+                                                    parse'(v, j, trim(xs,j), drop(stack,1) @ [parsedTensor], false);
+                                         }
+                                | a   => if(!tensor && List.length(stack) > 0 ){
+                                                 failwith("unexpected term encountered, did you forget a composition or tensor?") 
+                                             } else {
+                                                 let sym = v.parse(a); 
+                                                 let subterm = fst(sym) ? Value(snd(sym)) : functionLookup(a);
+                                                 parse'(v, i+1, xs, stack @ [subterm], tensor)
+                                             }
+                          }
     }
 }
  

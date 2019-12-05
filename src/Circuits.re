@@ -66,7 +66,7 @@ let rec printComponent = (v, c) => {
     | Composition(f, g)                 => "(" ++ printComponent(v,f) ++ {js| ⋅ |js} ++ printComponent(v,g) ++ ")"
     | Tensor([])                        => "[]"
     | Tensor([x])                       => printComponent(v,x)
-    | Tensor([f, ...tl])                => "[" ++ List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent(v,comp)), printComponent(v,f), tl) ++ "]"
+    | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent(v,comp)), printComponent(v,f), tl)
     | Function(id, _, _, _)             => id
     | Delay(x)                          => {js|ẟ[|js} ++ string_of_int(x) ++ "]"
     | Trace(x, component)               => "Tr[" ++ string_of_int(x) ++ "](" ++ printComponent(v,component) ++ ")" 

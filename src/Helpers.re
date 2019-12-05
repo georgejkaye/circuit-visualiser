@@ -27,10 +27,13 @@ let rec split' = (n, xs, ys) => {
 /* Split a list into two lists at position n, with n in the second list */
 let split = (n, xs) => split'(n, [], xs);
 
-let rec printList = (xs, print) => {
+let rec printList = (xs, print) => { 
+    let string = printList'(xs, print); 
+    string == "" ? "[]" : "[" ++ String.sub(string, 0, String.length(string) - 1) ++ "]]"
+} and printList' = (xs, print) => {
     switch(xs){
     | [] => ""
-    | [x,...xs] => let elem = print(x) == "" ? "_" : print(x); elem ++ ", " ++ printList(xs,print) 
+    | [x,...xs] => let elem = print(x) == "" ? "_" : print(x); elem ++ " :: " ++ printList(xs,print) 
     }
 }
 
@@ -59,10 +62,21 @@ and slice' = (xs, a, b, n) => {
     }
 }
 
-let rec trim = (xs, b) => trim'(xs, b, 0)
+/* Drop the last b elements of a list */
+let rec drop = (xs, b) => drop'(xs, List.length(xs) - b, 0)
+and drop' = (xs, b, n) => {
+    switch(xs){
+    | [] => failwith("not enough list!")
+    | [x,...xs] => n == b ? [] : [x,...drop'(xs, b, n + 1)]
+    }
+}
+
+
+/* Trim the first b elements of a list */
+let rec trim = (xs, b) => trim'(xs, b-1, 0)
 and trim' = (xs, b, n) => {
     switch(xs){
     | [] => failwith("not enough list!")
-    | [x,...xs] => n < b ? [x,...trim'(xs, b, n+1)] : [x]         
+    | [x,...xs] => n == b ? xs : trim'(xs, b, n + 1)      
     }
 }

@@ -1,3 +1,5 @@
+open Examples;
+
 let str = React.string;
 
 let log = () =>
@@ -30,7 +32,8 @@ let make = () => {
             <p>(str(Circuits.printCircuit(Examples.fullAdderReduced)))</p>
         </div>
         <div className="parsing">
-            <p>(str(Helpers.printList(Parser.tokenise("(t * f * (t . id) * f) . (F * F) . (F * F)"), (x) => x)))</p>
+            <p>(str(Helpers.printStringList(Examples.exampleTokenised)))</p>
+            <p>(str(Circuits.printComponent(Constructs.v, Examples.exampleParsed)))</p>
         </div>
     </div>
 }
