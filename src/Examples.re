@@ -49,8 +49,11 @@ let fullAdderApplied = composemany([
 
 let fullAdderReduced = evaluate(fullAdderApplied)
 
-let exampleFunctions = List.concat([specialMorphisms(v), [Function("F", 2, 2, (x,y) => y), Function("id", 1, 1, (x,y) => y)]])
-let exampleString = "(t * f * (t . id) * f) . x{2,2} . (F * F) . (F * F) . \\/{2}";
+let exampleFunctions = List.concat([specialMorphisms(v), [Function("F", 1, 1, (x,y) => y), Function("G", 2, 1, (x,y) => y), Function("id", 1, 1, (x,y) => y)]])
+
+/*let exampleString = "(t * f * (t . id) * f) . x{2,2} . (F * F) . (F * F) . \\/{2}";*/
+let exampleString = "t * F . G" 
+
 let exampleTokenised = tokenise(exampleString);
 Js.log(printStringList(exampleTokenised));
 let exampleParsed = parse(v, exampleFunctions, exampleTokenised);
@@ -58,4 +61,4 @@ let exampleCircuit = {v:v,c:exampleParsed};
 
 let exampleReduced = evaluate(exampleCircuit);
 
-let printComponentList = (xs) => printList(xs, (x) => printComponent(v,x));
+

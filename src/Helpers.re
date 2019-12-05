@@ -30,6 +30,20 @@ let rec printList = (xs, print) => {
     }
 }
 
+/* Print a list of elements with commas and no surrounding brackets
+ *  xs: list('a)
+ *  print : 'a -> string
+ */ 
+let rec printListCommas = (xs, print) => { 
+    let string = printListCommas'(xs, print); 
+    string == "" ? "" : String.sub(string, 0, String.length(string) - 2)
+} and printListCommas' = (xs, print) => {
+    switch(xs){
+    | [] => ""
+    | [x,...xs] => let elem = print(x) == "" ? "_" : print(x); elem ++ ", " ++ printListCommas'(xs,print) 
+    }
+}
+
 let printStringList = (xs) => printList(xs, (x) => x);
 let printIntList = (xs) => printList(xs, (x) => string_of_int(x));
 let printCharList = (xs) => printList(xs, (x) => String.make(1,x));

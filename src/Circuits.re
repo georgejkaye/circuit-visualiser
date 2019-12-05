@@ -80,6 +80,9 @@ let rec printComponent = (v, c) => {
 
 let printCircuit = ({v,c}) => printComponent(v,c)
 
+let printComponentList = (v, xs) => printList(xs, (x) => printComponent(v,x));
+let printComponentListCommas = (v, xs) => printListCommas(xs, (x) => printComponent(v,x));
+
 let value = (v,v') => {v:v, c:Value(v')}
 
 let identity = (v, n) => {v:v, c:Identity(n)}
@@ -139,12 +142,12 @@ let macro = (v, id, f) =>
 let fork = (v) => func(v,{js|⋏|js}, 1, 2, (_, c) => Tensor([c, c]));
 
 /* Join two wires into one, taking the join of their values */
-let join = (v) => func(v,{js|⋎|js}, 
+let rec join = (v) => func(v,{js|⋎|js}, 
                             2, 
                             1, 
                             (v, c) => switch(c){
                                         | Tensor([Value(x), Value(y)]) => Value(v.joinOp(x,y))
-                                        | Tensor([x, y]) => failwith("Not implemented")
+                                        | Tensor([x, y]) => Function(printComponent(v,x) ++ {js|⊔|js} ++ printComponent(v,y), inputs'(c), 1, (v,c) => compose({v,c}, join(v)).c)
                                         | _ => failwith("Join can only take two arguments")
                                     }
                         )  

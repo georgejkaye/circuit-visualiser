@@ -51,9 +51,9 @@ let rec applyTensor = (v, arg, ys) => {
     | ([x, ...xs], [y, ...ys]) => if(outputs'(x) - nx == inputs'(y) - ny){
                                         let lhs =   switch(xs',ys'){
                                                     | ([], []) => Composition(x, y)
-                                                    | (_, []) => Composition(Tensor(List.concat([xs', [x]])), y)
-                                                    | ([], _) => Composition(x, Tensor(List.concat([ys', [y]])))
-                                                    | (_, _) => Composition(Tensor(List.concat([xs', [x]])), Tensor(List.concat([ys', [y]])))
+                                                    | (_, [])  => Composition(Tensor(List.concat([xs', [x]])), y)
+                                                    | ([], _)  => Composition(x, Tensor(List.concat([ys', [y]])))
+                                                    | (_, _)   => Composition(Tensor(List.concat([xs', [x]])), Tensor(List.concat([ys', [y]])))
                                                     };
                                                     [lhs, ...applyTensor'(v,xs,0,ys,0,[],[])]
                                     } else {
@@ -63,6 +63,16 @@ let rec applyTensor = (v, arg, ys) => {
                                             applyTensor'(v, [x,...xs], nx + inputs'(x), ys, 0, xs', List.concat([ys', [y]]))
                                         }
                                     }
+    }
+}
+
+let rec tensorAllValues = (xs) => {
+    switch(xs){
+    | []                => false
+    | [Value(_)]        => true
+    | [_]               => false
+    | [Value(_),...xs]  => tensorAllValues(xs)
+    | [_,..._]          => false
     }
 }
 
@@ -80,15 +90,18 @@ let rec evaluateOneStepTensor = (v,xs) => {
     Js.log("evaluateOneStepComposition " ++ printComponent(v,x) ++ " --- " ++ printComponent(v,y));
     if(normalForm(x)){
         switch(y){
-        | Identity(_)       =>  x
-        | Function(_,_,_,f) =>  f(v,x)
-        | Tensor(ys)        =>  applyTensor(v,x,ys)/*if(normalForm(Tensor(ys))){
-                                    applyTensor(v, x, ys)
-                                } else {
-                                    Composition(x, Tensor(evaluateOneStepTensor(v,ys)))
-                                }*/
-        | Composition(a,b)  => Composition(evaluateOneStepComposition(v,x,a),b)
-        | f                 => Composition(x, evaluateOneStep({v:v, c:f}).c)
+        | Identity(_)        =>  x
+        | Function(id,_,_,f) => switch(x){
+                                | Value(a)   => f(v,x)
+                                | Tensor(xs) => if(tensorAllValues(xs)) {
+                                                    f(v,x)
+                                                } else {
+                                                    Function(id ++ "(" ++ printComponentListCommas(v,xs) ++ ")", inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v:v,c:x},{v,c:y}]).c) 
+                                                }
+                                }
+        | Tensor(ys)        =>  applyTensor(v,x,ys)
+        | Composition(a,b)  =>  Composition(evaluateOneStepComposition(v,x,a),b)
+        | f                 =>  Composition(x, evaluateOneStep({v:v, c:f}).c)
         }        
     } else {
         Composition(evaluateOneStep({v:v,c:x}).c, y)
