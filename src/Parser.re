@@ -101,7 +101,10 @@ and parse' = (v, funcs, i, tokens, stack, tensor) => {
                                                         parse'(v, funcs, i+1, xs, stack @ [dfork(v,x).c], tensor) 
                                             | '\\'   => let m = match(i, djoinRegEx, a);
                                                         let x = int_of_string(m[1]);
-                                                        parse'(v, funcs, i+1, xs, stack @ [djoin(v,x).c], tensor)           
+                                                        parse'(v, funcs, i+1, xs, stack @ [djoin(v,x).c], tensor)      
+                                            | 'o'    => let m = match(i, delayRegEx, a);
+                                                        let x = int_of_string(m[1]);
+                                                        parse'(v, funcs, i+1, xs, stack @ [delay(v,x).c], tensor)          
                                             | _      => if(!tensor && List.length(stack) > 0 ){
                                                             failwith("unexpected term encountered, did you forget a composition or tensor?") 
                                                         } else {

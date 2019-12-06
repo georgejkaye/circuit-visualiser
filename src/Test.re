@@ -1,5 +1,3 @@
-open Examples;
-
 let str = React.string;
 
 let log = () =>

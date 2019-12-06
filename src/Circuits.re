@@ -68,7 +68,7 @@ let rec printComponent = (v, c) => {
     | Tensor([x])                       => printComponent(v,x)
     | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent(v,comp)), printComponent(v,f), tl)
     | Function(id, _, _, _)             => id
-    | Delay(x)                          => {js|ẟ[|js} ++ string_of_int(x) ++ "]"
+    | Delay(x)                          => {js|ẟ{|js} ++ string_of_int(x) ++ "}"
     | Trace(x, component)               => "Tr{" ++ string_of_int(x) ++ "}(" ++ printComponent(v,component) ++ ")" 
     | Iter(x, component)                => "iter{" ++ string_of_int(x) ++ "}(" ++ printComponent(v,component) ++ ")" 
     | Input(int)                        => ":" ++ string_of_int(int)   
@@ -87,17 +87,18 @@ let value = (v,v') => {v:v, c:Value(v')}
 
 let identity = (v, n) => {v:v, c:Identity(n)}
 
-/* Create a composition circuit */
-let compose = (c, c') => {
-    assert'(outputs(c) == inputs(c'), "Outputs of circuit " ++ printCircuit(c) ++ " do not match inputs of circuit " ++ printCircuit(c'));
-    assert'(c.v == c'.v, "Circuits use different lattices!");
-    {v:c.v, c:Composition(c.c, c'.c)};
-}
-
+/* Compose two components together */
 let compose' = (v, c, c') => {
-    assert'(outputs'(c) == inputs'(c'), "Outputs of circuit " ++ printComponent(v, c) ++ " do not match inputs of circuit " ++ printComponent(v, c'));
+    assert'(outputs'(c) == inputs'(c'), "Outputs of circuit " ++ printComponent(v,c) ++ " do not match inputs of circuit " ++ printComponent(v,c'));
     Composition(c, c')
 }
+
+/* Create a composition circuit */
+let compose = (c, c') => {
+    assert'(c.v == c'.v, "Circuits use different lattices!");
+    {v:c.v, c:compose'(c.v, c.c,c'.c)};
+}
+
 
 /* Compose many circuits at once */
 let rec composemany = (xs) => {
@@ -130,8 +131,21 @@ let exp = (f, x) => {
     tensor(exp'(f, x));
 }
 
+/* Create a function. */
 let func = (v, id, ins, outs, f) =>
     {v:v, c: Function(id,ins,outs,f)}
+
+/* Create a function that acts as a 'black box' - it transforms the inputs into the outputs but we don't know how exactly. */
+let funcBlackBox = (v, id, ins, outs) => {
+    let rec bb = Function(id,ins,outs, (v,c) => {
+                    let id' = switch(c){
+                    | Tensor(xs) => printComponentList(v,xs)
+                    | _          => printComponent(v,c)
+                    };
+                    Function(id ++ "(" ++ id' ++ ")", inputs'(c), outs, (v,c) => composemany([{v,c},{v,c:bb}]).c)
+                });
+    {v:v, c: bb}
+}
 
 let macro = (v, id, f) =>
     {v:v, c: Macro(id, f)}
@@ -200,7 +214,8 @@ let swapRegEx = [%bs.re "/x\{([0-9]+),([0-9]+)\}/"];
 let dforkRegEx = [%bs.re "/\/\\\{([0-9]+)\}/"];
 
 /* Create a delay */
-let delay = (n) => Delay(n);
+let delay = (v,n) => {v:v, c:Delay(n)}
+let delayRegEx = [%bs.re "/o\{([0-9]+)\}/"];
 
 /* Create a trace */
 let trace = (x, f) => {

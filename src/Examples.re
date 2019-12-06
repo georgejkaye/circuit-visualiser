@@ -49,10 +49,14 @@ let fullAdderApplied = composemany([
 
 let fullAdderReduced = evaluate(fullAdderApplied)
 
-let exampleFunctions = List.concat([specialMorphisms(v), [Function("F", 1, 1, (x,y) => y), Function("G", 2, 1, (x,y) => y), Function("id", 1, 1, (x,y) => y)]])
+let exampleFunctions = List.concat([specialMorphisms(v), 
+                                    [Function("F", 1, 1, (_,y) => y), 
+                                     Function("G", 2, 1, (_,y) => y), 
+                                     Function("id", 1, 1, (_,y) => y)
+                                    ]])
 
-/*let exampleString = "(t * f * (t . id) * f) . x{2,2} . (F * F) . (F * F) . \\/{2}";*/
-let exampleString = "t * F . G" 
+let exampleString = "(t * f * (t . id) * f) . x{2,2} . (G * G) . (F * F) . \\/";
+/*let exampleString = "t * F . G" */
 
 let exampleTokenised = tokenise(exampleString);
 Js.log(printStringList(exampleTokenised));
