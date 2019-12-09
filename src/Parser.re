@@ -4,11 +4,13 @@ open Lattices;
 
 let functionLookup = (func,funcs) => {
     switch(List.find((x) => switch(x){
-                        | Function(id,ins,outs,f) => (id == func)
+                        | Function(id,_,_,_) => (id == func)
+                        | _ => failwith("Unexpected non-function found in function library")
                         }, funcs)){
                             | item => item
                             | exception Not_found => failwith("Function not in library")
                         }
+                        
 }
 
 let stringToChars = (s) => {List.map((i => String.get(s,i)), range(String.length(s) - 1))}
@@ -55,7 +57,7 @@ and scanForNextComposition' = (xs, i, bracks) => {
     | [")",...xs] => scanForNextComposition'(xs, i+1, bracks-1)
     | ["]",...xs] => scanForNextComposition'(xs, i+1, bracks-1)
     | [".",...xs] => bracks == 0 ? i : scanForNextComposition'(xs, i+1, bracks)
-    | [x,...xs]   => scanForNextComposition'(xs, i+1, bracks)
+    | [_,...xs]   => scanForNextComposition'(xs, i+1, bracks)
     }
 }
 
@@ -75,7 +77,7 @@ and parse' = (v, funcs, i, tokens, stack, tensor) => {
                                 | "("   => let j = scanForClosingBracket(xs, 1, ")"); 
                                                     let parsedSubterm = parse'(v, funcs, i+1, slice(xs, 0, j-1), [], false);
                                                     parse'(v, funcs, j+1, trim(xs,j+1), stack @ [parsedSubterm], tensor)
-                                | "("   => let j = scanForClosingBracket(xs, 1, "]"); 
+                                | "["   => let j = scanForClosingBracket(xs, 1, "]"); 
                                                     let parsedSubterm = parse'(v, funcs, i+1, slice(xs, 0, j-1), [], false);
                                                     parse'(v, funcs, j+1, trim(xs,j+1), stack @ [parsedSubterm], tensor)
                                 | ")"   => failwith("parse error, char " ++ string_of_int(i) ++ ": unexpected ) encountered")
@@ -106,7 +108,7 @@ and parse' = (v, funcs, i, tokens, stack, tensor) => {
                                                         let x = int_of_string(m[1]);
                                                         parse'(v, funcs, i+1, xs, stack @ [delay(v,x).c], tensor)          
                                             | _      => if(!tensor && List.length(stack) > 0 ){
-                                                            failwith("unexpected term encountered, did you forget a composition or tensor?") 
+                                                            failwith("parse error, char " ++ string_of_int(i) ++ ": unexpected term encountered, did you forget a composition or tensor?") 
                                                         } else {
                                                             let sym = v.parse(a); 
                                                             let subterm = fst(sym) ? Value(snd(sym)) : functionLookup(a,funcs);

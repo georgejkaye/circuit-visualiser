@@ -93,11 +93,14 @@ let rec evaluateOneStepTensor = (v,xs) => {
         | Identity(_)        =>  x
         | Function(id,_,_,f) => switch(x){
                                 | Value(a)   => f(v,x)
-                                | Tensor(xs) => if(tensorAllValues(xs)) {
-                                                    f(v,x)
-                                                } else {
-                                                    Function(id ++ "(" ++ printComponentListCommas(v,xs) ++ ")", inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v:v,c:x},{v,c:y}]).c) 
-                                                }
+                                | Tensor(xs) => switch(f(v,x)){
+                                                | item => f(v,x)
+                                                | exception _ => Function(id ++ "(" ++ printComponentListCommas(v,xs) ++ ")", inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v,c:x},{v,c:y}]).c) 
+                                }
+                                | Function(_,_,_,_) => switch(f(v,x)){
+                                                        | item        => item
+                                                        | exception _ => Function(id ++ "(" ++ printComponent(v,x) ++ ")", inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v,c:x},{v,c:y}]).c) 
+                                                        }
                                 }
         | Tensor(ys)        =>  applyTensor(v,x,ys)
         | Composition(a,b)  =>  Composition(evaluateOneStepComposition(v,x,a),b)

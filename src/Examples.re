@@ -51,12 +51,15 @@ let fullAdderReduced = evaluate(fullAdderApplied)
 
 let exampleFunctions = List.concat([specialMorphisms(v), 
                                     [Function("F", 1, 1, (_,y) => y), 
-                                     Function("G", 2, 1, (_,y) => y), 
-                                     Function("id", 1, 1, (_,y) => y)
+                                     funcBlackBox(v, "G", 2, 2).c, 
+                                     Function("id", 1, 1, (_,y) => y),
+                                     andGate(v).c,
+                                     orGate(v).c,
                                     ]])
 
-let exampleString = "(t * f * (t . id) * f) . x{2,2} . (G * G) . (F * F) . \\/";
+/*let exampleString = "(t * f * (t . id) * f) . x{2,2} . (G * G) . (AND * AND) . \\/";*/
 /*let exampleString = "t * F . G" */
+let exampleString = "(G * G) . (AND * AND) . \\/"
 
 let exampleTokenised = tokenise(exampleString);
 Js.log(printStringList(exampleTokenised));

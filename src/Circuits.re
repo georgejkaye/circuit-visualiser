@@ -139,7 +139,7 @@ let func = (v, id, ins, outs, f) =>
 let funcBlackBox = (v, id, ins, outs) => {
     let rec bb = Function(id,ins,outs, (v,c) => {
                     let id' = switch(c){
-                    | Tensor(xs) => printComponentList(v,xs)
+                    | Tensor(xs) => printComponentListCommas(v,xs)
                     | _          => printComponent(v,c)
                     };
                     Function(id ++ "(" ++ id' ++ ")", inputs'(c), outs, (v,c) => composemany([{v,c},{v,c:bb}]).c)
@@ -161,7 +161,7 @@ let rec join = (v) => func(v,{js|⋎|js},
                             1, 
                             (v, c) => switch(c){
                                         | Tensor([Value(x), Value(y)]) => Value(v.joinOp(x,y))
-                                        | Tensor([x, y]) => Function(printComponent(v,x) ++ {js|⊔|js} ++ printComponent(v,y), inputs'(c), 1, (v,c) => compose({v,c}, join(v)).c)
+                                        | Tensor([x, y]) => Function(printComponent(v,x) ++ {js| ⊔ |js} ++ printComponent(v,y), inputs'(c), 1, (v,c) => compose({v,c}, join(v)).c)
                                         | _ => failwith("Join can only take two arguments")
                                     }
                         )  
