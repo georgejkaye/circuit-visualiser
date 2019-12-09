@@ -46,4 +46,4 @@ let notGate = (v) => {v:v, c:Function({js|NOT|js}, 1, 1, (v, c) =>
                                                  | Value(a) => Value(v.notOp(a))
                                                  })}
 
-let id = (v, n) => func(v,"id[" ++ string_of_int(n) ++ "]",n,n, (_,c) => c)
+let id = (v, n) => func(v,"id{" ++ string_of_int(n) ++ "}",n,n, (_,c) => c)

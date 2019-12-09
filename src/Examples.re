@@ -49,20 +49,35 @@ let fullAdderApplied = composemany([
 
 let fullAdderReduced = evaluate(fullAdderApplied)
 
+let multiplexer = func'("m", 3, 1, (v,c) => switch(c){
+                                                | Tensor([Value(c),a,b]) => c == Lattices.True ? a : b 
+                                                | _ => failwith("Bad input")
+                                                }
+                  )
+
 let exampleFunctions = List.concat([specialMorphisms(v), 
-                                    [Function("F", 1, 1, (_,y) => y), 
-                                     funcBlackBox(v, "G", 2, 2).c, 
-                                     Function("id", 1, 1, (_,y) => y),
+                                    [id(v,1).c,
+                                     funcBlackBox(v, "F", 1, 1).c,
+                                     funcBlackBox(v, "G", 1, 1).c, 
+                                     funcBlackBox(v, "A", 2, 2).c, 
+                                     funcBlackBox(v, "H", 1, 2).c, 
                                      andGate(v).c,
                                      orGate(v).c,
+                                     multiplexer
                                     ]])
 
-/*let exampleString = "(t * f * (t . id) * f) . x{2,2} . (G * G) . (AND * AND) . \\/";*/
-/*let exampleString = "t * F . G" */
-let exampleString = "(G * G) . (AND * AND) . \\/"
+let exampleString = "(t * f * (t . id{1}) * f) . x{2,2} . (A * A) . (AND * AND) . \\/";
+/*let exampleString = "t * H . A" */ 
+/* let exampleString = "(A * A) . (AND * AND) . \\/" */
+/*let exampleString = "Tr{1}(A))"*/
 
-let exampleTokenised = tokenise(exampleString);
-Js.log(printStringList(exampleTokenised));
+let exampleCombinational = "Tr{1}((x{1,1} * /\\) . (/\\ * x{1,1} * 1) . (/\\ * (m . G . /\\) * 1) . (3 * x{1,1}) . (1 * (m . F) * 1) . (x{1,1} * 1) . (/\\ * 2)) . (x{1,1} * 1) . m"
+
+/*let exampleTokenised = tokenise(exampleString);
+let exampleParsed = parse(v, exampleFunctions, exampleTokenised);
+let exampleCircuit = {v:v,c:exampleParsed};*/
+
+let exampleTokenised = tokenise(exampleCombinational);
 let exampleParsed = parse(v, exampleFunctions, exampleTokenised);
 let exampleCircuit = {v:v,c:exampleParsed};
 

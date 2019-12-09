@@ -116,7 +116,3 @@ let simpleLattice: lattice(simpleLatticeElems) = {
     print: printSimpleLattice,
     parse: simpleParse
 }
-
-Js.log(simpleLattice.print(simpleLattice.andOp(True, True)));
-Js.log(simpleLattice.leq(Bottom, True));
-Js.log(simpleLattice.leq(False, True));

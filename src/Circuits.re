@@ -132,8 +132,9 @@ let exp = (f, x) => {
 }
 
 /* Create a function. */
+let func' = (id, ins, outs, f) => Function(id,ins,outs,f)
 let func = (v, id, ins, outs, f) =>
-    {v:v, c: Function(id,ins,outs,f)}
+    {v:v, c: func'(id,ins,outs,f)}
 
 /* Create a function that acts as a 'black box' - it transforms the inputs into the outputs but we don't know how exactly. */
 let funcBlackBox = (v, id, ins, outs) => {
@@ -218,14 +219,28 @@ let delay = (v,n) => {v:v, c:Delay(n)}
 let delayRegEx = [%bs.re "/o\{([0-9]+)\}/"];
 
 /* Create a trace */
-let trace = (x, f) => {
-    assert'(inputs(f) >= x && outputs(f) >= x, "Inputs and outputs of circuit " ++ printCircuit(f) ++ " are less than the size of the trace.");
-    {v:f.v, c:Trace(x, f.c)}
+let trace' = (v, x, f) => {
+    assert'(inputs'(f) >= x && outputs'(f) >= x, "Inputs and outputs of circuit " ++ printComponent(v,f) ++ " are less than the size of the trace.");
+    Trace(x, f)
 }
 
-/* Create an iteration */
-let iter = (f) => {
-    assert'(inputs(f) >= outputs(f), "Not enough inputs of circuit " ++ printCircuit(f) ++ " to iterate.");
-    {v:f.v, c:Iter(outputs(f), f.c)}
+let trace = (x, f) => {
+    {v:f.v, c:trace'(f.v, x, f.c)}
 }
-                  
+
+let traceRegEx = [%bs.re "/Tr\{([0-9]+)\}/"]
+
+/* Create an iteration */
+let iter' = (v,f) => {
+    assert'(inputs'(f) >= outputs'(f), "Not enough inputs of circuit " ++ printComponent(v,f) ++ " to iterate.");
+    Iter(outputs'(f), f)
+}
+
+let iter = (f) => {
+    {v:f.v, c:iter'(f.v, f.c)}
+}
+
+let iterRegEx = [%bs.re "/iter\{([0-9]+)\}/"]
+let iterRegEx2 = [%bs.re "/iter/"]
+
+let constructRegExes = [swapRegEx, djoinRegEx, dforkRegEx, delayRegEx, traceRegEx, iterRegEx, iterRegEx2]
