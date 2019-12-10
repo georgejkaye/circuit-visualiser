@@ -20,45 +20,11 @@ and circuit('element) = {
     c: component('element),
 }
 
-let rec inputs' = (c) => {
-    switch (c) {
-    | Value(_)               => 0
-    | Identity(x)            => x
-    | Composition(f, _)      => inputs'(f)
-    | Tensor(fs)             => List.fold_left(((no, comp) => no + inputs'(comp)), 0, fs)                        
-    | Function(_, x, _, _)   => x
-    | Delay(_)               => 1
-    | Trace(x, comp)         => inputs'(comp) - x
-    | Iter(x, comp)          => inputs'(comp) - x
-    | Input(_)               => 0   
-    | Output(_)              => 1
-    | Link(_, _, circuit)    => inputs'(circuit)
-    | Macro(_,f)             => inputs'(f)
-    ;}
-}
+/************/
+/* Printing */
+/************/
 
-let inputs = ({c}) => inputs'(c)
-
-
-let rec outputs' = (c) => {
-    switch (c) {
-    | Value(_)               => 1
-    | Identity(x)            => x
-    | Composition(_, g)      => outputs'(g)
-    | Tensor(fs)             => List.fold_left(((no, comp) => no + outputs'(comp)), 0, fs)    
-    | Function(_, _, y, _)   => y
-    | Delay(_)               => 1
-    | Trace(x, comp)         => outputs'(comp) - x
-    | Iter(_, comp)          => outputs'(comp)
-    | Input(_)               => 1   
-    | Output(_)              => 0
-    | Link(_, _, circuit)    => outputs'(circuit)
-    | Macro (_,f)            => outputs'(f)
-    ;}
-}
-
-let outputs = ({c}) => outputs'(c)
-
+/* Helper for printComponent. */
 let rec printComponent' = (v, c, i) => {
     switch (c) {
     | Value(x)                          => v.print(x)
@@ -79,7 +45,10 @@ let rec printComponent' = (v, c, i) => {
     ;}
 }
 
+/* Get a string representation of a component */
 let printComponent = (v, c) => printComponent'(v, c, 0);
+
+/* Get a string representation of a circuit */
 let printCircuit = ({v,c}) => printComponent(v,c)
 
 /* Print a list of components in the form [c1 :: c2 :: c3 :: c4] */
@@ -87,6 +56,58 @@ let printComponentList = (v, xs) => printList(xs, (x) => printComponent(v,x));
 
 /* Print a list of components in the form [c1, c2, c3, c4] */
 let printComponentListCommas = (v, xs) => printListCommas(xs, (x) => printComponent(v,x));
+
+/****************/
+/* Input-output */
+/****************/
+
+/* Get the inputs of a component */
+let rec inputs' = (c) => {
+    switch (c) {
+    | Value(_)               => 0
+    | Identity(x)            => x
+    | Composition(f, _)      => inputs'(f)
+    | Tensor(fs)             => List.fold_left(((no, comp) => no + inputs'(comp)), 0, fs)                        
+    | Function(_, x, _, _)   => x
+    | Delay(_)               => 1
+    | Trace(x, comp)         => inputs'(comp) - x
+    | Iter(x, comp)          => inputs'(comp) - x
+    | Input(_)               => 0   
+    | Output(_)              => 1
+    | Link(_, _, circuit)    => inputs'(circuit)
+    | Macro(_,f)             => inputs'(f)
+    ;}
+}
+
+/* Get the inputs of a circuit */
+let inputs = ({c}) => inputs'(c)
+
+
+/* Get the outputs of a component */
+let rec outputs' = (c) => {
+    switch (c) {
+    | Value(_)               => 1
+    | Identity(x)            => x
+    | Composition(_, g)      => outputs'(g)
+    | Tensor(fs)             => List.fold_left(((no, comp) => no + outputs'(comp)), 0, fs)    
+    | Function(_, _, y, _)   => y
+    | Delay(_)               => 1
+    | Trace(x, comp)         => outputs'(comp) - x
+    | Iter(_, comp)          => outputs'(comp)
+    | Input(_)               => 1   
+    | Output(_)              => 0
+    | Link(_, _, circuit)    => outputs'(circuit)
+    | Macro (_,f)            => outputs'(f)
+    ;}
+}
+
+/* Get the outputs of a circuit */
+let outputs = ({c}) => outputs'(c)
+
+/**********************************************************/
+/* Safe constructors                                      */
+/* Use these to ensure ports are always mapped correctly! */
+/**********************************************************/
 
 /* Create a value */
 let value = (v,x) => {v:v, c:Value(x)}
@@ -106,6 +127,39 @@ let compose = (c, c') => {
     {v:c.v, c:compose'(c.v, c.c,c'.c)};
 }
 
+/* Create a tensor circuit */
+let tensor = (xs) => {
+    assert'(List.fold_left((x,y) => x && (y.v == List.hd(xs).v), true, xs), "Not all circuits use the same lattice!");
+    let ys = List.map((x => x.c), xs);
+    {v:List.hd(xs).v, c:Tensor(ys)}
+}
+
+/* Create a function component */
+let func' = (id, ins, outs, f) => Function(id,ins,outs,f)
+
+/* Create a function circuit */
+let func = (v, id, ins, outs, f) => {v:v, c: func'(id,ins,outs,f)}
+
+/* Create a function that acts as a 'black box' - it transforms the inputs into the outputs but we don't know how exactly. */
+let funcBlackBox = (v, id, ins, outs) => {
+    let rec bb = Function(id,ins,outs, (v,c) => {
+                    let id' = switch(c){
+                    | Tensor(xs) => printComponentListCommas(v,xs)
+                    | _          => printComponent(v,c)
+                    };
+                    Function(id ++ "(" ++ id' ++ ")", inputs'(c), outs, (v,c) => composemany([{v,c},{v,c:bb}]).c)
+                });
+    {v:v, c: bb}
+}
+
+/* Create a macro circuit */
+let macro = (v, id, f) =>
+    {v:v, c: Macro(id, f)}
+
+/*********************/
+/* Helpful shortcuts */
+/*********************/
+
 /* Compose many circuits at once */
 let rec composemany = (xs) => {
     assert'(List.fold_left((x,y) => x && (y.v == List.hd(xs).v), true, xs), "Not all circuits use the same lattice!");
@@ -116,12 +170,6 @@ let rec composemany = (xs) => {
     }
 }
 
-/* Create a tensor circuit */
-let tensor = (xs) => {
-    assert'(List.fold_left((x,y) => x && (y.v == List.hd(xs).v), true, xs), "Not all circuits use the same lattice!");
-    let ys = List.map((x => x.c), xs);
-    {v:List.hd(xs).v, c:Tensor(ys)}
-}
 
 /* Helper function for exp */
 let rec exp' = (f, x) => {
@@ -137,28 +185,10 @@ let exp = (f, x) => {
     tensor(exp'(f, x));
 }
 
-/* Create a function. */
-let func' = (id, ins, outs, f) => Function(id,ins,outs,f)
-let func = (v, id, ins, outs, f) =>
-    {v:v, c: func'(id,ins,outs,f)}
 
-/* Create a function that acts as a 'black box' - it transforms the inputs into the outputs but we don't know how exactly. */
-let funcBlackBox = (v, id, ins, outs) => {
-    let rec bb = Function(id,ins,outs, (v,c) => {
-                    let id' = switch(c){
-                    | Tensor(xs) => printComponentListCommas(v,xs)
-                    | _          => printComponent(v,c)
-                    };
-                    Function(id ++ "(" ++ id' ++ ")", inputs'(c), outs, (v,c) => composemany([{v,c},{v,c:bb}]).c)
-                });
-    {v:v, c: bb}
-}
-
-/* Create a macro */
-let macro = (v, id, f) =>
-    {v:v, c: Macro(id, f)}
-
+/*********************/
 /* Special morphisms */
+/*********************/
 
 /* Fork a wire into two wires */
 let fork = (v) => func(v,{js|⋏|js}, 1, 2, (_, c) => Tensor([c, c]));
@@ -217,30 +247,42 @@ let rec djoin = (v,n) => {
     macro(v, {js|∇{|js} ++ string_of_int(n) ++ "}", comp)
 }
 
+/*********/
+/* Delay */
+/*********/
+
 /* Create a delay */
 let delay = (v,n) => {v:v, c:Delay(n)}
 
-/* Create a trace */
+/***********************/
+/* Trace and iteration */
+/***********************/
+
+/* Create a trace component */
 let trace' = (v, x, f) => {
     assert'(inputs'(f) >= x && outputs'(f) >= x, "Inputs and outputs of circuit " ++ printComponent(v,f) ++ " are less than the size of the trace.");
     Trace(x, f)
 }
 
+/* Create a trace circuit */
 let trace = (x, f) => {
     {v:f.v, c:trace'(f.v, x, f.c)}
 }
 
-let traceRegEx = [%bs.re "/Tr\{([0-9]+)\}/"]
-
-/* Create an iteration */
+/* Create an iteration component */
 let iter' = (v,f) => {
     assert'(inputs'(f) >= outputs'(f), "Not enough inputs of circuit " ++ printComponent(v,f) ++ " to iterate.");
     Iter(outputs'(f), f)
 }
 
+/* Create an iteration circuit */
 let iter = (f) => {
     {v:f.v, c:iter'(f.v, f.c)}
 }
+
+/***********************/
+/* Regular expressions */
+/***********************/
 
 /* Regexes for various constructs */
 let exponentialSoloRegEx = [%bs.re "/\^([0-9]+)/"]
@@ -249,6 +291,7 @@ let delayRegEx = [%bs.re "/o\{([0-9]+)\}/"];
 let djoinRegEx = [%bs.re "/\\\\\/\{([0-9]+)\}/"];
 let swapRegEx = [%bs.re "/x\{([0-9]+),([0-9]+)\}/"];
 let dforkRegEx = [%bs.re "/\/\\\{([0-9]+)\}/"];
+let traceRegEx = [%bs.re "/Tr\{([0-9]+)\}/"]
 let iterRegEx = [%bs.re "/iter\{([0-9]+)\}/"]
 let iterRegEx2 = [%bs.re "/iter/"]
 
