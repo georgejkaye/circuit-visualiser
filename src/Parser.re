@@ -17,6 +17,13 @@ let functionLookup = (func,funcs) => {
 
 let stringToChars = (s) => {List.map((i => String.get(s,i)), range(String.length(s) - 1))}
 
+let openingBracketsRegEx = [%bs.re "/(\(|\[])/"]
+let closingBracketsRegEx = [%bs.re "/(\)|\])(\^[0-9]+)?/"]
+
+let match = (regex, string) =>{
+    Js.String.match(regex, string)
+}
+
 /* Tokenise an input string into terms and brackets */
 let rec tokenise = (string) => { (List.map((x) => String.init(List.length(x), (i) => (List.nth(x, i))), tokenise'(stringToChars(string), [])))}
 and tokenise' = (chars, current) => {
@@ -56,15 +63,12 @@ and scanForNextComposition' = (xs, i, bracks) => {
     | [] => i
     | ["(",...xs] => scanForNextComposition'(xs, i+1, bracks+1)
     | ["[",...xs] => scanForNextComposition'(xs, i+1, bracks+1)
-    | [")",...xs] => scanForNextComposition'(xs, i+1, bracks-1)
-    | ["]",...xs] => scanForNextComposition'(xs, i+1, bracks-1)
     | [".",...xs] => bracks == 0 ? i : scanForNextComposition'(xs, i+1, bracks)
-    | [_,...xs]   => scanForNextComposition'(xs, i+1, bracks)
+    | [x,...xs]   => switch(match(closingBracketsRegEx, x)){
+                     | Some(a) => scanForNextComposition'(xs, i+1, bracks-1)
+                     | None    => scanForNextComposition'(xs, i+1, bracks)
+                     }
     }
-}
-
-let match = (regex, string) =>{
-    Js.String.match(regex, string)
 }
 
 let rec makeRegExChecks = (i, checks, token) => {
@@ -78,6 +82,21 @@ let rec makeRegExChecks = (i, checks, token) => {
 }
 
 let checkForMatches = (token) => makeRegExChecks(0, constructRegExes, token)
+
+let checkForExponential = (token) => {
+    switch(match(exponentialRegEx, token)) {
+    | Some(x) => (x[1], int_of_string(x[2]))
+    | None    => (token, 1)
+    }
+}
+
+let rec generateTensor = (a, n) => {
+    switch(n) {
+    | 0 => []
+    | 1 => [a]
+    | n => [a, "*", ...generateTensor(a, n-1)] 
+    }
+}
 
 let rec parse = (v, funcs, tokens) => parse'(v, funcs, 1, tokens, [], false)
 and parse' = (v, funcs, i, tokens, stack, tensor) => {
@@ -99,23 +118,32 @@ and parse' = (v, funcs, i, tokens, stack, tensor) => {
                                 | "*"   => parseTensor(v, funcs, i, xs, stack, tensor)
                                 | "/\\" => parse'(v, funcs, i, [{js|⋏|js},...xs], stack, tensor)
                                 | "\\/" => parse'(v, funcs, i, [{js|⋎|js},...xs], stack, tensor)
-                                | a     => let matches = checkForMatches(a);
-                                           let m = snd(matches);
-                                           switch(fst(matches)){
-                                            | 0  => let x = int_of_string(m[1]);
-                                                    let y = int_of_string(m[2]);
-                                                    parse'(v, funcs, i+1, xs, stack @ [swap(v,x,y).c], tensor) 
-                                            | 1  => let x = int_of_string(m[1]);
-                                                    parse'(v, funcs, i+1, xs, stack @ [dfork(v,x).c], tensor) 
-                                            | 2  => let x = int_of_string(m[1]);
-                                                    parse'(v, funcs, i+1, xs, stack @ [djoin(v,x).c], tensor) 
-                                            | 3  => let x = int_of_string(m[1]);
-                                                    parse'(v, funcs, i+1, xs, stack @ [delay(v,x).c], tensor)  
-                                            | 4  => parseTrace(m, v, funcs, i, xs, stack, tensor)
-                                            | 5  => parseIteration(m, v, funcs, i, xs, stack, tensor)
-                                            | 6  => parseIteration(m, v, funcs, i, xs, stack, tensor)
-                                            | -1 => parseTerm(a, v, funcs, i, xs, stack, tensor)
-                                           }
+                                | a     => let exps = checkForExponential(a);
+                                           let a = fst(exps);
+                                           let n = snd(exps);
+                                           if(n > 1) {
+                                               parse'(v, funcs, i, generateTensor(a, n) @ xs, stack, tensor)
+                                           } else {
+
+                                                let matches = checkForMatches(a);
+                                                let m = snd(matches);
+
+                                                switch(fst(matches)){
+                                                    | 0  => let x = int_of_string(m[1]);
+                                                            let y = int_of_string(m[2]);
+                                                            parse'(v, funcs, i+1, xs, stack @ [swap(v,x,y).c], tensor) 
+                                                    | 1  => let x = int_of_string(m[1]);
+                                                            parse'(v, funcs, i+1, xs, stack @ [dfork(v,x).c], tensor) 
+                                                    | 2  => let x = int_of_string(m[1]);
+                                                            parse'(v, funcs, i+1, xs, stack @ [djoin(v,x).c], tensor) 
+                                                    | 3  => let x = int_of_string(m[1]);
+                                                            parse'(v, funcs, i+1, xs, stack @ [delay(v,x).c], tensor)  
+                                                    | 4  => parseTrace(m, v, funcs, i, xs, stack, tensor)
+                                                    | 5  => parseIteration(m, v, funcs, i, xs, stack, tensor)
+                                                    | 6  => parseIteration(m, v, funcs, i, xs, stack, tensor)
+                                                    | -1 => parseTerm(a, v, funcs, i, xs, stack, tensor)
+                                                }
+                                                }
                           }
     }
 } and parseBrackets = (close, v, funcs, i, xs, stack, tensor) => {

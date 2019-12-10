@@ -80,11 +80,16 @@ let rec printComponent = (v, c) => {
 
 let printCircuit = ({v,c}) => printComponent(v,c)
 
+/* Print a list of components in the form [c1 :: c2 :: c3 :: c4] */
 let printComponentList = (v, xs) => printList(xs, (x) => printComponent(v,x));
+
+/* Print a list of components in the form [c1, c2, c3, c4] */
 let printComponentListCommas = (v, xs) => printListCommas(xs, (x) => printComponent(v,x));
 
-let value = (v,v') => {v:v, c:Value(v')}
+/* Create a value */
+let value = (v,x) => {v:v, c:Value(x)}
 
+/* Create an identity */
 let identity = (v, n) => {v:v, c:Identity(n)}
 
 /* Compose two components together */
@@ -98,7 +103,6 @@ let compose = (c, c') => {
     assert'(c.v == c'.v, "Circuits use different lattices!");
     {v:c.v, c:compose'(c.v, c.c,c'.c)};
 }
-
 
 /* Compose many circuits at once */
 let rec composemany = (xs) => {
@@ -148,6 +152,7 @@ let funcBlackBox = (v, id, ins, outs) => {
     {v:v, c: bb}
 }
 
+/* Create a macro */
 let macro = (v, id, f) =>
     {v:v, c: Macro(id, f)}
 
@@ -210,13 +215,8 @@ let rec djoin = (v,n) => {
     macro(v, {js|∇{|js} ++ string_of_int(n) ++ "}", comp)
 }
 
-let djoinRegEx = [%bs.re "/\\\\\/\{([0-9]+)\}/"];
-let swapRegEx = [%bs.re "/x\{([0-9]+),([0-9]+)\}/"];
-let dforkRegEx = [%bs.re "/\/\\\{([0-9]+)\}/"];
-
 /* Create a delay */
 let delay = (v,n) => {v:v, c:Delay(n)}
-let delayRegEx = [%bs.re "/o\{([0-9]+)\}/"];
 
 /* Create a trace */
 let trace' = (v, x, f) => {
@@ -240,6 +240,12 @@ let iter = (f) => {
     {v:f.v, c:iter'(f.v, f.c)}
 }
 
+/* Regexes for various constructs */
+let exponentialRegEx = [%bs.re "/(.+)?\^([0-9]+)/"]
+let delayRegEx = [%bs.re "/o\{([0-9]+)\}/"];
+let djoinRegEx = [%bs.re "/\\\\\/\{([0-9]+)\}/"];
+let swapRegEx = [%bs.re "/x\{([0-9]+),([0-9]+)\}/"];
+let dforkRegEx = [%bs.re "/\/\\\{([0-9]+)\}/"];
 let iterRegEx = [%bs.re "/iter\{([0-9]+)\}/"]
 let iterRegEx2 = [%bs.re "/iter/"]
 
