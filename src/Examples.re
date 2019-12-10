@@ -66,20 +66,20 @@ let exampleFunctions = List.concat([specialMorphisms(v),
                                      multiplexer
                                     ]])
 
-let exampleString = "(t^2 * (t . id{1})^2) . x{2,2} . (A * A) . (AND * AND) . \\/";
+let exampleString = "Tr{1}((1 * t^2 * (t . id{1})^2) . 1 * x{2,2} . (1 * A * A) . (1 * AND * AND) . 1 * \\/)^2";
 /*let exampleString = "t * H . A" */ 
 /* let exampleString = "(A * A) . (AND * AND) . \\/" */
 /*let exampleString = "Tr{1}(A))"*/
 
 let exampleCombinational = "Tr{1}((x{1,1} * /\\) . (/\\ * x{1,1} * 1) . (/\\ * (m . G . /\\) * 1) . (3 * x{1,1}) . (1 * (m . F) * 1) . (x{1,1} * 1) . (/\\ * 2)) . (x{1,1} * 1) . m"
 
-let exampleTokenised = tokenise(exampleString);
+/* let exampleTokenised = tokenise(exampleString);
+let exampleParsed = parse(v, exampleFunctions, exampleTokenised);
+let exampleCircuit = {v:v,c:exampleParsed}; */
+
+let exampleTokenised = tokenise(exampleCombinational);
 let exampleParsed = parse(v, exampleFunctions, exampleTokenised);
 let exampleCircuit = {v:v,c:exampleParsed};
-
-/*let exampleTokenised = tokenise(exampleCombinational);
-let exampleParsed = parse(v, exampleFunctions, exampleTokenised);
-let exampleCircuit = {v:v,c:exampleParsed};*/
 
 let exampleReduced = evaluate(exampleCircuit);
 

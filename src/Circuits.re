@@ -59,25 +59,27 @@ let rec outputs' = (c) => {
 
 let outputs = ({c}) => outputs'(c)
 
-let rec printComponent = (v, c) => {
+let rec printComponent' = (v, c, i) => {
     switch (c) {
     | Value(x)                          => v.print(x)
     | Identity(x)                       => string_of_int(x)
-    | Composition(f, g)                 => "(" ++ printComponent(v,f) ++ {js| ⋅ |js} ++ printComponent(v,g) ++ ")"
+    | Composition(f, g)                 => let b = printComponent'(v,f,0) ++ {js| ⋅ |js} ++ printComponent'(v,g,0);
+                                           i == 0 ? b : "(" ++ b ++ ")"
     | Tensor([])                        => "[]"
-    | Tensor([x])                       => printComponent(v,x)
-    | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent(v,comp)), printComponent(v,f), tl)
+    | Tensor([x])                       => printComponent'(v,x,i+1)
+    | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent'(v,comp, i+1)), printComponent'(v,f, i+1), tl)
     | Function(id, _, _, _)             => id
     | Delay(x)                          => {js|ẟ{|js} ++ string_of_int(x) ++ "}"
-    | Trace(x, component)               => "Tr{" ++ string_of_int(x) ++ "}(" ++ printComponent(v,component) ++ ")" 
-    | Iter(x, component)                => "iter{" ++ string_of_int(x) ++ "}(" ++ printComponent(v,component) ++ ")" 
+    | Trace(x, component)               => "Tr{" ++ string_of_int(x) ++ "}(" ++ printComponent'(v,component,0) ++ ")" 
+    | Iter(x, component)                => "iter{" ++ string_of_int(x) ++ "}(" ++ printComponent'(v,component,0) ++ ")" 
     | Input(int)                        => ":" ++ string_of_int(int)   
     | Output(int)                       => string_of_int(int) ++ ":"
-    | Link(inlink, outlink, circuit)    => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printComponent(v,circuit) 
+    | Link(inlink, outlink, circuit)    => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printComponent'(v,circuit,i) 
     | Macro(id, _)                      => id
     ;}
 }
 
+let printComponent = (v, c) => printComponent'(v, c, 0);
 let printCircuit = ({v,c}) => printComponent(v,c)
 
 /* Print a list of components in the form [c1 :: c2 :: c3 :: c4] */
