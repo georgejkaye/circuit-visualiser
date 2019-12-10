@@ -94,3 +94,4 @@ and trim' = (xs, b, n) => {
     | [x,...xs] => n == b ? xs : trim'(xs, b, n + 1)      
     }
 }
+

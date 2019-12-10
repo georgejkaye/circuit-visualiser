@@ -36,7 +36,7 @@ let halfAdderReduced_12 = evaluateOneStep(halfAdderReduced_11);
 let fullAdder = {
     composemany([
         tensor([dfork(v,2), identity(v,1)]),
-        swap(v,2,1),
+        tensor([identity(v,2), swap(v,2,1)]),
         tensor([xorGate(v), identity(v,3)]),
         tensor([dfork(v,2), identity(v,2)]),
         tensor([xorGate(v), andGate(v), andGate(v)]),
@@ -65,24 +65,37 @@ let exampleFunctions = List.concat([specialMorphisms(v),
                                      funcBlackBox(v, "H", 1, 2).c, 
                                      andGate(v).c,
                                      orGate(v).c,
-                                     multiplexer
+                                     multiplexer,
+                                     first(v).c,
+                                     second(v).c,
                                     ]])
 
-let exampleString = "Tr{1}((1 * t^2 * (t . id{1})^2) . 1 * x{2,2} . (1 * A * A) . (1 * AND * AND) . 1 * \\/)^2";
+/*let exampleString = "Tr{1}((1 * t^2 * (t . id{1})^2) . 1 * x{2,2} . (1 * A * A) . (1 * AND * AND) . 1 * \\/)^2";*/
 /*let exampleString = "t * H . A" */ 
 /* let exampleString = "(A * A) . (AND * AND) . \\/" */
 /*let exampleString = "Tr{1}(A))"*/
+let exampleString = "\x,y. x * 1 . 1 * y . fst"
 
-let exampleCombinational = "Tr{1}((x{1,1} * /\\) . (/\\ * x{1,1} * 1) . (/\\ * (m . G . /\\) * 1) . (3 * x{1,1}) . (1 * (m . F) * 1) . (x{1,1} * 1) . (/\\ * 2)) . (x{1,1} * 1) . m"
+let exampleCombinational = "f * t . Tr{1}((x{1,1} * /\\) . (/\\ * x{1,1} * 1) . (/\\ * (m . G . /\\) * 1) . (3 * x{1,1}) . (1 * (m . F) * 1) . (x{1,1} * 1) . (/\\ * 2)) . (x{1,1} * 1) . m"
 
-/* let exampleTokenised = tokenise(exampleString);
+let exampleTokenised = tokenise(exampleString);
 let exampleParsed = parse(v, exampleFunctions, exampleTokenised);
-let exampleCircuit = {v:v,c:exampleParsed}; */
+let exampleCircuit = {v:v,c:fst(exampleParsed)};
 
-let exampleTokenised = tokenise(exampleCombinational);
+/*let exampleTokenised = tokenise(exampleCombinational);
 let exampleParsed = parse(v, exampleFunctions, exampleTokenised);
-let exampleCircuit = {v:v,c:exampleParsed};
+let exampleCircuit = {v:v,c:fst(exampleParsed)};*/
 
-let exampleReduced = evaluate(exampleCircuit);
+let rec evaluateStepNo = (circuit, n) => {
+    Js.log(printCircuit(circuit));
+    switch(n) {
+    | 0 => circuit
+    | n => evaluateStepNo(evaluateOneStep(circuit), n-1)
+    }
+}
+
+let exampleReduced = exampleCircuit /*evaluateStepNo(exampleCircuit, 5)*/
+
+/*let exampleReduced = evaluate(exampleCircuit);*/
 
 

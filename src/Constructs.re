@@ -41,7 +41,7 @@ let orGate = (v) => {v:v, c:Function({js|OR|js}, 2, 1, (v, c) =>
 let xorGate = (v) => {v:v, c:Function({js|XOR|js}, 2, 1, (v, c) =>     
                                             switch(c){
                                             | Tensor([Value(a),Value(b)]) => Value(v.andOp(v.notOp(v.andOp(a, b)), v.orOp(a,b)))
-                                            | _ => failwith("Bad input");
+                                            | _ => failwith("Bad input")
                                             }
                                      )
                      }
@@ -52,3 +52,13 @@ let notGate = (v) => {v:v, c:Function({js|NOT|js}, 1, 1, (v, c) =>
                                                  })}
 
 let id = (v, n) => func(v,"id{" ++ string_of_int(n) ++ "}",n,n, (_,c) => c)
+
+let first = (v) => func(v, "fst", 2, 1, (_,c) => switch(c){
+                                          | Tensor([a,b]) => a
+                                          | _ => failwith("Bad input")
+                                          })
+
+let second = (v) => func(v, "snd", 2, 1, (_,c) => switch(c){
+       | Tensor([a,b]) => b
+       | _ => failwith("Bad input")
+       })

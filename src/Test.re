@@ -33,7 +33,7 @@ let make = () => {
             <h3>(str("Parsing examples"))</h3>
             <p><b>(str("Input string: "))</b>(str(Examples.exampleString))</p>
             <p><b>(str("Tokenised input: "))</b>(str(Helpers.printStringList(Examples.exampleTokenised)))</p>
-            <p><b>(str("Parsed input: "))</b>(str(Circuits.printComponent(Constructs.v, Examples.exampleParsed)))</p>
+            <p><b>(str("Parsed input: "))</b>(str(Circuits.printComponent(Constructs.v, fst(Examples.exampleParsed))))</p>
             <p><b>(str("Reduced input: "))</b>(str(Circuits.printCircuit(Examples.exampleReduced)))</p>
         </div>
     </div>

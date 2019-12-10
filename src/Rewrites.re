@@ -82,6 +82,44 @@ let rec tensorAllValues = (xs) => {
     }
 }
 
+/* Trace rewrites */
+let traceAsIteration = (v,trace) => {
+    switch (trace) {
+    | Trace(x, f)    =>  composemany([
+                                iter(
+                                    composemany([
+                                        tensor([
+                                            identity(v,x),
+                                            exp(stub(v),outputs'(trace)),
+                                            identity(v, inputs'(trace))
+                                        ]),
+                                        {v:v,c:f}
+                                    ])
+                                ),
+                                tensor([
+                                    exp(stub(v), x),
+                                    identity(v, outputs'(trace))
+                                ]),
+                            ]).c
+    | _ => failwith("This is not a trace")
+    }
+}
+
+let unfoldIteration = (v, trace) => {
+    switch(trace) {
+    | Iter(x, f) => {
+        composemany'(v, [
+            dfork(v, inputs'(trace)).c,
+            tensor'(v, [
+                trace,
+                identity(v,inputs'(trace)).c
+            ]),
+            f
+        ])
+    }
+    }
+}
+
 /* Perform one evaluation step on a circuit */
 let rec evaluateOneStep = ({v, c}) => {
     Js.log("evaluateOneStep " ++ printComponent(v,c));
@@ -91,8 +129,8 @@ let rec evaluateOneStep = ({v, c}) => {
         } else {
             switch(c){
             | Macro(_,f)       => f
-            | Trace(x,f)       => Trace(x,evaluateOneStep({v:v,c:f}).c)
-            | Iter(x,f)        => Iter(x,evaluateOneStep({v:v,c:f}).c)
+            | Trace(x,f)       => traceAsIteration(v,c)
+            | Iter(x,f)        => unfoldIteration(v,c)
             | Tensor(xs)       => Tensor(evaluateOneStepTensor(v,xs))
             | Composition(x,y) => evaluateOneStepComposition(v,x,y)
             | _                => failwith("todo evaluateOneStep " ++ printCircuit({v:v,c:c}))
@@ -145,25 +183,3 @@ let rec evaluate = (orig) => {
     }
 }
 
-/* Trace rewrites */
-let traceAsIteration = (trace) => {
-    switch (trace.c) {
-    | Trace(x, f)    =>  composemany([
-                                iter(
-                                    composemany([
-                                        tensor([
-                                            identity(trace.v,x),
-                                            exp(stub(trace.v),outputs(trace)),
-                                            identity(trace.v, inputs'(f))
-                                        ]),
-                                        {v:trace.v,c:f}
-                                    ])
-                                ),
-                                tensor([
-                                    exp(stub(trace.v), x),
-                                    identity(trace.v, outputs(trace))
-                                ]),
-                            ])
-    | _ => failwith("This is not a trace")
-    }
-}

@@ -42,9 +42,9 @@ let rec printComponent' = (v, c, i) => {
     | Delay(x)                          => {js|ẟ{|js} ++ string_of_int(x) ++ "}"
     | Trace(x, component)               => "Tr{" ++ string_of_int(x) ++ "}(" ++ printComponent'(v,component,0) ++ ")" 
     | Iter(x, component)                => "iter{" ++ string_of_int(x) ++ "}(" ++ printComponent'(v,component,0) ++ ")" 
-    | Input(int)                        => ":" ++ string_of_int(int)   
-    | Output(int)                       => string_of_int(int) ++ ":"
-    | Link(inlink, outlink, circuit)    => "|" ++ string_of_int(inlink) ++ "-" ++ string_of_int(outlink) ++ "|" ++ printComponent'(v,circuit,i) 
+    | Input(int)                        => "|" ++ string_of_int(int) ++ "|"   
+    | Output(int)                       => "|" ++ string_of_int(int) ++ "|"
+    | Link(inlink, outlink, circuit)    => "\\" ++ string_of_int(inlink) ++ "," ++ string_of_int(outlink) ++ ". " ++ printComponent'(v,circuit,i) 
     | Macro(id, _)                      => id
     ;}
 }
@@ -121,6 +121,7 @@ let identity = (v, n) => {v:v, c:Identity(n)}
 
 /* Compose two components together */
 let compose' = (v, c, c') => {
+    Js.log("composing " ++ printComponent(v,c) ++ " and " ++ printComponent(v,c'))
     assert'(outputs'(c) == inputs'(c'), "Outputs of circuit " ++ printComponent(v,c) ++ " do not match inputs of circuit " ++ printComponent(v,c'));
     Composition(c, c')
 }
@@ -136,6 +137,11 @@ let tensor = (xs) => {
     assert'(List.fold_left((x,y) => x && (y.v == List.hd(xs).v), true, xs), "Not all circuits use the same lattice!");
     let ys = List.map((x => x.c), xs);
     {v:List.hd(xs).v, c:Tensor(ys)}
+}
+
+/* Create a tensor component */
+let tensor' = (v, xs) => {
+    Tensor(xs)
 }
 
 /* Create a function component */
@@ -158,7 +164,16 @@ let rec composemany = (xs) => {
     switch(xs){
     | []         => failwith("no args")
     | [x]        => x
-    | [x, ...xs] => {v:List.hd(xs).v, c:Composition(x.c, composemany(xs).c)}
+    | [x, ...xs] => compose(x, composemany(xs))
+    }
+}
+
+/* Compose many components at once */
+let rec composemany' = (v, xs) => {
+    switch(xs){
+    | []         => failwith("no args")
+    | [x]        => x
+    | [x, ...xs] => compose'(v, x, composemany'(v, xs))
     }
 }
 
@@ -297,5 +312,6 @@ let dforkRegEx = [%bs.re "/\/\\\{([0-9]+)\}/"];
 let traceRegEx = [%bs.re "/Tr\{([0-9]+)\}/"]
 let iterRegEx = [%bs.re "/iter\{([0-9]+)\}/"]
 let iterRegEx2 = [%bs.re "/iter/"]
+let linkIntroRegEx = [%bs.re "/\\\\([a-z]+),([a-z]+)\./"]
 
-let constructRegExes = [swapRegEx, djoinRegEx, dforkRegEx, delayRegEx, traceRegEx, iterRegEx, iterRegEx2, exponentialSoloRegEx]
+let constructRegExes = [swapRegEx, djoinRegEx, dforkRegEx, delayRegEx, traceRegEx, iterRegEx, iterRegEx2, exponentialSoloRegEx, linkIntroRegEx]
