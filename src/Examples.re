@@ -66,7 +66,7 @@ let exampleFunctions = List.concat([specialMorphisms(v),
                                      multiplexer
                                     ]])
 
-let exampleString = "(t^2 * (t . id{1}) * f) . x{2,2} . (A * A) . (AND * AND) . \\/";
+let exampleString = "(t^2 * (t . id{1})^2) . x{2,2} . (A * A) . (AND * AND) . \\/";
 /*let exampleString = "t * H . A" */ 
 /* let exampleString = "(A * A) . (AND * AND) . \\/" */
 /*let exampleString = "Tr{1}(A))"*/

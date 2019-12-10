@@ -19,6 +19,8 @@ let stringToChars = (s) => {List.map((i => String.get(s,i)), range(String.length
 
 let openingBracketsRegEx = [%bs.re "/(\(|\[])/"]
 let closingBracketsRegEx = [%bs.re "/(\)|\])(\^[0-9]+)?/"]
+let roundBracketsClosingRegEx   = [%bs.re "/(\))(\^[0-9]+)?/"]
+let squareBracketsClosingRegEx   = [%bs.re "/(\])(\^[0-9]+)?/"]
 
 let match = (regex, string) =>{
     Js.String.match(regex, string)
@@ -34,24 +36,37 @@ and tokenise' = (chars, current) => {
     | [')', ...xs] => List.length(current) == 0 ? [[')'], ...tokenise'(xs, [])] : [List.rev(current), [')'], ...tokenise'(xs, [])]
     | ['[', ...xs] => List.length(current) == 0 ? [['['], ...tokenise'(xs, [])] : [List.rev(current), ['['], ...tokenise'(xs, [])]
     | [']', ...xs] => List.length(current) == 0 ? [[']'], ...tokenise'(xs, [])] : [List.rev(current), [']'], ...tokenise'(xs, [])]
+    | ['^', ...xs] => List.length(current) == 0 ? tokenise'(xs, ['^']) : [List.rev(current), ...tokenise'(xs, ['^'])]
     | [x, ...xs]   => tokenise'(xs, [x, ...current]) 
     }
 }
+
 let rec scanForClosingBracket = (xs, i, bracket) => scanForClosingBracket'(xs,i,0,bracket,[bracket])
 and scanForClosingBracket' = (xs, i, j, bracket, brackstack) => {
     switch(xs) {
     | []             => parseError(i, bracket ++ " expected")
     | ["(",...xs]    => scanForClosingBracket'(xs,i+1,j+1,bracket,[")",...brackstack])
     | ["[",...xs]    => scanForClosingBracket'(xs,i+1,j+1,bracket,["]",...brackstack])
-    | [x,...xs]      => if(x == bracket) { 
-                            if(List.length(brackstack) == 1 && List.hd(brackstack) == bracket){ 
-                                j
-                            } else { 
-                                List.length(brackstack) == 0 ? parseError(i, "unexpected " ++ bracket ++ " encountered") 
-                                                             : scanForClosingBracket'(xs,i+1,j+1,bracket,List.tl(brackstack))
-                            }
-                        } else {
-                            scanForClosingBracket'(xs,i+1,j+1,bracket,brackstack)
+    | [x,...xs]      => switch(match(closingBracketsRegEx, x)){
+                        | None => scanForClosingBracket'(xs,i+1,j+1,bracket,brackstack)
+                        | Some(x) => let a = x[1];                            
+                                     if(List.length(brackstack) == 0){
+                                        parseError(i, "unexpected " ++ a ++ " encountered") 
+                                     } else {
+                                        if(List.hd(brackstack) == a){
+                                            if(List.length(brackstack) == 1){
+                                                if(a == bracket){
+                                                    j
+                                                } else {
+                                                    parseError(i, "bracket " ++ bracket ++ " expected but not found")
+                                                }
+                                            } else {
+                                                scanForClosingBracket'(xs,i+1,j+1,bracket,List.tl(brackstack))
+                                            }
+                                        } else {
+                                            parseError(i, "bracket " ++ List.hd(brackstack) ++ " expected but " ++ a ++ " found")
+                                        }
+                                    }
                         }
     }
 }
@@ -98,8 +113,8 @@ let rec generateTensor = (a, n) => {
     }
 }
 
-let rec parse = (v, funcs, tokens) => parse'(v, funcs, 1, tokens, [], false)
-and parse' = (v, funcs, i, tokens, stack, tensor) => {
+let rec parse = (v, funcs, tokens) => parse'(v, funcs, 1, tokens, [], [], false)
+and parse' = (v, funcs, i, tokens, stack, lastterm, tensor) => {
     Js.log("parsing " ++ printStringList(tokens));
     switch(tokens){
         | [] => tensor ? 
@@ -114,52 +129,47 @@ and parse' = (v, funcs, i, tokens, stack, tensor) => {
                                 | ")"   => parseError(i, "unexpected ) encountered")
                                 | "]"   => parseError(i, "unexpected ] encountered")
                                 | "."   => List.length(stack) == 0 ? parseError(i, "unexpected * encountered")
-                                                                   : compose'(v, List.hd(stack), parse'(v, funcs, i+1, xs, List.tl(stack), tensor))
+                                                                   : compose'(v, List.hd(stack), parse'(v, funcs, i+1, xs, List.tl(stack), [], tensor))
                                 | "*"   => parseTensor(v, funcs, i, xs, stack, tensor)
-                                | "/\\" => parse'(v, funcs, i, [{js|⋏|js},...xs], stack, tensor)
-                                | "\\/" => parse'(v, funcs, i, [{js|⋎|js},...xs], stack, tensor)
-                                | a     => let exps = checkForExponential(a);
-                                           let a = fst(exps);
-                                           let n = snd(exps);
-                                           if(n > 1) {
-                                               parse'(v, funcs, i, generateTensor(a, n) @ xs, stack, tensor)
-                                           } else {
+                                | "/\\" => parse'(v, funcs, i, [{js|⋏|js},...xs], stack, [], tensor)
+                                | "\\/" => parse'(v, funcs, i, [{js|⋎|js},...xs], stack, [], tensor)
+                                | a     =>  let matches = checkForMatches(a);
+                                            let m = snd(matches);
 
-                                                let matches = checkForMatches(a);
-                                                let m = snd(matches);
-
-                                                switch(fst(matches)){
-                                                    | 0  => let x = int_of_string(m[1]);
-                                                            let y = int_of_string(m[2]);
-                                                            parse'(v, funcs, i+1, xs, stack @ [swap(v,x,y).c], tensor) 
-                                                    | 1  => let x = int_of_string(m[1]);
-                                                            parse'(v, funcs, i+1, xs, stack @ [dfork(v,x).c], tensor) 
-                                                    | 2  => let x = int_of_string(m[1]);
-                                                            parse'(v, funcs, i+1, xs, stack @ [djoin(v,x).c], tensor) 
-                                                    | 3  => let x = int_of_string(m[1]);
-                                                            parse'(v, funcs, i+1, xs, stack @ [delay(v,x).c], tensor)  
-                                                    | 4  => parseTrace(m, v, funcs, i, xs, stack, tensor)
-                                                    | 5  => parseIteration(m, v, funcs, i, xs, stack, tensor)
-                                                    | 6  => parseIteration(m, v, funcs, i, xs, stack, tensor)
-                                                    | -1 => parseTerm(a, v, funcs, i, xs, stack, tensor)
-                                                }
-                                                }
-                          }
+                                            switch(fst(matches)){
+                                                | 0  => let x = int_of_string(m[1]);
+                                                        let y = int_of_string(m[2]);
+                                                        parse'(v, funcs, i+1, xs, stack @ [swap(v,x,y).c], [swap(v,x,y).c], tensor) 
+                                                | 1  => let x = int_of_string(m[1]);
+                                                        parse'(v, funcs, i+1, xs, stack @ [dfork(v,x).c], [dfork(v,x).c], tensor) 
+                                                | 2  => let x = int_of_string(m[1]);
+                                                        parse'(v, funcs, i+1, xs, stack @ [djoin(v,x).c], [djoin(v,x).c], tensor) 
+                                                | 3  => let x = int_of_string(m[1]);
+                                                        parse'(v, funcs, i+1, xs, stack @ [delay(v,x).c], [delay(v,x).c], tensor)  
+                                                | 4  => parseTrace(m, v, funcs, i, xs, stack, tensor)
+                                                | 5  => parseIteration(m, v, funcs, i, xs, stack, tensor)
+                                                | 6  => parseIteration(m, v, funcs, i, xs, stack, tensor)
+                                                | 7  => parseExponential(m, v, funcs, i, xs, stack, lastterm, tensor)
+                                                | -1 => parseTerm(a, v, funcs, i, xs, stack, tensor)
+                                            }
+                                        }
     }
 } and parseBrackets = (close, v, funcs, i, xs, stack, tensor) => {
     
-    let j = scanForClosingBracket(xs, i, close); 
-    let parsedSubterm = parse'(v, funcs, i+1, slice(xs, 0, j-1), [], false);
-    parse'(v, funcs, j+1, trim(xs,j+1), stack @ [parsedSubterm], tensor)
+    let j = scanForClosingBracket(xs, i, close);
+    let parsedSubterm = parse'(v, funcs, i+1, slice(xs, 0, j-1), [], [], false);
+
+    parse'(v, funcs, j+1, trim(xs,j+1), stack @ [parsedSubterm], [parsedSubterm], tensor)
+
 
 } and parseTensor = (v, funcs, i, xs, stack, tensor) => {
   
     if(tensor){
-        parse'(v, funcs, i+1, xs, stack, tensor)
+        parse'(v, funcs, i+1, xs, stack, [], tensor)
      } else {
         let j = scanForNextComposition(xs, 0);
-                let parsedTensor = parse'(v, funcs, i+1, slice(xs,0,j-1),stack, true);
-                parse'(v, funcs, j, trim(xs,j), drop(stack,1) @ [parsedTensor], false);
+                let parsedTensor = parse'(v, funcs, i+1, slice(xs,0,j-1), stack,[],  true);
+                parse'(v, funcs, j, trim(xs,j), drop(stack,1) @ [parsedTensor], [], false);
      }
 
 } and parseTrace = (m, v, funcs, i, xs, stack, tensor) => {
@@ -169,8 +179,9 @@ and parse' = (v, funcs, i, tokens, stack, tensor) => {
         parseError(i, "trace expected, no expression found")
     } else {
         let j = scanForClosingBracket(List.tl(xs), i+6, ")")
-        let parsedTrace = parse'(v, funcs, i+6, slice(xs,1,j), [], false)
-        parse'(v, funcs, i+6+j+1, trim(xs,j+2), stack @ [trace'(v,x,parsedTrace)], tensor)
+        let parsedTrace = parse'(v, funcs, i+6, slice(xs,1,j), [], [], false)
+        let actualTrace = trace'(v,x,parsedTrace);
+        parse'(v, funcs, i+6+j+1, trim(xs,j+2), stack @ [actualTrace], [actualTrace], tensor)
     }
 
 } and parseIteration = (m, v, funcs, i, xs, stack, tensor) => {
@@ -179,9 +190,10 @@ and parse' = (v, funcs, i, tokens, stack, tensor) => {
     if(List.length(xs) == 0 || List.hd(xs) != "("){ 
         parseError(i, "iteration expected, no expression found")
     } else {
-        let j = scanForClosingBracket(List.tl(xs), i+6, ")")
-        let parsedIteration = parse'(v, funcs, i+6, slice(xs,1,j-1), [], false)
-        parse'(v, funcs, i+6+j+1, trim(xs,j+2), stack @ [iter'(v,parsedIteration)], tensor)
+        let j = scanForClosingBracket(List.tl(xs), i+6, ")");
+        let parsedIteration = parse'(v, funcs, i+6, slice(xs,1,j-1), [], [], false);
+        let actualIteration = iter'(v,parsedIteration)
+        parse'(v, funcs, i+6+j+1, trim(xs,j+2), stack @ [actualIteration], [actualIteration], tensor)
     }
 
 } and parseTerm = (a, v, funcs, i, xs, stack, tensor) => {
@@ -196,6 +208,25 @@ and parse' = (v, funcs, i, tokens, stack, tensor) => {
                         | item        => Identity(item)
                         | exception _ => functionLookup(a,funcs)
                         };
-        parse'(v, funcs, i+1, xs, stack @ [subterm], tensor)
+        parse'(v, funcs, i+1, xs, stack @ [subterm], [subterm], tensor)
     }  
+} and parseExponential = (m, v, funcs, i, xs, stack, lastterm, tensor) => {
+
+    let n = int_of_string(m[1]);
+
+    if(List.length(lastterm) != 1){
+        parseError(i, "exponential used without a valid term")
+    } else {
+        let newstack = processExponential(n,List.hd(lastterm),tensor);
+        parse'(v, funcs, i+1, xs, drop(stack,1) @ newstack, lastterm, tensor)
+    }
+
+} and processExponential = (n, term, tensor) => {
+    switch(n){ 
+    | 0 => [term]
+    | 1 => [term]
+    | n => tensor ?
+           [term, ...processExponential(n-1, term, tensor)] :
+           [Tensor([term,...processExponential(n-1,term,true)])]
+    }
 }

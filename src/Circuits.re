@@ -241,6 +241,7 @@ let iter = (f) => {
 }
 
 /* Regexes for various constructs */
+let exponentialSoloRegEx = [%bs.re "/\^([0-9]+)/"]
 let exponentialRegEx = [%bs.re "/(.+)?\^([0-9]+)/"]
 let delayRegEx = [%bs.re "/o\{([0-9]+)\}/"];
 let djoinRegEx = [%bs.re "/\\\\\/\{([0-9]+)\}/"];
@@ -249,4 +250,4 @@ let dforkRegEx = [%bs.re "/\/\\\{([0-9]+)\}/"];
 let iterRegEx = [%bs.re "/iter\{([0-9]+)\}/"]
 let iterRegEx2 = [%bs.re "/iter/"]
 
-let constructRegExes = [swapRegEx, djoinRegEx, dforkRegEx, delayRegEx, traceRegEx, iterRegEx, iterRegEx2]
+let constructRegExes = [swapRegEx, djoinRegEx, dforkRegEx, delayRegEx, traceRegEx, iterRegEx, iterRegEx2, exponentialSoloRegEx]
