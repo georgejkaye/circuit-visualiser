@@ -1,3 +1,8 @@
+/**
+ * File containing several useful constructs,
+ * such as common logic gates and multiplexers
+ */
+
 open Lattices;
 open Circuits;
 

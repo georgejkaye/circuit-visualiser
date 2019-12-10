@@ -1,3 +1,7 @@
+/**
+ * File containing circuit and component definitions
+ */
+
 open Helpers;
 open Lattices;
 
@@ -140,18 +144,6 @@ let func' = (id, ins, outs, f) => Function(id,ins,outs,f)
 /* Create a function circuit */
 let func = (v, id, ins, outs, f) => {v:v, c: func'(id,ins,outs,f)}
 
-/* Create a function that acts as a 'black box' - it transforms the inputs into the outputs but we don't know how exactly. */
-let funcBlackBox = (v, id, ins, outs) => {
-    let rec bb = Function(id,ins,outs, (v,c) => {
-                    let id' = switch(c){
-                    | Tensor(xs) => printComponentListCommas(v,xs)
-                    | _          => printComponent(v,c)
-                    };
-                    Function(id ++ "(" ++ id' ++ ")", inputs'(c), outs, (v,c) => composemany([{v,c},{v,c:bb}]).c)
-                });
-    {v:v, c: bb}
-}
-
 /* Create a macro circuit */
 let macro = (v, id, f) =>
     {v:v, c: Macro(id, f)}
@@ -185,6 +177,17 @@ let exp = (f, x) => {
     tensor(exp'(f, x));
 }
 
+/* Create a function that acts as a 'black box' - it transforms the inputs into the outputs but we don't know how exactly. */
+let funcBlackBox = (v, id, ins, outs) => {
+    let rec bb = Function(id,ins,outs, (v,c) => {
+                    let id' = switch(c){
+                    | Tensor(xs) => printComponentListCommas(v,xs)
+                    | _          => printComponent(v,c)
+                    };
+                    Function(id ++ "(" ++ id' ++ ")", inputs'(c), outs, (v,c) => composemany([{v,c},{v,c:bb}]).c)
+                });
+    {v:v, c: bb}
+}
 
 /*********************/
 /* Special morphisms */

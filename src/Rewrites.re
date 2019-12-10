@@ -1,3 +1,8 @@
+/**
+ * File containing functions for rewriting and
+ * evaluating circuits
+ */
+
 open Circuits;
 open Helpers;
 
@@ -66,6 +71,7 @@ let rec applyTensor = (v, arg, ys) => {
     }
 }
 
+/* Check if all the elements of a tensor are values */
 let rec tensorAllValues = (xs) => {
     switch(xs){
     | []                => false
@@ -76,7 +82,25 @@ let rec tensorAllValues = (xs) => {
     }
 }
 
-let rec evaluateOneStepTensor = (v,xs) => {
+/* Perform one evaluation step on a circuit */
+let rec evaluateOneStep = ({v, c}) => {
+    Js.log("evaluateOneStep " ++ printComponent(v,c));
+    let eval = {
+        if(normalForm(c)){
+            c;
+        } else {
+            switch(c){
+            | Macro(_,f)       => f
+            | Trace(x,f)       => Trace(x,evaluateOneStep({v:v,c:f}).c)
+            | Iter(x,f)        => Iter(x,evaluateOneStep({v:v,c:f}).c)
+            | Tensor(xs)       => Tensor(evaluateOneStepTensor(v,xs))
+            | Composition(x,y) => evaluateOneStepComposition(v,x,y)
+            | _                => failwith("todo evaluateOneStep " ++ printCircuit({v:v,c:c}))
+            }
+        }
+    };
+    {v:v, c:simplifyTensor(v,eval)}
+} and evaluateOneStepTensor = (v,xs) => {
     Js.log("evaluateOneStepTensor " ++ printList(xs, printComponent(v)));
     switch(xs){
     | []         => []
@@ -109,25 +133,7 @@ let rec evaluateOneStepTensor = (v,xs) => {
     } else {
         Composition(evaluateOneStep({v:v,c:x}).c, y)
     }
-} and evaluateOneStep = ({v, c}) => {
-    Js.log("evaluateOneStep " ++ printComponent(v,c));
-    let eval = {
-        if(normalForm(c)){
-            c;
-        } else {
-            switch(c){
-            | Macro(_,f)       => f
-            | Trace(x,f)       => Trace(x,evaluateOneStep({v:v,c:f}).c)
-            | Iter(x,f)        => Iter(x,evaluateOneStep({v:v,c:f}).c)
-            | Tensor(xs)       => Tensor(evaluateOneStepTensor(v,xs))
-            | Composition(x,y) => evaluateOneStepComposition(v,x,y)
-            | _                => failwith("todo evaluateOneStep " ++ printCircuit({v:v,c:c}))
-            }
-        }
-    };
-    {v:v, c:simplifyTensor(v,eval)}
-}
-
+} 
 
 /* Evaluate until a normal form is reached */
 let rec evaluate = (orig) => {

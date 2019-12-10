@@ -1,10 +1,12 @@
+/**
+ * Sandbox file, containing examples
+ */
+
 open Circuits;
 open Rewrites;
 open Constructs;
 open Parser;
 open Helpers;
-
-/* v = Bottom, (False, True), Top */
 
 let halfAdder = {
     composemany([

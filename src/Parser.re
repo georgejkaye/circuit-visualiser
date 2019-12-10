@@ -1,21 +1,21 @@
+/**
+ * File containing functions for tokenising and
+ * subsquently parsing user input into circuits
+ */
+
 open Helpers;
 open Circuits;
 open Lattices;
 
+/* Produce a parse error at character i */
 let parseError = (i, message) => failwith("parse error, char " ++ string_of_int(i) ++ ": " ++ message)
 
-let functionLookup = (func,funcs) => {
-    switch(List.find((x) => switch(x){
-                        | Function(id,_,_,_) => (id == func)
-                        | _ => failwith("Unexpected non-function found in function library")
-                        }, funcs)){
-                            | item => item
-                            | exception Not_found => failwith("Function " ++ func ++ " not in library")
-                        }
-                        
-}
-
+/* Convert a string to characters */
 let stringToChars = (s) => {List.map((i => String.get(s,i)), range(String.length(s) - 1))}
+
+/***********************/
+/* Regular expressions */
+/***********************/
 
 let openingBracketsRegEx = [%bs.re "/(\(|\[])/"]
 let closingBracketsRegEx = [%bs.re "/(\)|\])(\^[0-9]+)?/"]
@@ -25,6 +25,25 @@ let squareBracketsClosingRegEx   = [%bs.re "/(\])(\^[0-9]+)?/"]
 let match = (regex, string) =>{
     Js.String.match(regex, string)
 }
+
+
+let rec makeRegExChecks = (i, checks, token) => {
+    switch(checks){
+    | []        =>  (-1, [||])
+    | [x,...xs] =>  switch(match(x,token)){
+                        | None    => makeRegExChecks(i+1,xs,token)
+                        | Some(x) => (i,x) 
+                    }
+    }
+}
+
+let checkForMatches = (token) => makeRegExChecks(0, constructRegExes, token)
+
+/**********************************************************/
+/* Tokenisation                                           */
+/* First a string is split into characters and tokenised, */
+/* breaking into different tokens at spaces or brackets   */
+/**********************************************************/
 
 /* Tokenise an input string into terms and brackets */
 let rec tokenise = (string) => { (List.map((x) => String.init(List.length(x), (i) => (List.nth(x, i))), tokenise'(stringToChars(string), [])))}
@@ -40,6 +59,12 @@ and tokenise' = (chars, current) => {
     | [x, ...xs]   => tokenise'(xs, [x, ...current]) 
     }
 }
+
+/**************************************************************/
+/* Parsing                                                    */
+/* The tokens are parsed and turned into an actual circuit.   */
+/* Typechecking is also performed using the safe constructors */ 
+/**************************************************************/
 
 let rec scanForClosingBracket = (xs, i, bracket) => scanForClosingBracket'(xs,i,0,bracket,[bracket])
 and scanForClosingBracket' = (xs, i, j, bracket, brackstack) => {
@@ -86,33 +111,23 @@ and scanForNextComposition' = (xs, i, bracks) => {
     }
 }
 
-let rec makeRegExChecks = (i, checks, token) => {
-    switch(checks){
-    | []        =>  (-1, [||])
-    | [x,...xs] =>  switch(match(x,token)){
-                        | None    => makeRegExChecks(i+1,xs,token)
-                        | Some(x) => (i,x) 
-                    }
-    }
+/* Looks up a string in the function library to see if it is a function or not */ 
+let functionLookup = (func,funcs) => {
+    switch(List.find((x) => switch(x){
+                        | Function(id,_,_,_) => (id == func)
+                        | _ => failwith("Unexpected non-function found in function library")
+                        }, funcs)){
+                            | item => item
+                            | exception Not_found => failwith("Function " ++ func ++ " not in library")
+                        }
+                        
 }
 
-let checkForMatches = (token) => makeRegExChecks(0, constructRegExes, token)
-
-let checkForExponential = (token) => {
-    switch(match(exponentialRegEx, token)) {
-    | Some(x) => (x[1], int_of_string(x[2]))
-    | None    => (token, 1)
-    }
-}
-
-let rec generateTensor = (a, n) => {
-    switch(n) {
-    | 0 => []
-    | 1 => [a]
-    | n => [a, "*", ...generateTensor(a, n-1)] 
-    }
-}
-
+/* Parses a set of tokens into a circuit. 
+ * v: lattice
+ * funcs: function library
+ * tokens: the list of tokens 
+ */
 let rec parse = (v, funcs, tokens) => parse'(v, funcs, 1, tokens, [], [], false)
 and parse' = (v, funcs, i, tokens, stack, lastterm, tensor) => {
     Js.log("parsing " ++ printStringList(tokens));

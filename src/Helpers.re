@@ -1,3 +1,9 @@
+/**
+ * File containing helper functions for use 
+ * throughout the project
+ */
+
+/* Assert but with a specific message */
 let assert' = (condition, message) =>
     condition ? () : failwith(message);
 
