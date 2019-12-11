@@ -65,7 +65,7 @@ let second = (v) => func(v, "snd", 2, 1, (_,c) => switch(c){
        )
 
 let multiplexer = (v) => func(v, "m", 3, 1, (_,c) => switch(c){
-                                                        | Tensor([Value(c),a,b]) => c == Lattices.True ? a : b 
+                                                        | Tensor([Value(c),a,b]) => List.exists(((x) => x == c), v.highValues) ? a : b 
                                                         | _ => failwith("Bad input")
                                                      }
 )

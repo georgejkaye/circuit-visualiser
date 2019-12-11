@@ -1,9 +1,26 @@
 open Circuits;
 open Parser;
+open Lattices;
 
 let str = React.string;
 
+type state = {
+    lat: lattice,           /* The lattice being used */
+    circ: circuit,          /* The current circuit */
+    funs: list(component)   /* The library of functions available */
+}
+
+type action =
+  | ParseNewCircuit(string);
+
+
 let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
+
+let generateCircuit = (v,funcs,text) => {
+    let newCircuit = parseFromString(v,funcs,text);
+    Js.log(printCircuit(newCircuit));
+    newCircuit;
+}
 
 module Input = {
     type state = string;
@@ -26,11 +43,29 @@ module Input = {
     }
 }
 
+let newCircuit = () => identity(Constructs.v, 1);
+
 [@react.component]
 let make = () => {
+    let({lat, circ, funs},dispatch) = React.useReducer((state,action) => {
+        switch action {
+        | ParseNewCircuit(text) => {circ: generateCircuit(state.lat, state.funs, text), lat: state.lat, funs: state.funs}
+        }
+    }, {
+        lat: simpleLattice,
+        circ: zero(simpleLattice),
+        funs: Examples.exampleFunctions,
+    });
+    let number = List.length(funs);
     <div className = "main">
         <div className = "title">
             <h1>(str("Circuit visualiser "))</h1>
+        </div>
+        <div className = "input">
+        <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) />
+        </div>
+        <div>
+            <h2>(str(printCircuit(circ)))</h2>
         </div>
         <div className = "instructions">
             <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>
@@ -45,9 +80,6 @@ let make = () => {
             <div> <span className = "code">(str("Tr{n}(a)"))</span> <b>(str(" Trace"))</b> (str(" a circuit, using n of its outputs as inputs"))</div>
             <div> <span className = "code">(str("iter(a)"))</span> <b>(str(" Iterate"))</b> (str(" a circuit, using all of its outputs as inputs"))</div>
             <div> <span className = "code">(str("\xy."))</span> (str(" or ")) <span className = "code">(str("\x,y."))</span><b>(str(" Link"))</b> (str(" outlink x with inlink y"))</div>
-        </div>
-        <div className = "input">
-        <Input onSubmit=((text) => Js.log(printCircuit(parseFromString(Constructs.v, Examples.exampleFunctions, text)))) />
         </div>
     </div>
 }

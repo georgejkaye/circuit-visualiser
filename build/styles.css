@@ -2,11 +2,13 @@ body {
     font: 14px "Century Gothic", Futura, sans-serif;
 }
 
-.code {
-    font: 16px "Courier New", monospace;
-    outline-style: solid;
-    outline-color: #454545;
-    outline-width: 1px;
-    background-color: #2e2e2e;
+div {
+    margin-bottom: 10px;
+}
 
+.code {
+    font: 14px "Courier New", monospace;
+    background-color: #2e2e2e;
+    border-radius: 3px;
+    padding: .2em .4em;
 }

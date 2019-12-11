@@ -1,112 +1,130 @@
-type lattice('element) = {
-    leq     : ('element, 'element) => bool,       /* The order relation less than */
-    joinOp  : ('element, 'element) => 'element,   /* The least upper bound */
-    meetOp  : ('element, 'element) => 'element,   /* The greatest lower bound */
-    andOp   : ('element, 'element) => 'element,   /* And operation */
-    orOp    : ('element, 'element) => 'element,   /* Or operation */
-    notOp   : 'element => 'element,               /* Not operation */
-    print   : 'element => string,                 /* Print operation */
-    parse   : string => (bool, 'element)          /* Parse a string and determine if it is a value, and if so which one */
+/**
+ * File containing lattice definitions 
+ * 
+ * Lattices are defined as a list of pairs, with the first element
+ * representing the 'level' of the lattice, and the second element
+ * representing the position of the element in the level.
+ * To define a lattice, a number of operations must also be provided
+ * such as join and meet. 
+ */
+
+type lattice = {
+    elems     : list((int, int)),                      /* The list of lattice elements */
+    highValues : list((int,int)),                             /* The value in the list that represents true */
+    leq       : ((int,int), (int,int)) => bool,        /* The order relation less than */
+    joinOp    : ((int,int), (int,int)) => (int,int),   /* The least upper bound */
+    meetOp    : ((int,int), (int,int)) => (int,int),   /* The greatest lower bound */
+    andOp     : ((int,int), (int,int)) => (int,int),   /* And operation */
+    orOp      : ((int,int), (int,int)) => (int,int),   /* Or operation */
+    notOp     : ((int,int)) => (int,int),              /* Not operation */
+    print     : ((int,int)) => string,                 /* Print operation */
+    parse     : string => (bool, (int,int))            /* Parse a string and determine if it is a value, and if so which one */
 }
 
 /* A simple lattice containing four elements with the order Bottom < True, False < Top */
 
-type simpleLatticeElems = Bottom | False | True | Top ;
+let simpleLatticeElems = [(0,0), /* Bottom */
+                          (1,0), /* False */
+                          (1,1), /* True */
+                          (2,0), /* Top */
+                         ]
 
-let bot = Bottom;
-let t = True;
-let f = False;
-let top = Top;
+let bot = (0,0);
+let t = (1,1);
+let f = (1,0);
+let top = (2,0);
 
 let simpleLeq = (a, b) => {
     switch(a, b){
-    | (Bottom, _)    => true
-    | (_, Bottom)    => false
-    | (False, False) => true
-    | (False, True)  => true
-    | (True, False)  => true
-    | (True, True)   => true
-    | (Top, _)       => false
-    | (_, Top)       => true
+    | ((0,0), _)    => true
+    | (_, (0,0))    => false
+    | ((1,0), (1,0)) => true
+    | ((1,0), (1,1))  => true
+    | ((1,1), (1,0))  => true
+    | ((1,1), (1,1))   => true
+    | ((2,0), _)       => false
+    | (_, (2,0))       => true
     }
 }
 
-let printSimpleLattice = (lattice) => {
-    switch (lattice) {
-    | Bottom => "⊥"
-    | False  => "f"
-    | True   => "t"
-    | Top    => "T"
+let printSimpleLattice = (elem) => {
+    switch (elem) {
+    | (0,0) => "⊥"
+    | (1,0)  => "f"
+    | (1,1)   => "t"
+    | (2,0)    => "T"
     }
 }
 
 let simpleJoin = (a,b) => {
     switch(a, b){
-    | (Top, _)      => Top
-    | (_, Top)      => Top
-    | (Bottom, a)   => a
-    | (a, Bottom)   => a
-    | (True, _)     => True
-    | (False, _)    => False
+    | ((2,0), _)      => (2,0)
+    | (_, (2,0))      => (2,0)
+    | ((0,0), a)   => a
+    | (a, (0,0))   => a
+    | ((1,1), _)     => (1,1)
+    | ((1,0), _)    => (1,0)
     }
 }
 
 let simpleMeet = (a,b) => {
     switch(a, b){
-    | (Bottom, _) => Bottom
-    | (_, Bottom) => Bottom
-    | (Top, a)    => a
-    | (a, Top)    => a
-    | (True, _)   => True
-    | (False, _)  => False
+    | ((0,0), _) => (0,0)
+    | (_, (0,0)) => (0,0)
+    | ((2,0), a)    => a
+    | (a, (2,0))    => a
+    | ((1,1), _)   => (1,1)
+    | ((1,0), _)  => (1,0)
     }
 }
 
 let simpleAnd = (a,b) => {
     switch(a,b){
-    | (Bottom, _) => Bottom
-    | (_, Bottom) => Bottom
-    | (False, _)  => False
-    | (_, False)  => False
-    | (True, a)   => a
-    | (a, True)   => a
-    | (Top, Top)    => Top
+    | ((0,0), _) => (0,0)
+    | (_, (0,0)) => (0,0)
+    | ((1,0), _)  => (1,0)
+    | (_, (1,0))  => (1,0)
+    | ((1,1), a)   => a
+    | (a, (1,1))   => a
+    | ((2,0), (2,0))    => (2,0)
     }
 }
 
 let simpleOr = (a,b) => {
     switch(a,b){
-    | (True, _)      => True
-    | (_, True)      => True
-    | (False, False) => False
-    | (Bottom, _) => Bottom
-    | (_, Bottom) => Bottom
-    | (Top, _) => Top
-    | (_, Top) => Top
+    | ((1,1), _)      => (1,1)
+    | (_, (1,1))      => (1,1)
+    | ((1,0), (1,0)) => (1,0)
+    | ((0,0), _) => (0,0)
+    | (_, (0,0)) => (0,0)
+    | ((2,0), _) => (2,0)
+    | (_, (2,0)) => (2,0)
     }
 }
 
 let simpleNot = a => {
     switch(a){
-    | Top    => Top
-    | Bottom => Bottom
-    | True   => False
-    | False  => True
+    | (2,0) => (2,0)
+    | (0,0) => (0,0)
+    | (1,1) => (1,0)
+    | (1,0) => (1,1)
     }
 }
 
 let simpleParse = (str) => {
     switch(str) {
-    | "T" => (true, Top)
-    | "t" => (true, True)
-    | "f" => (true, False)
-    | "B" => (true, Bottom)
-    | _   => (false, Top)
+    | "T" => (true, (2,0))
+    | "t" => (true, (1,1))
+    | "f" => (true, (1,0))
+    | "B" => (true, (0,0))
+    | _   => (false, (2,0))
     };
     
 }
 
-let simpleLattice: lattice(simpleLatticeElems) = {
+let simpleLattice: lattice = {
+    elems: simpleLatticeElems,
+    highValues: [(1,1)],
     leq:   simpleLeq,
     joinOp: simpleJoin,
     meetOp: simpleMeet,
@@ -115,4 +133,12 @@ let simpleLattice: lattice(simpleLatticeElems) = {
     notOp: simpleNot,
     print: printSimpleLattice,
     parse: simpleParse
+}
+
+type availableLattices = Simple
+
+let getLattice = (lat) => {
+    switch(lat){
+    | Simple => simpleLatticeElems
+    }
 }

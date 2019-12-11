@@ -6,22 +6,22 @@ open Helpers;
 open Lattices;
 
 /* A circuit is a component associated with a lattice v */
-type component('element) = 
-    | Value('element)
+type component = 
+    | Value((int,int))
     | Identity(int)
-    | Composition(component('element), component('element))    
-    | Tensor(list(component('element)))
-    | Function(string, int, int, (lattice('element), component('element)) => component('element))
+    | Composition(component, component)    
+    | Tensor(list(component))
+    | Function(string, int, int, (lattice, component) => component)
     | Delay(int)
-    | Trace(int, component('element))
-    | Iter(int, component('element))
+    | Trace(int, component)
+    | Iter(int, component)
     | Input(int)
     | Output(int)
-    | Link(int, int, component('element))
-    | Macro(string, component('element))
-and circuit('element) = { 
-    v: lattice('element),
-    c: component('element),
+    | Link(int, int, component)
+    | Macro(string, component)
+and circuit = { 
+    v: lattice,
+    c: component,
 }
 
 /************/
@@ -112,6 +112,9 @@ let outputs = ({c}) => outputs'(c)
 /* Safe constructors                                      */
 /* Use these to ensure ports are always mapped correctly! */
 /**********************************************************/
+
+/* Zero circuit, represents nothingness */
+let zero = (v) => {v:v, c:Identity(0)}
 
 /* Create a value */
 let value = (v,x) => {v:v, c:Value(x)}
