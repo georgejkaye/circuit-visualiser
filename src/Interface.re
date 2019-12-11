@@ -16,9 +16,12 @@ type action =
 
 let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
 
-let generateCircuit = (v,funcs,text) => {
-    let newCircuit = parseFromString(v,funcs,text);
-    Js.log(printCircuit(newCircuit));
+let generateCircuit = (state, v,funcs,text) => {
+    let newCircuit = switch(parseFromString(v,funcs,text)){
+                        | item => item
+                        | exception e => state.circ
+                        };
+    Js.log(printCircuitLatex(newCircuit));
     newCircuit;
 }
 
@@ -49,7 +52,7 @@ let newCircuit = () => identity(Constructs.v, 1);
 let make = () => {
     let({lat, circ, funs},dispatch) = React.useReducer((state,action) => {
         switch action {
-        | ParseNewCircuit(text) => {circ: generateCircuit(state.lat, state.funs, text), lat: state.lat, funs: state.funs}
+        | ParseNewCircuit(text) => {circ: generateCircuit(state, state.lat, state.funs, text), lat: state.lat, funs: state.funs}
         }
     }, {
         lat: simpleLattice,
@@ -65,7 +68,7 @@ let make = () => {
         <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) />
         </div>
         <div>
-            <h2>(str(printCircuit(circ)))</h2>
+            <h3> (str(printCircuit(circ))) </h3>
         </div>
         <div className = "instructions">
             <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>
@@ -82,4 +85,5 @@ let make = () => {
             <div> <span className = "code">(str("\xy."))</span> (str(" or ")) <span className = "code">(str("\x,y."))</span><b>(str(" Link"))</b> (str(" outlink x with inlink y"))</div>
         </div>
     </div>
+    
 }

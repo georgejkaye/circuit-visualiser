@@ -35,7 +35,7 @@ let rec printComponent' = (v, c, i) => {
     | Identity(x)                       => string_of_int(x)
     | Composition(f, g)                 => let b = printComponent'(v,f,0) ++ {js| ⋅ |js} ++ printComponent'(v,g,0);
                                            i == 0 ? b : "(" ++ b ++ ")"
-    | Tensor([])                        => "[]"
+    | Tensor([])                        => ""
     | Tensor([x])                       => printComponent'(v,x,i+1)
     | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent'(v,comp, i+1)), printComponent'(v,f, i+1), tl)
     | Function(id, _, _, _)             => id
@@ -60,6 +60,32 @@ let printComponentList = (v, xs) => printList(xs, (x) => printComponent(v,x));
 
 /* Print a list of components in the form [c1, c2, c3, c4] */
 let printComponentListCommas = (v, xs) => printListCommas(xs, (x) => printComponent(v,x));
+
+let rec printComponentLatex' = (v, c, i) => {
+    switch (c) {
+        | Value(x)                          => "\\text{" ++ v.print(x) ++ "}"
+        | Identity(x)                       => string_of_int(x)
+        | Composition(f, g)                 => let b = printComponentLatex'(v,f,0) ++ " \\cdot " ++ printComponentLatex'(v,g,0);
+                                               i == 0 ? b : "(" ++ b ++ ")"
+        | Tensor([])                        => ""
+        | Tensor([x])                       => printComponentLatex'(v,x,i+1)
+        | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ " \\otimes " ++ printComponentLatex'(v,comp, i+1)), printComponentLatex'(v,f, i+1), tl)
+        | Function(id, _, _, _)             => "\\text{" ++ id ++ "}"
+        | Delay(x)                          => "\\delta_" ++ string_of_int(x)
+        | Trace(x, component)               => "\\text{Tr}^" ++ string_of_int(x) ++ "(" ++ printComponentLatex'(v,component,0) ++ ")" 
+        | Iter(x, component)                => "\\text{iter}^" ++ string_of_int(x) ++ "(" ++ printComponentLatex'(v,component,0) ++ ")" 
+        | Input(int)                        => "|" ++ string_of_int(int) ++ "|"   
+        | Output(int)                       => "|" ++ string_of_int(int) ++ "|"
+        | Link(inlink, outlink, circuit)    => "\\bar{" ++ string_of_int(inlink) ++ "," ++ string_of_int(outlink) ++ "}." ++ printComponentLatex'(v,circuit,i) 
+        | Macro(id, _)                      => id
+        ;}
+}
+
+/* Get a string representation of a component */
+let printComponentLatex = (v, c) => printComponentLatex'(v, c, 0);
+
+/* Get a string representation of a circuit */
+let printCircuitLatex = ({v,c}) => printComponentLatex(v,c)
 
 /****************/
 /* Input-output */
