@@ -59,6 +59,13 @@ let first = (v) => func(v, "fst", 2, 1, (_,c) => switch(c){
                                           })
 
 let second = (v) => func(v, "snd", 2, 1, (_,c) => switch(c){
-       | Tensor([a,b]) => b
-       | _ => failwith("Bad input")
-       })
+                                                        | Tensor([a,b]) => b
+                                                        | _ => failwith("Bad input")
+                                                  }
+       )
+
+let multiplexer = (v) => func(v, "m", 3, 1, (_,c) => switch(c){
+                                                        | Tensor([Value(c),a,b]) => c == Lattices.True ? a : b 
+                                                        | _ => failwith("Bad input")
+                                                     }
+)

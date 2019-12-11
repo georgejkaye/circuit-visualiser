@@ -6,7 +6,6 @@ open Circuits;
 open Rewrites;
 open Constructs;
 open Parser;
-open Helpers;
 
 let halfAdder = {
     composemany([
@@ -51,12 +50,6 @@ let fullAdderApplied = composemany([
 
 let fullAdderReduced = evaluate(fullAdderApplied)
 
-let multiplexer = func'("m", 3, 1, (v,c) => switch(c){
-                                                | Tensor([Value(c),a,b]) => c == Lattices.True ? a : b 
-                                                | _ => failwith("Bad input")
-                                                }
-                  )
-
 let exampleFunctions = List.concat([specialMorphisms(v), 
                                     [id(v,1).c,
                                      funcBlackBox(v, "F", 1, 1).c,
@@ -65,7 +58,7 @@ let exampleFunctions = List.concat([specialMorphisms(v),
                                      funcBlackBox(v, "H", 1, 2).c, 
                                      andGate(v).c,
                                      orGate(v).c,
-                                     multiplexer,
+                                     multiplexer(v).c,
                                      first(v).c,
                                      second(v).c,
                                     ]])
@@ -74,7 +67,7 @@ let exampleFunctions = List.concat([specialMorphisms(v),
 /*let exampleString = "t * H . A" */ 
 /* let exampleString = "(A * A) . (AND * AND) . \\/" */
 /*let exampleString = "Tr{1}(A))"*/
-let exampleString = "\x,y. x * 1 . 1 * y . fst"
+let exampleString = "\\x,y. x * 1 . 1 * y . fst"
 
 let exampleCombinational = "f * t . Tr{1}((x{1,1} * /\\) . (/\\ * x{1,1} * 1) . (/\\ * (m . G . /\\) * 1) . (3 * x{1,1}) . (1 * (m . F) * 1) . (x{1,1} * 1) . (/\\ * 2)) . (x{1,1} * 1) . m"
 

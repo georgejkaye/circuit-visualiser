@@ -55,6 +55,7 @@ and tokenise' = (chars, current) => {
     | ['[', ...xs] => List.length(current) == 0 ? [['['], ...tokenise'(xs, [])] : [List.rev(current), ['['], ...tokenise'(xs, [])]
     | [']', ...xs] => List.length(current) == 0 ? [[']'], ...tokenise'(xs, [])] : [List.rev(current), [']'], ...tokenise'(xs, [])]
     | ['^', ...xs] => List.length(current) == 0 ? tokenise'(xs, ['^']) : [List.rev(current), ...tokenise'(xs, ['^'])]
+    | ['.', ...xs] => List.length(current) == 0 ? tokenise'(xs, ['.']) : [List.rev(['.',...current]), ...tokenise'(xs, [])]
     | [x, ...xs]   => tokenise'(xs, [x, ...current]) 
     }
 }
@@ -310,5 +311,13 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
     let finalLink = Link(inx, oux, actualScope)
 
     parse'(v, funcs, i+1, trim(xs, j+1), stack @ [finalLink], [finalLink], tensor, nextlink, links)
+
+}
+
+let parseFromString = (v, funcs, string) => {
+    let tokenisedString = tokenise(string);
+    let parsedString = parse(v, funcs, tokenisedString);
+
+    {v:v, c:fst(parsedString)}
 
 }

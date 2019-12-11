@@ -1,1 +1,1 @@
-ReactDOMRe.renderToElementWithId(<Test />, "test");
+ReactDOMRe.renderToElementWithId(<Interface />, "test");
