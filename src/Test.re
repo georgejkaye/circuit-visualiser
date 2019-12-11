@@ -21,7 +21,6 @@ let make = () => {
             <p>(str(Circuits.printCircuit(Examples.halfAdderReduced_9)))</p>
             <p>(str(Circuits.printCircuit(Examples.halfAdderReduced_10)))</p>
             <p>(str(Circuits.printCircuit(Examples.halfAdderReduced_11)))</p>
-            <p>(str(Circuits.printCircuit(Examples.halfAdderReduced_12)))</p>
         </div>
         <div className="full-adder">
             <h3>(str("Full-adder"))</h3>

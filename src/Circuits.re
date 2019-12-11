@@ -313,5 +313,6 @@ let traceRegEx = [%bs.re "/Tr\{([0-9]+)\}/"]
 let iterRegEx = [%bs.re "/iter\{([0-9]+)\}/"]
 let iterRegEx2 = [%bs.re "/iter/"]
 let linkIntroRegEx = [%bs.re "/\\\\([a-z]+),([a-z]+)\./"]
+let linkIntroRegEx2 = [%bs.re "/\\\\([a-z])([a-z])\./"]
 
-let constructRegExes = [swapRegEx, djoinRegEx, dforkRegEx, delayRegEx, traceRegEx, iterRegEx, iterRegEx2, exponentialSoloRegEx, linkIntroRegEx]
+let constructRegExes = [swapRegEx, djoinRegEx, dforkRegEx, delayRegEx, traceRegEx, iterRegEx, iterRegEx2, exponentialSoloRegEx, linkIntroRegEx, linkIntroRegEx2]

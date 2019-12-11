@@ -175,6 +175,7 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
                                                 | 6  => parseIteration(m, v, funcs, i, xs, stack, tensor, nextlink, links)
                                                 | 7  => parseExponential(m, v, funcs, i, xs, stack, lastterm, tensor, nextlink, links)
                                                 | 8  => parseLink(m, v, funcs, i, xs, stack, tensor, nextlink, links)
+                                                | 9  => parseLink(m, v, funcs, i, xs, stack, tensor, nextlink, links)
                                                 | -1 => parseTerm(a, v, funcs, i, xs, stack, tensor, nextlink, links)
                                             }
                                         }
@@ -308,7 +309,7 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
     let nextlink = fst(snd(parsedScope));
     let links = snd(snd(parsedScope));
 
-    let finalLink = Link(inx, oux, actualScope)
+    let finalLink = Link(oux, inx, actualScope)
 
     parse'(v, funcs, i+1, trim(xs, j+1), stack @ [finalLink], [finalLink], tensor, nextlink, links)
 
