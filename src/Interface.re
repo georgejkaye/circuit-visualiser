@@ -7,22 +7,20 @@ let str = React.string;
 type state = {
     lat: lattice,           /* The lattice being used */
     circ: circuit,          /* The current circuit */
+    strn: string,           /* The string of the current circuit, or a parse error message */
     funs: list(component)   /* The library of functions available */
 }
 
 type action =
   | ParseNewCircuit(string);
 
-
 let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
 
-let generateCircuit = (state, v,funcs,text) => {
-    let newCircuit = switch(parseFromString(v,funcs,text)){
-                        | item => item
-                        | exception e => state.circ
-                        };
-    Js.log(printCircuitLatex(newCircuit));
-    newCircuit;
+let generateCircuit = (state,text) => {
+    switch(parseFromString(state.lat, state.funs, text)){
+        | item => (item, printCircuit(item))
+        | exception ParseError(e) => (zero(state.lat), e)
+    };
 }
 
 module Input = {
@@ -30,7 +28,7 @@ module Input = {
 
     [@react.component]
     let make = (~onSubmit) => {
-        let (text, setText) = React.useReducer((oldText, newText) => newText, "");
+        let (text, setText) = React.useReducer((_, newText) => newText, "");
         <input
             value = text
             type_ = "text"
@@ -46,20 +44,19 @@ module Input = {
     }
 }
 
-let newCircuit = () => identity(Constructs.v, 1);
-
 [@react.component]
 let make = () => {
-    let({lat, circ, funs},dispatch) = React.useReducer((state,action) => {
+    let({strn},dispatch) = React.useReducer((state,action) => {
         switch action {
-        | ParseNewCircuit(text) => {circ: generateCircuit(state, state.lat, state.funs, text), lat: state.lat, funs: state.funs}
+        | ParseNewCircuit(text) => let generatedCircuit = generateCircuit(state, text);
+                                    {circ: fst(generatedCircuit), lat: state.lat, strn: snd(generatedCircuit), funs: state.funs}
         }
     }, {
         lat: simpleLattice,
         circ: zero(simpleLattice),
+        strn: "",
         funs: Examples.exampleFunctions,
     });
-    let number = List.length(funs);
     <div className = "main">
         <div className = "title">
             <h1>(str("Circuit visualiser "))</h1>
@@ -68,7 +65,7 @@ let make = () => {
         <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) />
         </div>
         <div>
-            <h3> (str(printCircuit(circ))) </h3>
+            <h3> (str(strn)) </h3>
         </div>
         <div className = "instructions">
             <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>
