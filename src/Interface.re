@@ -38,26 +38,37 @@ type state = {
     error: bool             /* If there's a parse error */
 }
 
-type action =
-  | ParseNewCircuit(string);
-
-let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
-
-let generateCircuit = (state,text) => {
-    switch(parseFromString(state.lat, state.funs, text)){
-        | item => (true, (item, printCircuitLatex(item)))
-        | exception ParseError(e) => (false, (zero(state.lat), e))
-    };
-}
-
-let printLatexOrError(string, error){
-    if(error) {
-        (<MathJax string=(string) />)
+/*
+ * Prints either a latex representation of a circuit, or an error message
+ */
+let printLatexOrError = (string, error) => {
+    if(error){
+        <MathJax string=string />
     } else {
         string
     }
 }
 
+/*  
+ * Generate a circuit from the state and a string
+ * If parsing the string succeeds, returns (true, (circuit, latex string))
+ * If not, returns (false, (zero circuit, error message))
+ */
+let generateCircuit = (state, text) => {
+    switch(parseFromString(state.lat, state.funs, text)){ /* hello */
+    | item => (true, (item, printCircuitLatex(item)))
+    | exception ParseError(e) => (false, (zero(state.lat), e))
+    }
+}
+
+type action =
+  | ParseNewCircuit(string);
+
+let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
+
+/**
+ * Component for an input text box that fires an event when enter is pressed
+ */
 module Input = {
     type state = string;
 

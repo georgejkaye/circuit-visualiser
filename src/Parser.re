@@ -254,7 +254,7 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
 
 } and parseIteration = (m, v, funcs, i, xs, stack, tensor, nextlink, links) => {
     
-    let x = int_of_string(m[1]);
+    /*let x = int_of_string(m[1]);*/
     if(List.length(xs) == 0 || List.hd(xs) != "("){ 
         parseError(i, "iteration expected, no expression found")
     } else {
