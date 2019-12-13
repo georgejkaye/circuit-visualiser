@@ -16,7 +16,8 @@
   "namespace": true,
   "bs-dependencies": [
     "reason-react",
-    "graphviz-react"
+    "graphviz-react",
+    "react-mathjax2"
   ],
   "refmt": 3
 }

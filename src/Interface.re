@@ -7,6 +7,16 @@ module Graphviz = {
     external make : (~dot : string) => React.element = "Graphviz"
 }
 
+module MathJaxNode = {
+    [@bs.module "react-mathjax2"][@react.component]
+    external make : (~inline : bool, ~children : React.element) => React.element = "Node"
+}
+
+module MathJaxContext = {
+    [@bs.module "react-mathjax2"][@react.component]
+    external make : (~input : string, ~children : React.element) => React.element = "Context"
+}
+
 let str = React.string;
 
 type state = {
@@ -23,7 +33,7 @@ let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
 
 let generateCircuit = (state,text) => {
     switch(parseFromString(state.lat, state.funs, text)){
-        | item => (item, printCircuit(item))
+        | item => (item, printCircuitLatex(item))
         | exception ParseError(e) => (zero(state.lat), e)
     };
 }
@@ -79,6 +89,13 @@ let make = () => {
         </div>
         <div>
             <h3> (str(strn)) </h3>
+        </div>
+        <div>
+            <MathJaxContext input="tex">
+                <div>
+                    <MathJaxNode inline=true>(str(strn))</MathJaxNode>
+                </div>
+            </MathJaxContext>
         </div>
         <div className = "instructions">
             <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>

@@ -12,14 +12,14 @@ let rec normalForm = (c) => {
     | Identity(_)       => true
     | Composition(_, _) => false
     | Tensor(xs)        => List.fold_left((&&), true, List.map(normalForm, xs))
-    | Function(_,_,_,_) => true
+    | Function(_,_,_,_,_) => true
     | Delay(_)          => true
     | Trace(_,f)        => normalForm(f)
     | Input(_)          => true
     | Output(_)         => true
     | Iter(_,f)         => normalForm(f)
     | Link(_,_,f)       => normalForm(f)
-    | Macro(_,_)        => false
+    | Macro(_,_,_)        => false
     }
 }
 
@@ -128,7 +128,7 @@ let rec evaluateOneStep = ({v, c}) => {
             c;
         } else {
             switch(c){
-            | Macro(_,f)       => f
+            | Macro(_,_,f)       => f
             | Trace(x,f)       => traceAsIteration(v,c)
             | Iter(x,f)        => unfoldIteration(v,c)
             | Tensor(xs)       => Tensor(evaluateOneStepTensor(v,xs))
@@ -153,15 +153,19 @@ let rec evaluateOneStep = ({v, c}) => {
     if(normalForm(x)){
         switch(y){
         | Identity(_)        =>  x
-        | Function(id,_,_,f) => switch(x){
+        | Function(id,latex,_,_,f) => switch(x){
                                 | Value(a)   => f(v,x)
                                 | Tensor(xs) => switch(f(v,x)){
                                                 | item => f(v,x)
-                                                | exception _ => Function(id ++ "(" ++ printComponentListCommas(v,xs) ++ ")", inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v,c:x},{v,c:y}]).c) 
+                                                | exception _ => Function(id ++ "(" ++ printComponentListCommas(v,xs) ++ ")", 
+                                                                            latex ++ "(" ++ printComponentListLatexCommas(v,xs),
+                                                                            inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v,c:x},{v,c:y}]).c) 
                                 }
-                                | Function(_,_,_,_) => switch(f(v,x)){
+                                | Function(_,_,_,_,_) => switch(f(v,x)){
                                                         | item        => item
-                                                        | exception _ => Function(id ++ "(" ++ printComponent(v,x) ++ ")", inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v,c:x},{v,c:y}]).c) 
+                                                        | exception _ => Function(id ++ "(" ++ printComponent(v,x) ++ ")", 
+                                                                                      latex ++ "(" ++ printComponentLatex(v,x) ++ ")",
+                                                                                      inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v,c:x},{v,c:y}]).c) 
                                                         }
                                 }
         | Tensor(ys)        =>  applyTensor(v,x,ys)

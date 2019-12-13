@@ -123,7 +123,7 @@ and scanForNextComposition' = (xs, i, bracks) => {
 /* Looks up a string in the function library to see if it is a function or not */ 
 let functionLookup = (func,funcs) => {
     switch(List.find((x) => switch(x){
-                        | Function(id,_,_,_) => (id == func)
+                        | Function(id,_,_,_,_) => (id == func)
                         | _ => failwith("Unexpected non-function found in function library")
                         }, funcs)){
                             | item => Some(item)
