@@ -17,13 +17,25 @@ module MathJaxContext = {
     external make : (~input : string, ~children : React.element) => React.element = "Context"
 }
 
+module MathJax = {
+    [@react.component]
+    let make = (~string) => {
+        <MathJaxContext input="tex">
+            <div>
+                <MathJaxNode inline=true>string</MathJaxNode>
+            </div>
+        </MathJaxContext>
+    }
+}
+
 let str = React.string;
 
 type state = {
     lat: lattice,           /* The lattice being used */
     circ: circuit,          /* The current circuit */
     strn: string,           /* The string of the current circuit, or a parse error message */
-    funs: list(component)   /* The library of functions available */
+    funs: list(component),  /* The library of functions available */
+    error: bool             /* If there's a parse error */
 }
 
 type action =
@@ -33,9 +45,17 @@ let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
 
 let generateCircuit = (state,text) => {
     switch(parseFromString(state.lat, state.funs, text)){
-        | item => (item, printCircuitLatex(item))
-        | exception ParseError(e) => (zero(state.lat), e)
+        | item => (true, (item, printCircuitLatex(item)))
+        | exception ParseError(e) => (false, (zero(state.lat), e))
     };
+}
+
+let printLatexOrError(string, error){
+    if(error) {
+        (<MathJax string=(string) />)
+    } else {
+        string
+    }
 }
 
 module Input = {
@@ -61,16 +81,17 @@ module Input = {
 
 [@react.component]
 let make = () => {
-    let({strn},dispatch) = React.useReducer((state,action) => {
+    let({strn,error},dispatch) = React.useReducer((state,action) => {
         switch action {
         | ParseNewCircuit(text) => let generatedCircuit = generateCircuit(state, text);
-                                    {circ: fst(generatedCircuit), lat: state.lat, strn: snd(generatedCircuit), funs: state.funs}
+                                    {circ: fst(snd(generatedCircuit)), lat: state.lat, strn: snd(snd(generatedCircuit)), funs: state.funs, error:fst(generatedCircuit)}
         }
     }, {
         lat: simpleLattice,
         circ: zero(simpleLattice),
         strn: "",
         funs: Examples.exampleFunctions,
+        error: false
     });
     <div className = "main">
         <div className = "title">
@@ -80,22 +101,15 @@ let make = () => {
         <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) />
         </div>
         <div>
+            (printLatexOrError(str(strn), error))
+        </div>
+        <div>
             <Graphviz dot="graph {
             grandparent -- \"parent C\";
             child;
             \"parent B\" -- child;
             grandparent --  \"parent B\";
             }" />
-        </div>
-        <div>
-            <h3> (str(strn)) </h3>
-        </div>
-        <div>
-            <MathJaxContext input="tex">
-                <div>
-                    <MathJaxNode inline=true>(str(strn))</MathJaxNode>
-                </div>
-            </MathJaxContext>
         </div>
         <div className = "instructions">
             <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>
