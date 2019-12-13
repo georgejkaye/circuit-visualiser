@@ -2,6 +2,11 @@ open Circuits;
 open Parser;
 open Lattices;
 
+module Graphviz = {
+    [@bs.module "graphviz-react"][@react.component]
+    external make : (~dot : string) => React.element = "Graphviz"
+}
+
 let str = React.string;
 
 type state = {
@@ -63,6 +68,14 @@ let make = () => {
         </div>
         <div className = "input">
         <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) />
+        </div>
+        <div>
+            <Graphviz dot="graph {
+            grandparent -- \"parent C\";
+            child;
+            \"parent B\" -- child;
+            grandparent --  \"parent B\";
+            }" />
         </div>
         <div>
             <h3> (str(strn)) </h3>
