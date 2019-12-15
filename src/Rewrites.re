@@ -43,16 +43,16 @@ let rec simplifyTensor = (v,c) => {
  *   lhs: the argument to the apply to the tensor
  *   rhs: the elements of the tensor
  */
-let rec applyTensor = (v, arg, ys) => {
+let rec applyTensor = (v, l, arg, ys) => {
     switch(arg) {
-    | Tensor(xs) => Tensor(applyTensor'(v, xs, 0, ys, 0,[],[]))
+    | Tensor(xs) => Tensor(applyTensor'(v, l, xs, 0, ys, 0,[],[]))
     | f          => Composition(f, Tensor(ys))
     }
-} and applyTensor' = (v, xs, nx, ys, ny, xs', ys') => {
+} and applyTensor' = (v, l, xs, nx, ys, ny, xs', ys') => {
     switch(xs, ys){
     | ([], []) => []
-    | (_, []) => failwith("bad arguments a" ++ printList(xs, printComponent(v)))
-    | ([], _) => failwith("bad arguments b" ++ printList(ys, printComponent(v)))
+    | (_, []) => failwith("bad arguments a" ++ printList(xs, (x) => printComponent(v,x,l)))
+    | ([], _) => failwith("bad arguments b" ++ printList(ys, (x) => printComponent(v,x,l)))
     | ([x, ...xs], [y, ...ys]) => if(outputs'(x) - nx == inputs'(y) - ny){
                                         let lhs =   switch(xs',ys'){
                                                     | ([], []) => Composition(x, y)
@@ -60,12 +60,12 @@ let rec applyTensor = (v, arg, ys) => {
                                                     | ([], _)  => Composition(x, Tensor(List.concat([ys', [y]])))
                                                     | (_, _)   => Composition(Tensor(List.concat([xs', [x]])), Tensor(List.concat([ys', [y]])))
                                                     };
-                                                    [lhs, ...applyTensor'(v,xs,0,ys,0,[],[])]
+                                                    [lhs, ...applyTensor'(v,l,xs,0,ys,0,[],[])]
                                     } else {
                                         if(outputs'(x) - nx < inputs'(y) - ny) {
-                                            applyTensor'(v, xs, 0, [y,...ys], ny + outputs'(x), List.concat([xs', [x]]), ys')
+                                            applyTensor'(v, l, xs, 0, [y,...ys], ny + outputs'(x), List.concat([xs', [x]]), ys')
                                         } else {
-                                            applyTensor'(v, [x,...xs], nx + inputs'(x), ys, 0, xs', List.concat([ys', [y]]))
+                                            applyTensor'(v, l, [x,...xs], nx + inputs'(x), ys, 0, xs', List.concat([ys', [y]]))
                                         }
                                     }
     }
@@ -83,7 +83,7 @@ let rec tensorAllValues = (xs) => {
 }
 
 /* Trace rewrites */
-let traceAsIteration = (v,trace) => {
+let traceAsIteration = (v,l,trace) => {
     switch (trace) {
     | Trace(x, f)    =>  composemany([
                                 iter(
@@ -93,7 +93,7 @@ let traceAsIteration = (v,trace) => {
                                             exp(stub(v),outputs'(trace)),
                                             identity(v, inputs'(trace))
                                         ]),
-                                        {v:v,c:f}
+                                        {v,c:f,l}
                                     ])
                                 ),
                                 tensor([
@@ -106,74 +106,74 @@ let traceAsIteration = (v,trace) => {
 }
 
 let unfoldIteration = (v, trace) => {
-    switch(trace) {
-    | Iter(x, f) => {
-        composemany'(v, [
-            dfork(v, inputs'(trace)).c,
-            tensor'(v, [
+    switch(trace.c) {
+    | Iter(_, f) => {
+        composemany([
+            dfork(v, inputs(trace)),
+            tensor([
                 trace,
-                identity(v,inputs'(trace)).c
+                identity(v,inputs(trace))
             ]),
-            f
+        {v,c:f,l:[]}
         ])
     }
     }
 }
 
 /* Perform one evaluation step on a circuit */
-let rec evaluateOneStep = ({v, c}) => {
-    Js.log("evaluateOneStep " ++ printComponent(v,c));
+let rec evaluateOneStep = ({v, c, l}) => {
+    Js.log("evaluateOneStep " ++ printComponent(v,c,l));
     let eval = {
         if(normalForm(c)){
             c;
         } else {
             switch(c){
-            | Macro(_,_,f)       => f
-            | Trace(x,f)       => traceAsIteration(v,c)
-            | Iter(x,f)        => unfoldIteration(v,c)
-            | Tensor(xs)       => Tensor(evaluateOneStepTensor(v,xs))
-            | Composition(x,y) => evaluateOneStepComposition(v,x,y)
-            | _                => failwith("todo evaluateOneStep " ++ printCircuit({v:v,c:c}))
+            | Macro(_,_,f)     => f
+            | Trace(_,_)       => traceAsIteration(v,l,c)
+            | Iter(_,_)        => unfoldIteration(v,{v,l,c}).c
+            | Tensor(xs)       => Tensor(evaluateOneStepTensor(v,xs,l))
+            | Composition(x,y) => evaluateOneStepComposition(v,x,y,l)
+            | _                => failwith("todo evaluateOneStep " ++ printCircuit({v,c,l}))
             }
         }
     };
-    {v:v, c:simplifyTensor(v,eval)}
-} and evaluateOneStepTensor = (v,xs) => {
-    Js.log("evaluateOneStepTensor " ++ printList(xs, printComponent(v)));
+    {v, c:simplifyTensor(v,eval), l}
+} and evaluateOneStepTensor = (v,xs,l) => {
+    Js.log("evaluateOneStepTensor " ++ printComponentList(v,l,xs));
     switch(xs){
     | []         => []
     | [x, ...xs] => if (normalForm(x)){
-                        [x, ...evaluateOneStepTensor(v,xs)]
+                        [x, ...evaluateOneStepTensor(v,xs,l)]
                     } else {
-                        List.concat([[evaluateOneStep({v:v, c:x}).c], xs])
+                        List.concat([[evaluateOneStep({v, c:x, l}).c], xs])
                     }
     };
-} and evaluateOneStepComposition = (v, x, y) => {
-    Js.log("evaluateOneStepComposition " ++ printComponent(v,x) ++ " --- " ++ printComponent(v,y));
+} and evaluateOneStepComposition = (v, x, y, l) => {
+    Js.log("evaluateOneStepComposition " ++ printComponent(v,x,l) ++ " --- " ++ printComponent(v,y,l));
     if(normalForm(x)){
         switch(y){
         | Identity(_)        =>  x
         | Function(id,latex,_,_,f) => switch(x){
-                                | Value(a)   => f(v,x)
-                                | Tensor(xs) => switch(f(v,x)){
-                                                | item => f(v,x)
-                                                | exception _ => Function(id ++ "(" ++ printComponentListCommas(v,xs) ++ ")", 
-                                                                            latex ++ "(" ++ printComponentListLatexCommas(v,xs),
-                                                                            inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v,c:x},{v,c:y}]).c) 
+                                | Value(_)   => f(v,x,l)
+                                | Tensor(xs) => switch(f(v,x,l)){
+                                                | item => item
+                                                | exception _ => Function(id ++ "(" ++ printComponentListCommas(v,l,xs) ++ ")", 
+                                                                            latex ++ "(" ++ printComponentListLatexCommas(v,l,xs),
+                                                                            inputs'(x), outputs'(y), (v,c,l) => composemany([{v,c,l},{v,c:x,l},{v,c:y,l}]).c) 
                                 }
-                                | Function(_,_,_,_,_) => switch(f(v,x)){
+                                | Function(_,_,_,_,_) => switch(f(v,x,l)){
                                                         | item        => item
-                                                        | exception _ => Function(id ++ "(" ++ printComponent(v,x) ++ ")", 
-                                                                                      latex ++ "(" ++ printComponentLatex(v,x) ++ ")",
-                                                                                      inputs'(x), outputs'(y), (v,c) => composemany([{v,c},{v,c:x},{v,c:y}]).c) 
+                                                        | exception _ => Function(id ++ "(" ++ printComponent(v,x,l) ++ ")", 
+                                                                                      latex ++ "(" ++ printComponentLatex(v,x,l) ++ ")",
+                                                                                      inputs'(x), outputs'(y), (v,c,l) => composemany([{v,c,l},{v,c:x,l},{v,c:y,l}]).c) 
                                                         }
                                 }
-        | Tensor(ys)        =>  applyTensor(v,x,ys)
-        | Composition(a,b)  =>  Composition(evaluateOneStepComposition(v,x,a),b)
-        | f                 =>  Composition(x, evaluateOneStep({v:v, c:f}).c)
+        | Tensor(ys)        =>  applyTensor(v,l,x,ys)
+        | Composition(a,b)  =>  Composition(evaluateOneStepComposition(v,x,a,l),b)
+        | f                 =>  Composition(x, evaluateOneStep({v, c:f, l}).c)
         }        
     } else {
-        Composition(evaluateOneStep({v:v,c:x}).c, y)
+        Composition(evaluateOneStep({v,c:x,l}).c, y)
     }
 } 
 

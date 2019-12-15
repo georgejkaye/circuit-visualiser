@@ -75,7 +75,7 @@ let exampleCombinational = "f * t . Tr{1}((x{1,1} * /\\) . (/\\ * x{1,1} * 1) . 
 
 let exampleTokenised = tokenise(exampleString);
 let exampleParsed = parse(v, exampleFunctions, exampleTokenised);
-let exampleCircuit = {v:v,c:fst(exampleParsed)};
+let exampleCircuit = {v:v,c:fst(exampleParsed),l:[]};
 
 /*let exampleTokenised = tokenise(exampleCombinational);
 let exampleParsed = parse(v, exampleFunctions, exampleTokenised);

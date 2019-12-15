@@ -5,13 +5,15 @@
 open Helpers;
 open Lattices;
 
+type linklist = list(((string,int),(string,int)))
+
 /* A circuit is a component associated with a lattice v */
 type component = 
     | Value((int,int))
     | Identity(int)
     | Composition(component, component)    
     | Tensor(list(component))
-    | Function(string, string, int, int, (lattice, component) => component)
+    | Function(string, string, int, int, (lattice, component, linklist) => component)
     | Delay(int)
     | Trace(int, component)
     | Iter(int, component)
@@ -22,6 +24,17 @@ type component =
 and circuit = { 
     v: lattice,
     c: component,
+    l: linklist
+}
+
+/* Look up the string of a link from its number */
+let rec lookupLink = (i, l) => {
+    switch(l){
+    | [] => failwith("link not in list")
+    | [l, ...ls] => snd(fst(l)) == i ? fst(fst(l)) 
+                                     : (snd(snd(l))) == i ? fst(snd(l)) 
+                                                          : lookupLink(i,ls)
+    }
 }
 
 /************/
@@ -29,69 +42,69 @@ and circuit = {
 /************/
 
 /* Helper for printComponent. */
-let rec printComponent' = (v, c, i) => {
+let rec printComponent' = (v, c, l, i) => {
     switch (c) {
     | Value(x)                          => v.print(x)
     | Identity(x)                       => string_of_int(x)
-    | Composition(f, g)                 => let b = printComponent'(v,f,0) ++ {js| ⋅ |js} ++ printComponent'(v,g,0);
+    | Composition(f, g)                 => let b = printComponent'(v,f,l,0) ++ {js| ⋅ |js} ++ printComponent'(v,g,l,0);
                                            i == 0 ? b : "(" ++ b ++ ")"
     | Tensor([])                        => ""
-    | Tensor([x])                       => printComponent'(v,x,i+1)
-    | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent'(v,comp, i+1)), printComponent'(v,f, i+1), tl)
+    | Tensor([x])                       => printComponent'(v,x,l,i+1)
+    | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ {js| ⊗ |js} ++ printComponent'(v,comp,l,i+1)), printComponent'(v,f,l,i+1), tl)
     | Function(id, _, _, _, _)             => id
     | Delay(x)                          => {js|ẟ{|js} ++ string_of_int(x) ++ "}"
-    | Trace(x, component)               => "Tr{" ++ string_of_int(x) ++ "}(" ++ printComponent'(v,component,0) ++ ")" 
-    | Iter(x, component)                => "iter{" ++ string_of_int(x) ++ "}(" ++ printComponent'(v,component,0) ++ ")" 
-    | Input(int)                        => "|" ++ string_of_int(int) ++ "|"   
-    | Output(int)                       => "|" ++ string_of_int(int) ++ "|"
-    | Link(inlink, outlink, circuit)    => "\\" ++ string_of_int(inlink) ++ "," ++ string_of_int(outlink) ++ ". " ++ printComponent'(v,circuit,i) 
+    | Trace(x, component)               => "Tr{" ++ string_of_int(x) ++ "}(" ++ printComponent'(v,component,l,0) ++ ")" 
+    | Iter(x, component)                => "iter{" ++ string_of_int(x) ++ "}(" ++ printComponent'(v,component,l,0) ++ ")" 
+    | Input(int)                        => lookupLink(int,l)   
+    | Output(int)                       => lookupLink(int,l)
+    | Link(inlink, outlink, circuit)    => "\\" ++ lookupLink(inlink,l) ++ "," ++ lookupLink(outlink,l) ++ ". " ++ printComponent'(v,circuit,l,i) 
     | Macro(id, _, _)                      => id
     ;}
 }
 
 /* Get a string representation of a component */
-let printComponent = (v, c) => printComponent'(v, c, 0);
+let printComponent = (v, c, l) => printComponent'(v, c, l, 0);
 
 /* Get a string representation of a circuit */
-let printCircuit = ({v,c}) => printComponent(v,c)
+let printCircuit = ({v,c,l}) => printComponent(v,c,l)
 
-let rec printComponentLatex' = (v, c, i) => {
+let rec printComponentLatex' = (v, c, l, i) => {
     switch (c) {
         | Value(x)                          => "\\text{" ++ v.print(x) ++ "}"
         | Identity(x)                       => string_of_int(x)
-        | Composition(f, g)                 => let b = printComponentLatex'(v,f,0) ++ " \\cdot " ++ printComponentLatex'(v,g,0);
+        | Composition(f, g)                 => let b = printComponentLatex'(v,f,l,0) ++ " \\cdot " ++ printComponentLatex'(v,g,l,0);
                                                i == 0 ? b : "(" ++ b ++ ")"
         | Tensor([])                        => ""
-        | Tensor([x])                       => printComponentLatex'(v,x,i+1)
-        | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ " \\otimes " ++ printComponentLatex'(v,comp, i+1)), printComponentLatex'(v,f, i+1), tl)
+        | Tensor([x])                       => printComponentLatex'(v,x,l,i+1)
+        | Tensor([f, ...tl])                => List.fold_left(((string, comp) => string ++ " \\otimes " ++ printComponentLatex'(v,comp, l, i+1)), printComponentLatex'(v,f, l,i+1), tl)
         | Function(id, latex,  _, _, _)     => latex
         | Delay(x)                          => "\\delta_" ++ string_of_int(x)
-        | Trace(x, component)               => "\\text{Tr}^" ++ string_of_int(x) ++ "(" ++ printComponentLatex'(v,component,0) ++ ")" 
-        | Iter(x, component)                => "\\text{iter}^" ++ string_of_int(x) ++ "(" ++ printComponentLatex'(v,component,0) ++ ")" 
-        | Input(int)                        => "|" ++ string_of_int(int) ++ "|"   
-        | Output(int)                       => "|" ++ string_of_int(int) ++ "|"
-        | Link(inlink, outlink, circuit)    => "\\bar{" ++ string_of_int(inlink) ++ "," ++ string_of_int(outlink) ++ "}." ++ printComponentLatex'(v,circuit,i) 
+        | Trace(x, component)               => "\\text{Tr}^" ++ string_of_int(x) ++ "(" ++ printComponentLatex'(v,component,l,0) ++ ")" 
+        | Iter(x, component)                => "\\text{iter}^" ++ string_of_int(x) ++ "(" ++ printComponentLatex'(v,component,l,0) ++ ")" 
+        | Input(int)                        => lookupLink(int,l)   
+        | Output(int)                       => lookupLink(int,l)
+        | Link(inlink, outlink, circuit)    => "\\overline{" ++ lookupLink(inlink,l) ++ "|" ++ lookupLink(outlink,l) ++ "}." ++ printComponentLatex'(v,circuit,l,i) 
         | Macro(_, latex, _)                      => latex
         ;}
 }
 
 /* Get a string representation of a component */
-let printComponentLatex = (v, c) => printComponentLatex'(v, c, 0);
+let printComponentLatex = (v, c, l) => printComponentLatex'(v, c, l, 0);
 
 /* Get a string representation of a circuit */
-let printCircuitLatex = ({v,c}) => printComponentLatex(v,c)
+let printCircuitLatex = ({v,c,l}) => printComponentLatex(v,c,l)
 
 /* Print a list of components in the form [c1 :: c2 :: c3 :: c4] */
-let printComponentList = (v, xs) => printList(xs, (x) => printComponent(v,x));
+let printComponentList = (v, l, xs) => printList(xs, (x) => printComponent(v,x,l));
 
 /* Print a list of components in the form [c1 :: c2 :: c3 :: c4] */
-let printComponentListLatex = (v, xs) => printList(xs, (x) => printComponentLatex(v,x));
+let printComponentListLatex = (v, l, xs) => printList(xs, (x) => printComponentLatex(v,x,l));
 
 /* Print a list of components in the form [c1, c2, c3, c4] */
-let printComponentListCommas = (v, xs) => printListCommas(xs, (x) => printComponent(v,x));
+let printComponentListCommas = (v, l, xs) => printListCommas(xs, (x) => printComponent(v,x,l));
 
 /* Print a list of components in the form [c1, c2, c3, c4] */
-let printComponentListLatexCommas = (v, xs) => printListCommas(xs, (x) => printComponentLatex(v,x));
+let printComponentListLatexCommas = (v, l, xs) => printListCommas(xs, (x) => printComponentLatex(v,x,l));
 
 /****************/
 /* Input-output */
@@ -146,32 +159,31 @@ let outputs = ({c}) => outputs'(c)
 /**********************************************************/
 
 /* Zero circuit, represents nothingness */
-let zero = (v) => {v:v, c:Identity(0)}
+let zero = (v) => {v:v, c:Identity(0), l:[]}
 
 /* Create a value */
-let value = (v,x) => {v:v, c:Value(x)}
+let value = (v,x) => {v:v, c:Value(x), l:[]}
 
 /* Create an identity */
-let identity = (v, n) => {v:v, c:Identity(n)}
+let identity = (v, n) => {v:v, c:Identity(n),l:[]}
 
 /* Compose two components together */
-let compose' = (v, c, c') => {
-    Js.log("composing " ++ printComponent(v,c) ++ " and " ++ printComponent(v,c'))
-    assert'(outputs'(c) == inputs'(c'), "Outputs of circuit " ++ printComponent(v,c) ++ " do not match inputs of circuit " ++ printComponent(v,c'));
+let compose' = (v, c, l, c', l') => {
+    assert'(outputs'(c) == inputs'(c'), "Outputs of circuit " ++ printComponent(v,c,l) ++ " do not match inputs of circuit " ++ printComponent(v,c',l'));
     Composition(c, c')
 }
 
 /* Create a composition circuit */
 let compose = (c, c') => {
     assert'(c.v == c'.v, "Circuits use different lattices!");
-    {v:c.v, c:compose'(c.v, c.c,c'.c)};
+    {v:c.v, c:compose'(c.v, c.c, c.l, c'.c, c'.l), l: c.l @ c'.l};
 }
 
 /* Create a tensor circuit */
 let tensor = (xs) => {
     assert'(List.fold_left((x,y) => x && (y.v == List.hd(xs).v), true, xs), "Not all circuits use the same lattice!");
     let ys = List.map((x => x.c), xs);
-    {v:List.hd(xs).v, c:Tensor(ys)}
+    {v:List.hd(xs).v, c:Tensor(ys), l:List.fold_left(((x,y) => x @ y.l), [], xs)}
 }
 
 /* Create a tensor component */
@@ -183,11 +195,11 @@ let tensor' = (v, xs) => {
 let func' = (id, latex, ins, outs, f) => Function(id,latex,ins,outs,f)
 
 /* Create a function circuit */
-let func = (v, id, latex, ins, outs, f) => {v:v, c: func'(id,latex,ins,outs,f)}
+let func = (v, id, latex, ins, outs, f, l) => {v, c: func'(id,latex,ins,outs,f), l}
 
 /* Create a macro circuit */
-let macro = (v, id, latex, f) =>
-    {v:v, c: Macro(id, latex, f)}
+let macro = (v, id, latex, f, l) =>
+    {v, c: Macro(id, latex, f), l}
 
 /*********************/
 /* Helpful shortcuts */
@@ -204,13 +216,13 @@ let rec composemany = (xs) => {
 }
 
 /* Compose many components at once */
-let rec composemany' = (v, xs) => {
+/*let rec composemany' = (v, xs) => {
     switch(xs){
     | []         => failwith("no args")
     | [x]        => x
     | [x, ...xs] => compose'(v, x, composemany'(v, xs))
     }
-}
+}*/
 
 
 /* Helper function for exp */
@@ -229,14 +241,14 @@ let exp = (f, x) => {
 
 /* Create a function that acts as a 'black box' - it transforms the inputs into the outputs but we don't know how exactly. */
 let funcBlackBox = (v, id, latex, ins, outs) => {
-    let rec bb = Function(id,latex,ins,outs, (v,c) => {
+    let rec bb = Function(id,latex,ins,outs, (v,c,l) => {
                     let id' = switch(c){
-                    | Tensor(xs) => (printComponentListCommas(v,xs), printComponentListLatexCommas(v,xs))
-                    | _          => (printComponent(v,c), printComponentLatex(v,c))
+                    | Tensor(xs) => (printComponentListCommas(v,l,xs), printComponentListLatexCommas(v,l,xs))
+                    | _          => (printComponent(v,c,l), printComponentLatex(v,c,l))
                     };
-                    Function(id ++ "(" ++ fst(id') ++ ")", latex ++ "(" ++ snd(id') ++ ")", inputs'(c), outs, (v,c) => composemany([{v,c},{v,c:bb}]).c)
+                    Function(id ++ "(" ++ fst(id') ++ ")", latex ++ "(" ++ snd(id') ++ ")", inputs'(c), outs, (v,c,l) => composemany([{v,c,l},{v,c:bb,l}]).c)
                 });
-    {v:v, c: bb}
+    {v, c: bb, l:[]}
 }
 
 /*********************/
@@ -244,23 +256,24 @@ let funcBlackBox = (v, id, latex, ins, outs) => {
 /*********************/
 
 /* Fork a wire into two wires */
-let fork = (v) => func(v,{js|⋏|js}, "\\curlywedge", 1, 2, (_, c) => Tensor([c, c]));
+let fork = (v) => func(v,{js|⋏|js}, "\\curlywedge", 1, 2, (_, c,_) => Tensor([c, c]),[]);
 
 /* Join two wires into one, taking the join of their values */
 let rec join = (v) => func(v,{js|⋎|js}, "\\curlyvee",
                             2, 
                             1, 
-                            (v, c) => switch(c){
+                            (v, c, l) => switch(c){
                                         | Tensor([Value(x), Value(y)]) => Value(v.joinOp(x,y))
-                                        | Tensor([x, y]) => Function(printComponent(v,x) ++ {js| ⊔ |js} ++ printComponent(v,y), 
-                                                                     printComponentLatex(v,x) ++ " \\sqcup " ++ printComponentLatex(v,y), 
-                                                                     inputs'(c), 1, (v,c) => compose({v,c}, join(v)).c)
+                                        | Tensor([x, y]) => Function(printComponent(v,x,l) ++ {js| ⊔ |js} ++ printComponent(v,y,l), 
+                                                                     printComponentLatex(v,x,l) ++ " \\sqcup " ++ printComponentLatex(v,y,l), 
+                                                                     inputs'(c), 1, (v,c,l) => compose({v,c,l}, join(v)).c)
                                         | _ => failwith("Join can only take two arguments")
-                                    }
+                                    },
+                            []
                         )  
 
 /* Stub a wire, leading to the unique identity on 0 */
-let stub = (v) => func(v, {js|~|js}, "{\\sim}", 1, 0, (_, _) => Identity(0));
+let stub = (v) => func(v, {js|~|js}, "{\\sim}", 1, 0, (_,_,_) => Identity(0),[]);
 
 let specialMorphisms = (v) => [fork(v).c, join(v).c, stub(v).c];
 
@@ -269,10 +282,10 @@ let swap = (v, x, y) => func(v, {js|×|js} ++ "{" ++ string_of_int(x) ++ "," ++ 
                                 "\\times_{" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ "}",
                                 x + y, 
                                 x + y, 
-                                (_, comp) => switch(comp){
+                                (_, comp,_) => switch(comp){
                                 | Tensor(xs) => let (top, bot) = split(x, xs); Tensor(List.concat([bot, top]));
                                 | _ => failwith("Swap can only swap a tensor")
-                                }
+                                }, []
                             )
 
 
@@ -287,7 +300,7 @@ let rec dfork = (v,n) => {
                         tensor([identity(v,n-1), swap(v, n-1, 1), identity(v,1)])
                         ]).c
         };
-    macro(v, {js|Δ{|js} ++ string_of_int(n) ++ "}", "\\Delta_" ++ string_of_int(n), comp)
+    macro(v, {js|Δ{|js} ++ string_of_int(n) ++ "}", "\\Delta_" ++ string_of_int(n), comp, [])
 }
 
 /* Join all wires in a bus */
@@ -300,7 +313,7 @@ let rec djoin = (v,n) => {
                         tensor([djoin(v,n-1), join(v)])
                         ]).c
         };
-    macro(v, {js|∇{|js} ++ string_of_int(n) ++ "}", "\\nabla_" ++ string_of_int(n), comp)
+    macro(v, {js|∇{|js} ++ string_of_int(n) ++ "}", "\\nabla_" ++ string_of_int(n), comp, [])
 }
 
 /*********/
@@ -308,32 +321,32 @@ let rec djoin = (v,n) => {
 /*********/
 
 /* Create a delay */
-let delay = (v,n) => {v:v, c:Delay(n)}
+let delay = (v,n) => {v:v, c:Delay(n), l:[]}
 
 /***********************/
 /* Trace and iteration */
 /***********************/
 
 /* Create a trace component */
-let trace' = (v, x, f) => {
-    assert'(inputs'(f) >= x && outputs'(f) >= x, "Inputs and outputs of circuit " ++ printComponent(v,f) ++ " are less than the size of the trace.");
+let trace' = (v, x, f, l) => {
+    assert'(inputs'(f) >= x && outputs'(f) >= x, "Inputs and outputs of circuit " ++ printComponent(v,f,l) ++ " are less than the size of the trace.");
     Trace(x, f)
 }
 
 /* Create a trace circuit */
 let trace = (x, f) => {
-    {v:f.v, c:trace'(f.v, x, f.c)}
+    {v:f.v, c:trace'(f.v, x, f.c, f.l), l:f.l}
 }
 
 /* Create an iteration component */
-let iter' = (v,f) => {
-    assert'(inputs'(f) >= outputs'(f), "Not enough inputs of circuit " ++ printComponent(v,f) ++ " to iterate.");
+let iter' = (v,f,l) => {
+    assert'(inputs'(f) >= outputs'(f), "Not enough inputs of circuit " ++ printComponent(v,f,l) ++ " to iterate.");
     Iter(outputs'(f), f)
 }
 
 /* Create an iteration circuit */
 let iter = (f) => {
-    {v:f.v, c:iter'(f.v, f.c)}
+    {v:f.v, c:iter'(f.v, f.c, f.l), l:f.l}
 }
 
 /***********************/

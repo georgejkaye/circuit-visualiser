@@ -212,9 +212,9 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
         
         let actualArgument = fst(parsedArgument);
         let nextlink = fst(snd(parsedArgument));
-        let links = snd(snd(parsedArgument));
+        let newlinks = snd(snd(parsedArgument));
 
-        (compose'(v, List.hd(stack), actualArgument), (nextlink, links))
+        (compose'(v, List.hd(stack), links, actualArgument, newlinks), (nextlink, newlinks))
     }
 
 } and parseTensor = (v, funcs, i, xs, stack, tensor, nextlink, links) => {
@@ -245,9 +245,9 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
 
         let parsedTrace = parse'(v, funcs, i + 1 + 1 + String.length(m[0]) , traceTokens, [], [], false, nextlink, links)
         
-        let actualTrace = trace'(v,x,fst(parsedTrace));
         let nextlink = fst(snd(parsedTrace));
         let links = snd(snd(parsedTrace));
+        let actualTrace = trace'(v,x,fst(parsedTrace),links);
         
         parse'(v, funcs, i + 1 + 1 + String.length(m[0]) + lengthOfTokens(traceTokens) + 1, trim(xs,j+2), stack @ [actualTrace], [actualTrace], tensor, nextlink, links)
     }
@@ -262,10 +262,10 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
         let iterationTokens = slice(xs,1,j-1);
         let parsedIteration = parse'(v, funcs, i + 1 + 1 + String.length(m[0]), iterationTokens, [], [], false, nextlink, links);
         
-        let actualIteration = iter'(v,fst(parsedIteration));
         let nextlink = fst(snd(parsedIteration));
         let links = snd(snd(parsedIteration));
-
+        let actualIteration = iter'(v,fst(parsedIteration), links);
+        
         parse'(v, funcs, i + 1 + 1 + String.length(m[0]) + lengthOfTokens(iterationTokens) + 1, trim(xs,j+2), stack @ [actualIteration], [actualIteration], tensor, nextlink, links)
     }
 
@@ -336,6 +336,6 @@ let parseFromString = (v, funcs, string) => {
     let tokenisedString = tokenise(string);
     let parsedString = parse(v, funcs, tokenisedString);
 
-    {v:v, c:fst(parsedString)}
+    {v:v, c:fst(parsedString), l:snd(snd(parsedString))}
 
 }
