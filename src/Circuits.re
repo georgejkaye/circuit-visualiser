@@ -7,6 +7,10 @@ open Lattices;
 
 type linklist = list(((string,int),(string,int)))
 
+exception SemanticsError(string);
+
+let semanticsError = (message) => raise(SemanticsError(message));
+
 /* A circuit is a component associated with a lattice v */
 type component = 
     | Value((int,int))
@@ -169,8 +173,11 @@ let identity = (v, n) => {v:v, c:Identity(n),l:[]}
 
 /* Compose two components together */
 let compose' = (v, c, l, c', l') => {
-    assert'(outputs'(c) == inputs'(c'), "Outputs of circuit " ++ printComponent(v,c,l) ++ " do not match inputs of circuit " ++ printComponent(v,c',l'));
-    Composition(c, c')
+    if(outputs'(c) != inputs'(c')){
+        semanticsError("Outputs of circuit " ++ printComponent(v,c,l) ++ " do not match inputs of circuit " ++ printComponent(v,c',l'))
+    } else {
+        Composition(c, c')
+    }
 }
 
 /* Create a composition circuit */

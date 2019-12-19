@@ -58,6 +58,7 @@ let generateCircuit = (state, text) => {
     switch(parseFromString(state.lat, state.funs, text)){ /* hello */
     | item => (true, (item, printCircuitLatex(item)))
     | exception ParseError(e) => (false, (zero(state.lat), e))
+    | exception SemanticsError(e) => (false, (zero(state.lat), e))
     }
 }
 
