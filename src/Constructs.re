@@ -57,7 +57,7 @@ let xorGate = (v) => {v:v, c:Function({js|XOR|js}, "\\oplus", 2, 1, (c) =>
 let notGate = (v) => {v:v, c:Function({js|NOT|js}, "\\neg", 1, 1, (c) =>
                                                  switch(c.c){
                                                  | Value(a) => value(v,v.notOp(a))
-                                                 | a        => func(v,"¬" ++ printCircuit(c),
+                                                 | _        => func(v,"¬" ++ printCircuit(c),
                                                                              "\\neg " ++ printCircuitLatex(c),
                                                                              inputs(c), 1, (_) => failwith("not implemented"))
                                                  }),l:[]}
@@ -65,12 +65,12 @@ let notGate = (v) => {v:v, c:Function({js|NOT|js}, "\\neg", 1, 1, (c) =>
 let id = (v, n) => func(v,"id{" ++ string_of_int(n) ++ "}", "\\text{id}_" ++ string_of_int(n), n,n, (c) => c)
 
 let first = (v) => func(v, "fst", "\\text{fst}", 2, 1, (c) => switch(c.c){
-                                          | Tensor([a,b]) => a
+                                          | Tensor([a,_]) => a
                                           | _ => failwith("Bad input")
                                           })
 
 let second = (v) => func(v, "snd", "\\text{snd}", 2, 1, (c) => switch(c.c){
-                                                        | Tensor([a,b]) => b
+                                                        | Tensor([_,b]) => b
                                                         | _ => failwith("Bad input")
                                                   }
        )

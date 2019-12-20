@@ -1,6 +1,7 @@
 open Circuits;
 open Parser;
 open Lattices;
+open Hypernets;
 
 module Graphviz = {
     [@bs.module "graphviz-react"][@react.component]
@@ -34,7 +35,9 @@ type state = {
     lat: lattice,           /* The lattice being used */
     circ: circuit,          /* The current circuit */
     strn: string,           /* The string of the current circuit, or a parse error message */
-    funs: list(circuit),  /* The library of functions available */
+    funs: list(circuit),    /* The library of functions available */
+    net: hypernet,          /* The corresponding hypernet */
+    dot: string,            /* The corresponding dot string */
     error: bool             /* If there's a parse error */
 }
 
@@ -92,16 +95,27 @@ module Input = {
 
 [@react.component]
 let make = () => {
-    let({strn,error},dispatch) = React.useReducer((state,action) => {
+    let({strn,dot,error},dispatch) = React.useReducer((state,action) => {
         switch action {
         | ParseNewCircuit(text) => let generatedCircuit = generateCircuit(state, text);
-                                    {circ: fst(snd(generatedCircuit)), lat: state.lat, strn: snd(snd(generatedCircuit)), funs: state.funs, error:fst(generatedCircuit)}
+                                    let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
+                                    let generatedDot = generateGraphvizCode(generatedHypernet);
+                                    Js.log(generatedDot);
+                                    {circ: fst(snd(generatedCircuit)), 
+                                        lat: state.lat, 
+                                        strn: snd(snd(generatedCircuit)), 
+                                        funs: state.funs, 
+                                        net: generatedHypernet,
+                                        dot: generatedDot,
+                                        error:fst(generatedCircuit)}
         }
     }, {
         lat: simpleLattice,
         circ: zero(simpleLattice),
         strn: "",
         funs: Examples.exampleFunctions,
+        net: zeroNet,
+        dot: zeroDot,
         error: false
     });
     <div className = "main">
@@ -126,15 +140,10 @@ let make = () => {
             <div> <span className = "code">(str("x{a,b}"))</span> <b>(str(" Swap"))</b> (str(" buses of width a and b"))</div>
             <div> <span className = "code">(str("Tr{n}(a)"))</span> <b>(str(" Trace"))</b> (str(" a circuit, using n of its outputs as inputs"))</div>
             <div> <span className = "code">(str("iter(a)"))</span> <b>(str(" Iterate"))</b> (str(" a circuit, using all of its outputs as inputs"))</div>
-            <div> <span className = "code">(str("\xy."))</span> (str(" or ")) <span className = "code">(str("\x,y."))</span><b>(str(" Link"))</b> (str(" outlink x with inlink y"))</div>
+            <div> <span className = "code">(str("\\xy."))</span> (str(" or ")) <span className = "code">(str("\\x,y."))</span><b>(str(" Link"))</b> (str(" outlink x with inlink y"))</div>
         </div>
         <div>
-        <Graphviz dot="digraph {
-        grandparent -> \"parent C\";
-        child;
-        \"parent B\" -> child;
-        grandparent -> \"parent B\";
-        }" />
+        <Graphviz dot=dot/>
     </div>
     </div>
     

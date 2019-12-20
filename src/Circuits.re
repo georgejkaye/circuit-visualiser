@@ -50,7 +50,7 @@ let rec printComponent' = (v, c, l, i) => {
     switch (c) {
     | Value(x)                          => v.print(x)
     | Identity(x)                       => string_of_int(x)
-    | Composition(f, g)                 => let b = printCircuit'(f,0) ++ {js| ⋅ |js} ++ printCircuit'(f,0);
+    | Composition(f, g)                 => let b = printCircuit'(f,0) ++ {js| ⋅ |js} ++ printCircuit'(g,0);
                                            i == 0 ? b : "(" ++ b ++ ")"
     | Tensor([])                        => ""
     | Tensor([x])                       => printCircuit'(x,i+1)
@@ -77,7 +77,7 @@ let rec printComponentLatex' = (v, c, l, i) => {
         | Tensor([])                        => ""
         | Tensor([x])                       => printCircuitLatex'(x,i+1)
         | Tensor([f, ...tl])                => List.fold_left(((string, f') => string ++ " \\otimes " ++ printCircuitLatex'(f', i+1)), printCircuitLatex'(f,i+1), tl)
-        | Function(id, latex,  _, _, _)     => latex
+        | Function(_, latex,  _, _, _)     => latex
         | Delay(x)                          => "\\delta_" ++ string_of_int(x)
         | Trace(x, f)               => "\\text{Tr}^" ++ string_of_int(x) ++ "(" ++ printCircuit'(f,0) ++ ")" 
         | Iter(x, f)                => "\\text{iter}^" ++ string_of_int(x) ++ "(" ++ printCircuit'(f,0) ++ ")" 
@@ -279,7 +279,7 @@ let rec join = (v) => func(v,{js|⋎|js}, "\\curlyvee",
                         )  
 
 /* Stub a wire, leading to the unique identity on 0 */
-let stub = (v) => func(v, {js|~|js}, "{\\sim}", 1, 0, (c) => zero(v));
+let stub = (v) => func(v, {js|~|js}, "{\\sim}", 1, 0, (_) => zero(v));
 
 let specialMorphisms = (v) => [fork(v), join(v), stub(v)];
 
