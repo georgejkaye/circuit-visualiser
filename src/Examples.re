@@ -19,6 +19,23 @@ let halfAdderApplied = composemany([
                             halfAdder
                        ])
 
+let exampleFunctions = List.concat([specialMorphisms(v), 
+            [id(v,1),
+                funcBlackBox(v, "F", "\\text{F}", 1, 1),
+                funcBlackBox(v, "G", "\\text{F}", 1, 1), 
+                funcBlackBox(v, "A", "\\text{F}", 2, 2), 
+                funcBlackBox(v, "H", "\\text{F}", 1, 2), 
+                andGate(v),
+                orGate(v),
+                xorGate(v),
+                notGate(v),
+                multiplexer(v),
+                first(v),
+                second(v),
+]])
+
+                       /*
+
 let halfAdderReduced_1 = evaluateOneStep(halfAdderApplied);
 let halfAdderReduced_2 = evaluateOneStep(halfAdderReduced_1);
 let halfAdderReduced_3 = evaluateOneStep(halfAdderReduced_2);
@@ -50,21 +67,6 @@ let fullAdderApplied = composemany([
 
 let fullAdderReduced = evaluate(fullAdderApplied)
 
-let exampleFunctions = List.concat([specialMorphisms(v), 
-                                    [id(v,1).c,
-                                     funcBlackBox(v, "F", "\\text{F}", 1, 1).c,
-                                     funcBlackBox(v, "G", "\\text{F}", 1, 1).c, 
-                                     funcBlackBox(v, "A", "\\text{F}", 2, 2).c, 
-                                     funcBlackBox(v, "H", "\\text{F}", 1, 2).c, 
-                                     andGate(v).c,
-                                     orGate(v).c,
-                                     xorGate(v).c,
-                                     notGate(v).c,
-                                     multiplexer(v).c,
-                                     first(v).c,
-                                     second(v).c,
-                                    ]])
-
 /*let exampleString = "Tr{1}((1 * t^2 * (t . id{1})^2) . 1 * x{2,2} . (1 * A * A) . (1 * AND * AND) . 1 * \\/)^2";*/
 /*let exampleString = "t * H . A" */ 
 /* let exampleString = "(A * A) . (AND * AND) . \\/" */
@@ -94,3 +96,4 @@ let exampleReduced = exampleCircuit /*evaluateStepNo(exampleCircuit, 5)*/
 /*let exampleReduced = evaluate(exampleCircuit);*/
 
 
+*/

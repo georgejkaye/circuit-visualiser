@@ -4,8 +4,8 @@
  */
 
 /* Assert but with a specific message */
-let assert' = (condition, message) =>
-    condition ? () : failwith(message);
+let assert' = (condition, error, message) =>
+    condition ? () : error(message);
 
 /******************/
 /* List functions */

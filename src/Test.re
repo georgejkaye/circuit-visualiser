@@ -2,7 +2,7 @@ let str = React.string;
 
 let log = () =>
     Js.log("Hey there!");
-
+/*
 [@react.component]
 let make = () => { 
     <div className="app"> 
@@ -36,4 +36,4 @@ let make = () => {
             <p><b>(str("Reduced input: "))</b>(str(Circuits.printCircuit(Examples.exampleReduced)))</p>
         </div>
     </div>
-}
+}*/

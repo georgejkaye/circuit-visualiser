@@ -3,6 +3,7 @@
  * evaluating circuits
  */
 
+/*
 open Circuits;
 open Helpers;
 
@@ -187,3 +188,4 @@ let rec evaluate = (orig) => {
     }
 }
 
+*/

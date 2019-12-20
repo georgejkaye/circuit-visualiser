@@ -34,7 +34,7 @@ type state = {
     lat: lattice,           /* The lattice being used */
     circ: circuit,          /* The current circuit */
     strn: string,           /* The string of the current circuit, or a parse error message */
-    funs: list(component),  /* The library of functions available */
+    funs: list(circuit),  /* The library of functions available */
     error: bool             /* If there's a parse error */
 }
 
