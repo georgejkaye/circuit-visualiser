@@ -83,8 +83,7 @@ module Input = {
             onChange = ((evt) => setText(valueFromEvent(evt)))
             onKeyDown = ((evt) => 
                 if(ReactEvent.Keyboard.key(evt) == "Enter") {
-                    onSubmit(text);
-                    setText("")
+                    onSubmit(text); 
                 }
             )
         />
@@ -115,14 +114,6 @@ let make = () => {
         <div>
             (printLatexOrError(str(strn), error))
         </div>
-        <div>
-            <Graphviz dot="graph {
-            grandparent -- \"parent C\";
-            child;
-            \"parent B\" -- child;
-            grandparent --  \"parent B\";
-            }" />
-        </div>
         <div className = "instructions">
             <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>
             <div> <span className = "code">(str("a * b"))</span> <b>(str(" Vertical composition (tensor)"))</b></div>
@@ -137,6 +128,14 @@ let make = () => {
             <div> <span className = "code">(str("iter(a)"))</span> <b>(str(" Iterate"))</b> (str(" a circuit, using all of its outputs as inputs"))</div>
             <div> <span className = "code">(str("\xy."))</span> (str(" or ")) <span className = "code">(str("\x,y."))</span><b>(str(" Link"))</b> (str(" outlink x with inlink y"))</div>
         </div>
+        <div>
+        <Graphviz dot="digraph {
+        grandparent -> \"parent C\";
+        child;
+        \"parent B\" -> child;
+        grandparent -> \"parent B\";
+        }" />
+    </div>
     </div>
     
 }
