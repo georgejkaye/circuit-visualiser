@@ -34,24 +34,30 @@ let compose = (f,g) => {
 
 }
 
+let rec convertCircuitToHypernet = (circuit) => {
+
+}
+
 let rec generateGraphvizCode = (net) => {
-    let graph = generateGraphvizCodeEdges(net.edges);
+    let graph = generateGraphvizCodeEdges(net.edges, "", "");
     "digraph{" ++ graph ++ "}"
-} and generateGraphvizCodeEdges = (edges) => {
+} and generateGraphvizCodeEdges = (edges, nodes, transitions) => {
     switch(edges){
-    | [] => ""
-    | [x,...xs] => generateGraphvizCodeEdge(x) ++ "; \\n" ++ generateGraphvizCodeEdges(xs)
+    | [] => nodes ++ transitions
+    | [x,...xs] => let edgecode = generateGraphvizCodeEdge(x);
+                    generateGraphvizCodeEdges(edges, nodes ++ fst(edgecode), transitions ++ snd(edgecode))
     }
 } and generateGraphvizCodeEdge = (edge) => {
     let ins = Array.length(edge^.sources);
     let outs = Array.length(edge^.targets);
     let inports = generatePorts(ins);
     let outports = generatePorts(outs);
+    let transitions = generateTransitions(edge^.id, edge^.targets);
 
-    "edge" ++ string_of_int(edge^.id) ++ 
+    ("edge" ++ string_of_int(edge^.id) ++ 
         " [shape=record,label=\"" ++ 
         inports ++ " | " ++ edge^.label ++ " | " ++ outports
-        ++ "]"
+        ++ "]", transitions)  
 } and generatePorts = (n) => {
     "{" ++ generatePorts'(0,n) ++ "}"
 } and generatePorts' = (x,n) => {
@@ -60,4 +66,11 @@ let rec generateGraphvizCode = (net) => {
     | 1 => "<f" ++ string_of_int(x) ++ ">"
     | n => string_of_int(n) ++ " <f" ++ string_of_int(x) ++ "> | "
     }
+} and generateTransitions = (x, targets) => {
+    let string = ref("");
+    for(i in 0 to Array.length(targets)){
+        let (e,k) = targets[i];
+        string := "\"node" ++ string_of_int(x) ++ "\":f" ++ string_of_int(i) ++ " -> \"node" ++ string_of_int(e^.id) ++ "\":f" ++ string_of_int(k) ++ ";\n"
+    }
+    string^;
 }
