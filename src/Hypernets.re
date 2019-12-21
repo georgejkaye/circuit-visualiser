@@ -87,20 +87,26 @@ let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(ci
 and convertCircuitToHypernet' = (circuit, i) => {
     
     switch(circuit.c){
-    | Value(x)           => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:circuit.v.print(x)})
-                            and ine = ref(floatingEdge(i,"inputs")) 
-                            and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:"outputs"});
-                            ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
-    | Identity(n)        => let rec ine = ref(floatingEdge(i,""));
-                            let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:"outputs"});
-                            ine := {id:i, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:"inputs"};
-                            ({inputs:ine^, edges: [], outputs: oute^},i+2)
-    | Composition(f,g)   => let fh = convertCircuitToHypernet'(f,i);
-                            let gh = convertCircuitToHypernet'(g,snd(fh));
-                            (composeSequential(fst(fh),fst(gh)), snd(gh))
+    | Value(x)                  => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:circuit.v.print(x)})
+                                   and ine = ref(floatingEdge(i,"inputs")) 
+                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:"outputs"});
+                                   ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
+    | Identity(n)               => let rec ine = ref(floatingEdge(i,""));
+                                   let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:"outputs"});
+                                   ine := {id:i, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:"inputs"};
+                                   ({inputs:ine^, edges: [], outputs: oute^},i+2)
+    | Composition(f,g)          => let fh = convertCircuitToHypernet'(f,i);
+                                   let gh = convertCircuitToHypernet'(g,snd(fh));
+                                   (composeSequential(fst(fh),fst(gh)), snd(gh))
     | Tensor([x,...xs])         => List.fold_left((f,g) => { let gh = convertCircuitToHypernet'(g,snd(f));
                                                  (composeParallel(fst(f),fst(gh)), snd(gh));}, 
                                                  (convertCircuitToHypernet'(x, i)), xs)
+    | Function(id,_,ins,outs,_) =>  let ine = ref(floatingEdge(i,""));
+                                    let oute = ref(floatingEdge(i+2,""));
+                                    let fune = ref({id:i+1, sources:Array.init(ins, (n) => (ine, n)), targets:Array.init(outs, (n) => (oute, n)), label:id});
+                                    ine := {id:i, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:"inputs"};
+                                    oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:"outputs"};
+                                    ({inputs:ine^, edges: [fune], outputs:oute^}, i+3)
     }
 }
 
@@ -118,8 +124,8 @@ let rec generateGraphvizCode = (net) => {
 } and generateGraphvizCodeEdge = (edge) => {
     let ins = Array.length(edge.sources);
     let outs = Array.length(edge.targets);
-    let inports = generatePorts(ins);
-    let outports = generatePorts(outs);
+    let inports = generatePorts(ins, false);
+    let outports = generatePorts(outs, true);
     let transitions = generateTransitions(edge.id, edge.targets);
 
     let instring = inports == "{}" ? "" : inports ++ " | ";
@@ -129,19 +135,20 @@ let rec generateGraphvizCode = (net) => {
         " [shape=record,label=\"" ++ 
         instring ++ edge.label ++ outstring
         ++ "\"]", transitions)  
-} and generatePorts = (n) => {
-    "{" ++ generatePorts'(0,n) ++ "}"
-} and generatePorts' = (x,n) => {
+} and generatePorts = (n, out) => {
+    "{" ++ generatePorts'(0,n, out) ++ "}"
+} and generatePorts' = (x,n,out) => {
+    let y = out ? "o" : "i"
     switch(n){
     | 0 => ""
-    | 1 => "<f" ++ string_of_int(x) ++ ">"
-    | n => "<f" ++ string_of_int(x) ++ "> | " ++ generatePorts'(x+1,n-1)
+    | 1 => "<" ++ y ++ string_of_int(x) ++ ">"
+    | n => "<" ++ y ++ string_of_int(x) ++ "> | " ++ generatePorts'(x+1,n-1,out)
     }
 } and generateTransitions = (x, targets) => {
     let string = ref("");
     for(i in 0 to Array.length(targets) - 1){
         let (e,k) = targets[i];
-        string := string^ ++ "\"edge" ++ string_of_int(x) ++ "\":f" ++ string_of_int(i) ++ " -> \"edge" ++ string_of_int(e^.id) ++ "\":f" ++ string_of_int(k) ++ ";\n"
+        string := string^ ++ "\"edge" ++ string_of_int(x) ++ "\":o" ++ string_of_int(i) ++ " -> \"edge" ++ string_of_int(e^.id) ++ "\":i" ++ string_of_int(k) ++ ";\n"
     }
     string^;
 }
