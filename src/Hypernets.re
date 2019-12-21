@@ -56,14 +56,27 @@ let composeParallel = (f,g) => {
     let newInputs = {id: f.inputs.id, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: "inputs"};
     let newOutputs = {id: f.outputs.id, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: "outputs"};
 
-    for(i in 0 to Array.length(newInputs.targets) - 1){
-        let (e,k) = newInputs.targets[i];
+    let fins = Array.length(f.inputs.targets);
+    let fouts = Array.length(f.outputs.sources);
+
+    for(i in 0 to fins - 1){
+        let (e,k) = f.inputs.targets[i];
         e^.sources[k] = (ref(newInputs), i);
     };
 
-    for(i in 0 to Array.length(newOutputs.sources) - 1){
-        let (e,k) = newOutputs.sources[i];
+    for(i in 0 to Array.length(g.inputs.targets) - 1){
+        let (e,k) = g.inputs.targets[i];
+        e^.sources[k] = (ref(newInputs), i + fins);
+    };
+
+    for(i in 0 to fouts - 1){
+        let (e,k) = f.outputs.sources[i];
         e^.targets[k] = (ref(newOutputs), i);
+    };
+
+    for(i in 0 to Array.length(g.outputs.sources) - 1){
+        let (e,k) = g.outputs.sources[i];
+        e^.targets[k] = (ref(newOutputs), i + fouts);
     };
 
     {inputs: newInputs, edges: f.edges @ g.edges, outputs: newOutputs}
@@ -85,9 +98,9 @@ and convertCircuitToHypernet' = (circuit, i) => {
     | Composition(f,g)   => let fh = convertCircuitToHypernet'(f,i);
                             let gh = convertCircuitToHypernet'(g,snd(fh));
                             (composeSequential(fst(fh),fst(gh)), snd(gh))
-    | Tensor(xs)         => List.fold_left((f,g) => { let gh = convertCircuitToHypernet'(g,snd(f));
+    | Tensor([x,...xs])         => List.fold_left((f,g) => { let gh = convertCircuitToHypernet'(g,snd(f));
                                                  (composeParallel(fst(f),fst(gh)), snd(gh));}, 
-                                                 (zeroNet, i), xs)
+                                                 (convertCircuitToHypernet'(x, i)), xs)
     }
 }
 
