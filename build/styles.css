@@ -12,3 +12,11 @@ div {
     border-radius: 3px;
     padding: .2em .4em;
 }
+
+.right {
+    float: right
+}
+
+td {
+    vertical-align: top
+}
