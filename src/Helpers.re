@@ -7,6 +7,15 @@
 let assert' = (condition, error, message) =>
     condition ? () : error(message);
 
+let generateUnicodeSubscript = (n) => {
+    let s1 = string_of_int(n);
+    let s2 = ref("");
+    for(i in 0 to String.length(s1) - 1){
+        s2 := s2^ ++ "&#832" ++ String.make(1,s1.[i]) ++ ";"
+    }
+    s2^
+}
+
 /******************/
 /* List functions */
 /******************/

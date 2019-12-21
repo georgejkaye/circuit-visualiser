@@ -107,6 +107,12 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                     ine := {id:i, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:"inputs"};
                                     oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:"outputs"};
                                     ({inputs:ine^, edges: [fune], outputs:oute^}, i+3)
+    | Delay(x)                 =>  let ine = ref(floatingEdge(i,""));
+                                    let oute = ref(floatingEdge(i+2,""));
+                                    let fune = ref({id:i+1, sources:[|(ine,0)|], targets:[|(oute,0)|], label:("&delta;" ++ generateUnicodeSubscript(x))});
+                                    ine := {id:i, sources:[||], targets:[|(fune, 0)|], label:"inputs"};
+                                    oute := {id:i+2, sources:[|(fune,0)|], targets:[||], label:"outputs"};
+                                    ({inputs:ine^, edges: [fune], outputs:oute^}, i+3)
     }
 }
 

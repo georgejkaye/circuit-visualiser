@@ -160,7 +160,7 @@ let make = () => {
                 </div>
             </td>
         </tr>
-        </table>
+        </table>    
     </div>
     
 }
