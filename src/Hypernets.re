@@ -17,19 +17,23 @@ type edge = {
 }
 
 let rec printEdge = (e) => {
-    "edge " ++ string_of_int(e.id) ++ ": " ++ e.label
+    "edge " ++ string_of_int(e.id) ++ ": " ++ e.label ++ ", sources: " ++ printEdgeRefPortPairArray(e.sources) ++ ", targets: " ++ printEdgeRefPortPairArray(e.targets)
 } and printEdgeArray = (es) => printArray(es, printEdge)
 and printEdgeRefArray = (es) => printArray(es, (x) => printEdge(x^))
-and printEdgeRefPortPairArray = (es) => printArray(es, ((x,n)) => printEdge(x^) ++ ":" ++ string_of_int(n))
+and printEdgeRefPortPairArray = (es) => printArray(es, ((x,n)) => (x^.label) ++ ":" ++ string_of_int(n))
 and printEdgeRefList = (es) => printList(es, (x) => printEdge(x^))
 
 let printHypernet = (h) => {
     "hypernet inputs " ++ printEdge(h.inputs) ++ ", outputs " ++ printEdge(h.outputs) ++ ", edges " ++ printEdgeRefList(h.edges)
 }
 
+
+let floatingEdge = (id,label) => {id, sources:[||], targets:[||], label} 
+
+let zeroNet = {inputs:floatingEdge(0, "inputs"), edges:[], outputs:floatingEdge(1,"outputs")}
 let identity = (array) => array
 
-let compose = (f,g) => {
+let composeSequential = (f,g) => {
 
     assert(Array.length(f.outputs.sources) == Array.length(g.inputs.targets));
     Js.log("Composing " ++ printHypernet(f) ++ " and " ++ printHypernet(g));
@@ -47,7 +51,24 @@ let compose = (f,g) => {
 
 }
 
-let floatingEdge = (id,label) => {id, sources:[||], targets:[||], label} 
+let composeParallel = (f,g) => {
+
+    let newInputs = {id: f.inputs.id, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: "inputs"};
+    let newOutputs = {id: f.outputs.id, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: "outputs"};
+
+    for(i in 0 to Array.length(newInputs.targets) - 1){
+        let (e,k) = newInputs.targets[i];
+        e^.sources[k] = (ref(newInputs), i);
+    };
+
+    for(i in 0 to Array.length(newOutputs.sources) - 1){
+        let (e,k) = newOutputs.sources[i];
+        e^.targets[k] = (ref(newOutputs), i);
+    };
+
+    {inputs: newInputs, edges: f.edges @ g.edges, outputs: newOutputs}
+
+}
 
 let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(circuit, 0))
 and convertCircuitToHypernet' = (circuit, i) => {
@@ -63,7 +84,10 @@ and convertCircuitToHypernet' = (circuit, i) => {
                             ({inputs:ine^, edges: [], outputs: oute^},i+2)
     | Composition(f,g)   => let fh = convertCircuitToHypernet'(f,i);
                             let gh = convertCircuitToHypernet'(g,snd(fh));
-                            (compose(fst(fh),fst(gh)), snd(gh))
+                            (composeSequential(fst(fh),fst(gh)), snd(gh))
+    | Tensor(xs)         => List.fold_left((f,g) => { let gh = convertCircuitToHypernet'(g,snd(f));
+                                                 (composeParallel(fst(f),fst(gh)), snd(gh));}, 
+                                                 (zeroNet, i), xs)
     }
 }
 
@@ -85,8 +109,8 @@ let rec generateGraphvizCode = (net) => {
     let outports = generatePorts(outs);
     let transitions = generateTransitions(edge.id, edge.targets);
 
-    let instring = inports == "{}" ? "" : inports ++ "|";
-    let outstring = outports == "{}" ? "" : "|" ++ outports; 
+    let instring = inports == "{}" ? "" : inports ++ " | ";
+    let outstring = outports == "{}" ? "" : " | " ++ outports; 
 
     ("edge" ++ string_of_int(edge.id) ++ 
         " [shape=record,label=\"" ++ 
@@ -109,6 +133,5 @@ let rec generateGraphvizCode = (net) => {
     string^;
 }
 
-let zeroNet = {inputs:floatingEdge(0, "inputs"), edges:[], outputs:floatingEdge(1,"outputs")}
 let zeroDot = generateGraphvizCode(zeroNet);
 Js.log(zeroDot);
