@@ -83,6 +83,22 @@ let composeParallel = (f,g) => {
 
 }
 
+let traceHypernet = (x, h) => {
+
+    let newInputs = {id: h.inputs.id, sources: [||], targets:Array.sub(h.inputs.targets, x, (Array.length(h.inputs.targets) - x)), label:"inputs"};
+    let newOutputs = {id: h.outputs.id, sources: Array.sub(h.outputs.sources, x, (Array.length(h.outputs.sources) - x)), targets: [||], label:"outputs"};
+
+    for(i in 0 to x-1){
+        let (e, k) = h.inputs.targets[i];
+        let (e', k') = h.outputs.sources[i];
+        e'^.targets[k'] = (e, k);
+        e^.sources[k] = (e',k');
+    };
+
+    {inputs: newInputs, edges: h.edges, outputs: newOutputs}
+    
+}
+
 let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(circuit, 0))
 and convertCircuitToHypernet' = (circuit, i) => {
     
@@ -107,12 +123,17 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                     ine := {id:i, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:"inputs"};
                                     oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:"outputs"};
                                     ({inputs:ine^, edges: [fune], outputs:oute^}, i+3)
-    | Delay(x)                 =>  let ine = ref(floatingEdge(i,""));
+    | Delay(x)                  =>  let ine = ref(floatingEdge(i,""));
                                     let oute = ref(floatingEdge(i+2,""));
                                     let fune = ref({id:i+1, sources:[|(ine,0)|], targets:[|(oute,0)|], label:("&delta;" ++ generateUnicodeSubscript(x))});
                                     ine := {id:i, sources:[||], targets:[|(fune, 0)|], label:"inputs"};
                                     oute := {id:i+2, sources:[|(fune,0)|], targets:[||], label:"outputs"};
                                     ({inputs:ine^, edges: [fune], outputs:oute^}, i+3)
+    | Trace(x, f)               => let (fh,i') = convertCircuitToHypernet'(f,i+1);
+                                    (traceHypernet(x,fh), i')
+                                    
+                                    
+                                    
     }
 }
 

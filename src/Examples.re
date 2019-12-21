@@ -32,6 +32,7 @@ let exampleFunctions = List.concat([specialMorphisms(v),
                 multiplexer(v),
                 first(v),
                 second(v),
+                id(v,2),
 ]])
 
                        /*

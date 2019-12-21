@@ -62,7 +62,7 @@ let notGate = (v) => {v:v, c:Function({js|NOT|js}, "\\neg", 1, 1, (c) =>
                                                                              inputs(c), 1, (_) => failwith("not implemented"))
                                                  }),l:[]}
 
-let id = (v, n) => func(v,"id{" ++ string_of_int(n) ++ "}", "\\text{id}_" ++ string_of_int(n), n,n, (c) => c)
+let id = (v, n) => func(v,"id\\{" ++ string_of_int(n) ++ "\\}", "\\text{id}_" ++ string_of_int(n), n,n, (c) => c)
 
 let first = (v) => func(v, "fst", "\\text{fst}", 2, 1, (c) => switch(c.c){
                                           | Tensor([a,_]) => a
