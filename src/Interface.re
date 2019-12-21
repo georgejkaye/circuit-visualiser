@@ -32,6 +32,7 @@ module MathJax = {
 let str = React.string;
 
 type state = {
+    old: string,             /* Currently to stop multiple things happening */
     lat: lattice,           /* The lattice being used */
     circ: circuit,          /* The current circuit */
     strn: string,           /* The string of the current circuit, or a parse error message */
@@ -96,20 +97,27 @@ module Input = {
 [@react.component]
 let make = () => {
     let({strn,dot,error},dispatch) = React.useReducer((state,action) => {
-        switch action {
-        | ParseNewCircuit(text) => let generatedCircuit = generateCircuit(state, text);
-                                    let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
-                                    let generatedDot = generateGraphvizCode(generatedHypernet);
-                                    Js.log(generatedDot);
-                                    {circ: fst(snd(generatedCircuit)), 
+        switch(action) {
+        | ParseNewCircuit(text) =>  Js.log(state.old ++ " old vs new " ++ text);
+                                    if(state.old == text){
+                                        state
+                                    } else { 
+                                        let generatedCircuit = generateCircuit(state, text);
+                                        let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
+                                        let generatedDot = generateGraphvizCode(generatedHypernet);
+                                        Js.log(generatedDot);
+                                        {circ: fst(snd(generatedCircuit)), 
+                                        old: text,
                                         lat: state.lat, 
                                         strn: snd(snd(generatedCircuit)), 
                                         funs: state.funs, 
                                         net: generatedHypernet,
                                         dot: generatedDot,
                                         error:fst(generatedCircuit)}
-        }
+                                    }
+                                }
     }, {
+        old: "",
         lat: simpleLattice,
         circ: zero(simpleLattice),
         strn: "",

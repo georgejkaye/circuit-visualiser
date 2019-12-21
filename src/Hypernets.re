@@ -1,7 +1,7 @@
 open Circuits;
 
-exception SemanticsError(string);
-let semanticsError = (message) => raise(SemanticsError(message));
+exception GraphError(string);
+let graphError = (message) => raise(GraphError(message));
 
 /* An edge represents a morphism between buses */
 type edge = { 
@@ -34,7 +34,7 @@ let compose = (f,g) => {
 
 }
 
-let floatingEdge = (id,label) => {id, sources:[||], targets:[||], label}
+let floatingEdge = (id,label) => {id, sources:[||], targets:[||], label} 
 
 let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(circuit, 0))
 and convertCircuitToHypernet' = (circuit, i) => {
@@ -44,6 +44,10 @@ and convertCircuitToHypernet' = (circuit, i) => {
                             and ine = ref(floatingEdge(i,"inputs")) 
                             and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:"outputs"});
                             ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
+    | Identity(n)        => let rec ine = ref(floatingEdge(i,""));
+                            let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:"outputs"});
+                            ine := {id:i, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:"inputs"};
+                            ({inputs:ine^, edges: [], outputs: oute^},i+2)
     | Composition(f,g)   => let fh = convertCircuitToHypernet'(f,i);
                             let gh = convertCircuitToHypernet'(g,snd(fh));
                             (compose(fst(fh),fst(gh)), snd(gh))
@@ -81,13 +85,13 @@ let rec generateGraphvizCode = (net) => {
     switch(n){
     | 0 => ""
     | 1 => "<f" ++ string_of_int(x) ++ ">"
-    | n => string_of_int(n) ++ " <f" ++ string_of_int(x) ++ "> | "
+    | n => "<f" ++ string_of_int(x) ++ "> | " ++ generatePorts'(x+1,n-1)
     }
 } and generateTransitions = (x, targets) => {
     let string = ref("");
     for(i in 0 to Array.length(targets) - 1){
         let (e,k) = targets[i];
-        string := "\"edge" ++ string_of_int(x) ++ "\":f" ++ string_of_int(i) ++ " -> \"edge" ++ string_of_int(e^.id) ++ "\":f" ++ string_of_int(k) ++ ";\n"
+        string := string^ ++ "\"edge" ++ string_of_int(x) ++ "\":f" ++ string_of_int(i) ++ " -> \"edge" ++ string_of_int(e^.id) ++ "\":f" ++ string_of_int(k) ++ ";\n"
     }
     string^;
 }
