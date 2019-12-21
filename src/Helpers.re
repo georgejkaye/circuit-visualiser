@@ -95,3 +95,14 @@ and trim' = (xs, b, n) => {
     }
 }
 
+/*******************/
+/* Array functions */
+/*******************/
+
+let printArray = (a, f) => {
+    let string = ref("{");
+    for(i in 0 to Array.length(a) - 1) {
+        string := string^ ++ ", " ++ f(a[i]);
+    }
+    string^ ++ "}"
+}

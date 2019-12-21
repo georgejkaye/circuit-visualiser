@@ -1,4 +1,5 @@
 open Circuits;
+open Helpers;
 
 exception GraphError(string);
 let graphError = (message) => raise(GraphError(message));
@@ -15,17 +16,29 @@ type edge = {
     outputs: edge
 }
 
+let rec printEdge = (e) => {
+    "edge " ++ string_of_int(e.id) ++ ": " ++ e.label
+} and printEdgeArray = (es) => printArray(es, printEdge)
+and printEdgeRefArray = (es) => printArray(es, (x) => printEdge(x^))
+and printEdgeRefPortPairArray = (es) => printArray(es, ((x,n)) => printEdge(x^) ++ ":" ++ string_of_int(n))
+and printEdgeRefList = (es) => printList(es, (x) => printEdge(x^))
+
+let printHypernet = (h) => {
+    "hypernet inputs " ++ printEdge(h.inputs) ++ ", outputs " ++ printEdge(h.outputs) ++ ", edges " ++ printEdgeRefList(h.edges)
+}
+
 let identity = (array) => array
 
 let compose = (f,g) => {
 
     assert(Array.length(f.outputs.sources) == Array.length(g.inputs.targets));
+    Js.log("Composing " ++ printHypernet(f) ++ " and " ++ printHypernet(g));
 
     for (i in 0 to Array.length(f.outputs.sources) - 1){
         let (e,k) = f.outputs.sources[i];
         let (e',k') = g.inputs.targets[i];
     
-        e^.sources[k] = (e',k');
+        e^.targets[k] = (e',k');
         e'^.sources[k'] = (e,k);
 
     };
