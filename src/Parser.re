@@ -255,7 +255,7 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
         parseError(i, "iteration expected, no expression found")
     } else {
         let j = scanForClosingBracket(List.tl(xs), i+6, ")");
-        let iterationTokens = slice(xs,1,j-1);
+        let iterationTokens = slice(xs,1,j);
         let parsedIteration = parse'(v, funcs, i + 1 + 1 + String.length(m[0]), iterationTokens, [], [], false, nextlink, links);
         
         let nextlink = snd(parsedIteration)

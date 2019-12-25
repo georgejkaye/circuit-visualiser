@@ -85,15 +85,18 @@ let composeParallel = (f,g) => {
 
 let traceHypernet = (x, h) => {
 
-    let newInputs = {id: h.inputs.id, sources: [||], targets:Array.sub(h.inputs.targets, x, (Array.length(h.inputs.targets) - x)), label:"inputs"};
-    let newOutputs = {id: h.outputs.id, sources: Array.sub(h.outputs.sources, x, (Array.length(h.outputs.sources) - x)), targets: [||], label:"outputs"};
-
     for(i in 0 to x-1){
         let (e, k) = h.inputs.targets[i];
         let (e', k') = h.outputs.sources[i];
+        
         e'^.targets[k'] = (e, k);
         e^.sources[k] = (e',k');
     };
+
+    let newInputs = {id: h.inputs.id, sources: [||], targets:Array.sub(h.inputs.targets, x, (Array.length(h.inputs.targets) - x)), label:"inputs"};
+    let newOutputs = {id: h.outputs.id, sources: Array.sub(h.outputs.sources, x, (Array.length(h.outputs.sources) - x)), targets: [||], label:"outputs"};
+
+
 
     {inputs: newInputs, edges: h.edges, outputs: newOutputs}
     
@@ -131,7 +134,8 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                     ({inputs:ine^, edges: [fune], outputs:oute^}, i+3)
     | Trace(x, f)               => let (fh,i') = convertCircuitToHypernet'(f,i+1);
                                     (traceHypernet(x,fh), i')
-                                    
+    | Iter(x, f)                => let (fh,i') = convertCircuitToHypernet'(f,i+1);
+                                     (traceHypernet(x,fh), i')                                
                                     
                                     
     }
