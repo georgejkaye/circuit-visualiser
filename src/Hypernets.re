@@ -83,6 +83,15 @@ let composeParallel = (f,g) => {
 
 }
 
+let functionNet = (id, ins, outs, i) => {
+    let ine = ref(floatingEdge(i,""));
+    let oute = ref(floatingEdge(i+2,""));
+    let fune = ref({id:i+1, sources:Array.init(ins, (n) => (ine, n)), targets:Array.init(outs, (n) => (oute, n)), label:id});
+    ine := {id:i, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:"inputs"};
+    oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:"outputs"};
+    ({inputs: ine^, edges:[fune], outputs: oute^}, i+3)
+}
+
 let traceHypernet = (x, h) => {
 
     for(i in 0 to x-1){
@@ -128,6 +137,29 @@ let traceHypernet = (x, h) => {
     
 }
 
+let delayNet = (i, n) => {
+    let subscript = generateUnicodeSubscript(n);
+    functionNet({js|ẟ|js} ++ subscript, 1, 1, i)
+}
+
+let forkNet = (i) => {
+    functionNet({js|⋏|js}, 1, 2, i)
+}
+
+let dforkNet = (i, n) => {
+    let subscript = generateUnicodeSubscript(n);
+    functionNet({js|Δ|js} ++ subscript, n, n*2, i)
+}
+
+let iterHypernet = (circuit, i) => {
+
+    let n = Array.length(circuit.outputs.sources);
+    let nfork = dforkNet(i, n)
+    let newCircuit = composeSequential(circuit, fst(nfork));
+    (traceHypernet(n, newCircuit), snd(nfork));    
+
+}
+
 let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(circuit, 0))
 and convertCircuitToHypernet' = (circuit, i) => {
     
@@ -146,20 +178,15 @@ and convertCircuitToHypernet' = (circuit, i) => {
     | Tensor([x,...xs])         => List.fold_left((f,g) => { let gh = convertCircuitToHypernet'(g,snd(f));
                                                  (composeParallel(fst(f),fst(gh)), snd(gh));}, 
                                                  (convertCircuitToHypernet'(x, i)), xs)
-    | Function(id,_,ins,outs,_) =>  let ine = ref(floatingEdge(i,""));
-                                    let oute = ref(floatingEdge(i+2,""));
-                                    let fune = ref({id:i+1, sources:Array.init(ins, (n) => (ine, n)), targets:Array.init(outs, (n) => (oute, n)), label:id});
-                                    ine := {id:i, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:"inputs"};
-                                    oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:"outputs"};
-                                    ({inputs:ine^, edges: [fune], outputs:oute^}, i+3)
-    | Delay(x)                  =>  let ine = ref(floatingEdge(i,""));
-                                    let oute = ref(floatingEdge(i+2,""));
-                                    let fune = ref({id:i+1, sources:[|(ine,0)|], targets:[|(oute,0)|], label:("&delta;" ++ generateUnicodeSubscript(x))});
-                                    ine := {id:i, sources:[||], targets:[|(fune, 0)|], label:"inputs"};
-                                    oute := {id:i+2, sources:[|(fune,0)|], targets:[||], label:"outputs"};
-                                    ({inputs:ine^, edges: [fune], outputs:oute^}, i+3)
+    | Function(id,_,ins,outs,_) => functionNet(id, ins, outs, i)
+    | Delay(x)                  => delayNet(i,x)
     | Trace(x, f)               => let (fh,i') = convertCircuitToHypernet'(f,i+1);
-                                    (traceHypernet(x,fh), i')                           
+                                   (traceHypernet(x,fh), i')
+    | Iter(x, f)                => let f' = compose(f, dfork(circuit.v, outputs(f)));
+                                   let (fh,i') = convertCircuitToHypernet'(f',i+1);
+                                   (traceHypernet(outputs(f), fh), i');  
+    | Macro(_,_,f)              => convertCircuitToHypernet'(f,i);
+                             
                                     
     }
 }
