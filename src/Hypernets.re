@@ -106,6 +106,24 @@ let traceHypernet = (x, h) => {
         newInputs.targets[i] = (e,k)
     };
 
+    for(i in 0 to Array.length(newOutputs.targets) - 1){
+        let (e, k) = newInputs.sources[i];
+        let k = (e^.label == "inputs") ? k - x : k;
+        newInputs.sources[i] = (e,k)
+    };
+
+    for(i in 0 to Array.length(newInputs.targets) - 1){
+        let (e, k) = newInputs.targets[i];
+        let (e',k') = e^.sources[k];
+        e^.sources[k] = (e',k'-x);
+    };
+
+    for(i in 0 to Array.length(newOutputs.sources) - 1){
+        let (e, k) = newOutputs.sources[i];
+        let (e',k') = e^.targets[k];
+        e^.targets[k] = (e',k'-x);
+    };
+
     {inputs: newInputs, edges: h.edges, outputs: newOutputs}
     
 }
