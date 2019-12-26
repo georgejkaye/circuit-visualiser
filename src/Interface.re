@@ -98,8 +98,7 @@ module Input = {
 let make = () => {
     let({strn,dot,error},dispatch) = React.useReducer((state,action) => {
         switch(action) {
-        | ParseNewCircuit(text) =>  Js.log(state.old ++ " old vs new " ++ text);
-                                    if(state.old == text){
+        | ParseNewCircuit(text) =>  if(state.old == text){
                                         state
                                     } else { 
                                         let generatedCircuit = generateCircuit(state, text);
