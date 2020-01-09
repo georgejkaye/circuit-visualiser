@@ -167,17 +167,8 @@ let value = (v,x) => {v:v, c:Value(x), l:[]}
 /* Create an identity */
 let identity = (v, n) => {v:v, c:Identity(n),l:[]}
 
-/* Compose two components together */
-/*let compose' = (v, c, l, c', l') => {
-     else {
-        Composition(c, c')
-    }
-}*/
-
 /* Create a composition circuit */
 let compose = (c, c') => {
-    Js.log("outputs of " ++ printCircuit(c) ++ " " ++ string_of_int(outputs(c)));
-    Js.log("inputs of " ++ printCircuit(c') ++ " " ++ string_of_int(inputs(c)));
     assert'(c.v == c'.v, semanticsError, "Circuits use different lattices!");
     assert'(outputs(c) == inputs(c'), semanticsError, "Outputs of circuit " ++ printCircuit(c) ++ " do not match inputs of circuit " ++ printCircuit(c'));
     {v:c.v, c:Composition(c, c'), l: c.l @ c'.l};
@@ -284,7 +275,7 @@ let stub = (v) => func(v, {js|~|js}, "{\\sim}", 1, 0, (_) => zero(v));
 let specialMorphisms = (v) => [fork(v), join(v), stub(v)];
 
 /* Swap buses of width x and y */
-let swap = (v, x, y) => func(v, {js|×|js} ++ "{" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "}", 
+let swap = (v, x, y) => func(v, {js|×|js} ++ "\{" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "\}", 
                                 "\\times_{" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ "}",
                                 x + y, 
                                 x + y, 

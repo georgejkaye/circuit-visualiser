@@ -36,7 +36,6 @@ let identity = (array) => array
 let composeSequential = (f,g) => {
 
     assert(Array.length(f.outputs.sources) == Array.length(g.inputs.targets));
-    Js.log("Composing " ++ printHypernet(f) ++ " and " ++ printHypernet(g));
 
     for (i in 0 to Array.length(f.outputs.sources) - 1){
         let (e,k) = f.outputs.sources[i];
@@ -162,7 +161,7 @@ let iterHypernet = (circuit, i) => {
 
 let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(circuit, 0))
 and convertCircuitToHypernet' = (circuit, i) => {
-    
+    Js.log(printCircuit(circuit));
     switch(circuit.c){
     | Value(x)                  => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:circuit.v.print(x)})
                                    and ine = ref(floatingEdge(i,"inputs")) 
