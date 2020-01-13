@@ -43,10 +43,7 @@ let composeSequential = (f,g) => {
     for (i in 0 to Array.length(f.outputs.sources) - 1){
         let (e,k) = f.outputs.sources[i];
         let (e',k') = g.inputs.targets[i];
-        
-        Js.log("output " ++ string_of_int(i) ++ " = " ++ e^.label ++ " ID " ++ string_of_int(e^.id));
-        Js.log("input " ++ string_of_int(i) ++ " = " ++ e'^.label ++ " ID " ++ string_of_int(e'^.id));
-
+    
         e^.targets[k] = (e',k');
         e'^.sources[k'] = (e,k);
 
@@ -61,30 +58,37 @@ let composeParallel = (f,g) => {
     let newInputs = {id: f.inputs.id, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: "inputs"};
     let newOutputs = {id: f.outputs.id, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: "outputs"};
 
+    let refInputs = ref(newInputs);
+    let refOutputs = ref(newOutputs);
+
     let fins = Array.length(f.inputs.targets);
     let fouts = Array.length(f.outputs.sources);
 
     for(i in 0 to fins - 1){
         let (e,k) = f.inputs.targets[i];
-        e^.sources[k] = (ref(newInputs), i);
+        e^.sources[k] = (refInputs, i);
+        refInputs^.targets[i] = (e, k);
     };
 
     for(i in 0 to Array.length(g.inputs.targets) - 1){
         let (e,k) = g.inputs.targets[i];
-        e^.sources[k] = (ref(newInputs), i + fins);
+        e^.sources[k] = (refInputs, i + fins);
+        refInputs^.targets[i] = (e, k);
     };
 
     for(i in 0 to fouts - 1){
         let (e,k) = f.outputs.sources[i];
-        e^.targets[k] = (ref(newOutputs), i);
+        e^.targets[k] = (refOutputs, i);
+        refOutputs^.sources[i + fouts] = (e, k);
     };
 
     for(i in 0 to Array.length(g.outputs.sources) - 1){
         let (e,k) = g.outputs.sources[i];
-        e^.targets[k] = (ref(newOutputs), i + fouts);
+        e^.targets[k] = (refOutputs, i + fouts);
+        refOutputs^.sources[i + fouts] = (e, k);
     };
 
-    {inputs: newInputs, edges: f.edges @ g.edges, outputs: newOutputs}
+    {inputs: refInputs^, edges: f.edges @ g.edges, outputs: refOutputs^}
 
 }
 
