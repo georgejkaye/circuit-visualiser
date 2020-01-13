@@ -35,12 +35,18 @@ let identity = (array) => array
 
 let composeSequential = (f,g) => {
 
+    Js.log(" ");
+    Js.log("composing sequentially");
+
     assert(Array.length(f.outputs.sources) == Array.length(g.inputs.targets));
 
     for (i in 0 to Array.length(f.outputs.sources) - 1){
         let (e,k) = f.outputs.sources[i];
         let (e',k') = g.inputs.targets[i];
-    
+        
+        Js.log("output " ++ string_of_int(i) ++ " = " ++ e^.label ++ " ID " ++ string_of_int(e^.id));
+        Js.log("input " ++ string_of_int(i) ++ " = " ++ e'^.label ++ " ID " ++ string_of_int(e'^.id));
+
         e^.targets[k] = (e',k');
         e'^.sources[k'] = (e,k);
 
