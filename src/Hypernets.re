@@ -59,6 +59,7 @@ let composeParallel = (f,g,i) => {
     let newOutputs = {id: i+1, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: "outputs"};
 
     let finputs = Array.length(f.inputs.targets);
+    let foutputs = Array.length(f.outputs.sources);
 
     let finputsID = f.inputs.id;
     let ginputsID = g.inputs.id;
@@ -68,27 +69,38 @@ let composeParallel = (f,g,i) => {
     let refInputs = ref(newInputs);
     let refOutputs = ref(newOutputs);
 
-    for(i in 0 to Array.length(newInputs.targets) - 1){
-        let (e,k) = newInputs.targets[i];
-        let inputPair = (refInputs, i);
+    for(i in 0 to Array.length(f.inputs.targets) - 1){
+        let (e,k) = f.inputs.targets[i];
         
         e^.label == "outputs" ? 
-            e^.id == goutputsID ? 
-                refOutputs^.sources[k+finputs] = inputPair : 
-                refOutputs^.sources[k] = inputPair :
-            e^.sources[k] = inputPair
+            refOutputs^.sources[k] = (refInputs, i) :
+            e^.sources[k] = (refOutputs, i)
     };
 
-    for(i in 0 to Array.length(newOutputs.sources) - 1){
-        let (e,k) = newOutputs.sources[i];
-        let outputPair = (refOutputs, i);
+    for(i in 0 to Array.length(g.inputs.targets) - 1){
+        let (e,k) = g.inputs.targets[i];
+        
+        e^.label == "outputs" ? 
+            refOutputs^.sources[k+foutputs] = (refInputs, i + finputs) : 
+            e^.sources[k] = (refInputs, i + finputs)
+    };
 
+    for(i in 0 to Array.length(f.outputs.sources) - 1){
+        let (e,k) = f.outputs.sources[i];
+        
         e^.label == "inputs" ? 
-            e^.id == ginputsID ? 
-                refInputs^.targets[k+finputs] = outputPair : 
-                refInputs^.targets[k] = outputPair :
-            e^.sources[k] = outputPair
+            refInputs^.targets[k] = (refOutputs, i) :
+            e^.targets[k] = (refOutputs, i)
     };
+
+    for(i in 0 to Array.length(g.outputs.sources) - 1){
+        let (e,k) = g.outputs.sources[i];
+        
+        e^.label == "inputs" ? 
+            refInputs^.targets[k+finputs] = (refOutputs, i + foutputs) : 
+            e^.targets[k] = (refOutputs, i + foutputs)
+    };
+
 
     {inputs: refInputs^, edges: f.edges @ g.edges, outputs: refOutputs^}
 
