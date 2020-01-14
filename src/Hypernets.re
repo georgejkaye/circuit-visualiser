@@ -53,39 +53,41 @@ let composeSequential = (f,g) => {
 
 }
 
-let composeParallel = (f,g) => {
+let composeParallel = (f,g,i) => {
 
-    let newInputs = {id: f.inputs.id, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: "inputs"};
-    let newOutputs = {id: f.outputs.id, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: "outputs"};
+    let newInputs = {id: i, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: "inputs"};
+    let newOutputs = {id: i+1, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: "outputs"};
+
+    let finputs = Array.length(f.inputs.targets);
+
+    let finputsID = f.inputs.id;
+    let ginputsID = g.inputs.id;
+    let foutputsID = f.outputs.id;
+    let goutputsID = g.outputs.id;
 
     let refInputs = ref(newInputs);
     let refOutputs = ref(newOutputs);
 
-    let fins = Array.length(f.inputs.targets);
-    let fouts = Array.length(f.outputs.sources);
-
-    for(i in 0 to fins - 1){
-        let (e,k) = f.inputs.targets[i];
-        e^.sources[k] = (refInputs, i);
-        refInputs^.targets[i] = (e, k);
+    for(i in 0 to Array.length(newInputs.targets) - 1){
+        let (e,k) = newInputs.targets[i];
+        let inputPair = (refInputs, i);
+        
+        e^.label == "outputs" ? 
+            e^.id == goutputsID ? 
+                refOutputs^.sources[k+finputs] = inputPair : 
+                refOutputs^.sources[k] = inputPair :
+            e^.sources[k] = inputPair
     };
 
-    for(i in 0 to Array.length(g.inputs.targets) - 1){
-        let (e,k) = g.inputs.targets[i];
-        e^.sources[k] = (refInputs, i + fins);
-        refInputs^.targets[i] = (e, k);
-    };
+    for(i in 0 to Array.length(newOutputs.sources) - 1){
+        let (e,k) = newOutputs.sources[i];
+        let outputPair = (refOutputs, i);
 
-    for(i in 0 to fouts - 1){
-        let (e,k) = f.outputs.sources[i];
-        e^.targets[k] = (refOutputs, i);
-        refOutputs^.sources[i + fouts] = (e, k);
-    };
-
-    for(i in 0 to Array.length(g.outputs.sources) - 1){
-        let (e,k) = g.outputs.sources[i];
-        e^.targets[k] = (refOutputs, i + fouts);
-        refOutputs^.sources[i + fouts] = (e, k);
+        e^.label == "inputs" ? 
+            e^.id == ginputsID ? 
+                refInputs^.targets[k+finputs] = outputPair : 
+                refInputs^.targets[k] = outputPair :
+            e^.sources[k] = outputPair
     };
 
     {inputs: refInputs^, edges: f.edges @ g.edges, outputs: refOutputs^}
@@ -185,7 +187,7 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    let gh = convertCircuitToHypernet'(g,snd(fh));
                                    (composeSequential(fst(fh),fst(gh)), snd(gh))
     | Tensor([x,...xs])         => List.fold_left((f,g) => { let gh = convertCircuitToHypernet'(g,snd(f));
-                                                 (composeParallel(fst(f),fst(gh)), snd(gh));}, 
+                                                 (composeParallel(fst(f),fst(gh),snd(gh)), snd(gh) + 2);}, 
                                                  (convertCircuitToHypernet'(x, i)), xs)
     | Function(id,_,ins,outs,_) => functionNet(id, ins, outs, i)
     | Delay(x)                  => delayNet(i,x)
