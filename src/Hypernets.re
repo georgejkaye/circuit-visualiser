@@ -239,7 +239,7 @@ and convertCircuitToHypernet' = (circuit, i) => {
 
 let rec generateGraphvizCode = (net) => {
     let graph = generateGraphvizCodeEdges([net.inputs, net.outputs, ...List.map((x) => x^, net.edges)], "", "");
-    "digraph{\n" ++ graph ++ "}"
+    "digraph{\nnodesep=3;\nranksep=0.5;\nnode [shape=record; constraint=false]\n" ++ graph ++ "}"
 } and generateGraphvizCodeEdges = (edges, nodes, transitions) => {
     switch(edges){
     | [] => nodes ++ transitions
@@ -258,8 +258,10 @@ let rec generateGraphvizCode = (net) => {
     let instring = inports == "{}" ? "" : inports ++ " | ";
     let outstring = outports == "{}" ? "" : " | " ++ outports; 
 
-    ("edge" ++ string_of_int(edge.id) ++ 
-        " [shape=record,label=\"" ++ 
+    let rank = edge.label == "inputs" ? "rank = same; " : (edge.label == "outputs" ? "rank = same; " : "");  
+
+    ("    edge" ++ string_of_int(edge.id) ++ 
+        " [shape=record; " ++ rank ++ "label=\"" ++ 
         instring ++ edge.label ++ outstring
         ++ "\"]", transitions)  
 } and generatePorts = (n, out) => {
@@ -275,7 +277,7 @@ let rec generateGraphvizCode = (net) => {
     let string = ref("");
     for(i in 0 to Array.length(targets) - 1){
         let (e,k) = targets[i];
-        string := string^ ++ "\"edge" ++ string_of_int(x) ++ "\":o" ++ string_of_int(i) ++ " -> \"edge" ++ string_of_int(e^.id) ++ "\":i" ++ string_of_int(k) ++ ";\n"
+        string := string^ ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> \"edge" ++ string_of_int(e^.id) ++ "\":i" ++ string_of_int(k) ++ ":w;\n"
     }
     string^;
 }

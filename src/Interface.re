@@ -152,6 +152,7 @@ let make = () => {
                     <div> <span className = "code">(str("iter(a)"))</span> <b>(str(" Iterate"))</b> (str(" a circuit, using all of its outputs as inputs"))</div>
                     <div> <span className = "code">(str("\\xy."))</span> (str(" or ")) <span className = "code">(str("\\x,y."))</span><b>(str(" Link"))</b> (str(" outlink x with inlink y"))</div>
                 </div>
+                <textarea rows=15 cols=50 value=dot></textarea>
             </td>
             <td>
                 <div className="right">

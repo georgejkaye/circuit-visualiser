@@ -79,7 +79,7 @@ let rec printComponentLatex' = (v, c, l, i) => {
         | Tensor([])                        => ""
         | Tensor([x])                       => printCircuitLatex'(x,i+1)
         | Tensor([f, ...tl])                => List.fold_left(((string, f') => string ++ " \\otimes " ++ printCircuitLatex'(f', i+1)), printCircuitLatex'(f,i+1), tl)
-        | Swap(x, y)                        => "\\times_" ++ string_of_int(x) ++ ", " ++ string_of_int(y)
+        | Swap(x, y)                        => "\\times_{" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ "}"
         | Function(_, latex,  _, _, _)      => latex
         | Delay(x)                          => "\\delta_" ++ string_of_int(x)
         | Trace(x, f)                       => "\\text{Tr}^" ++ string_of_int(x) ++ "(" ++ printCircuitLatex'(f,0) ++ ")" 
