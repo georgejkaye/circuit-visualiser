@@ -114,7 +114,7 @@ and scanForNextComposition' = (xs, i, bracks) => {
     | ["[",...xs] => scanForNextComposition'(xs, i+1, bracks+1)
     | [".",...xs] => bracks == 0 ? i : scanForNextComposition'(xs, i+1, bracks)
     | [x,...xs]   => switch(match(closingBracketsRegEx, x)){
-                     | Some(a) => scanForNextComposition'(xs, i+1, bracks-1)
+                     | Some(_) => scanForNextComposition'(xs, i+1, bracks-1)
                      | None    => scanForNextComposition'(xs, i+1, bracks)
                      }
     }
@@ -324,7 +324,6 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
     let finalLink = link(v, oux, inx, actualScope,links)
 
     parse'(v, funcs, i+1, trim(xs, j+1), stack @ [finalLink], [finalLink], tensor, nextlink, links)
-
 }
 
 let parseFromString = (v, funcs, string) => {
@@ -332,5 +331,4 @@ let parseFromString = (v, funcs, string) => {
     let parsedString = parse(v, funcs, tokenisedString);
 
     fst(parsedString)
-
 }

@@ -13,10 +13,11 @@ let semanticsError = (message) => raise(SemanticsError(message));
 
 /* A circuit is a component associated with a lattice v */
 type component = 
-    | Value((int,int))
+    | Value(latticeElement)
     | Identity(int)
     | Composition(circuit, circuit)    
     | Tensor(list(circuit))
+    | Swap(int, int)
     | Function(string, string, int, int, circuit => circuit)
     | Delay(int)
     | Trace(int, circuit)
@@ -55,6 +56,7 @@ let rec printComponent' = (v, c, l, i) => {
     | Tensor([])                        => ""
     | Tensor([x])                       => printCircuit'(x,i+1)
     | Tensor([f, ...tl])                => List.fold_left(((string, f') => string ++ {js| ⊗ |js} ++ printCircuit'(f',i+1)), printCircuit'(f,i+1), tl)
+    | Swap(x,y)                         => {js|×{|js} ++ string_of_int(x) ++ ", " ++ string_of_int(y)
     | Function(id, _, _, _, _)          => id
     | Delay(x)                          => {js|ẟ{|js} ++ string_of_int(x) ++ "}"
     | Trace(x, f)                       => "Tr{" ++ string_of_int(x) ++ "}(" ++ printCircuit'(f,0) ++ ")" 
@@ -77,14 +79,15 @@ let rec printComponentLatex' = (v, c, l, i) => {
         | Tensor([])                        => ""
         | Tensor([x])                       => printCircuitLatex'(x,i+1)
         | Tensor([f, ...tl])                => List.fold_left(((string, f') => string ++ " \\otimes " ++ printCircuitLatex'(f', i+1)), printCircuitLatex'(f,i+1), tl)
-        | Function(_, latex,  _, _, _)     => latex
+        | Swap(x, y)                        => "\\times_" ++ string_of_int(x) ++ ", " ++ string_of_int(y)
+        | Function(_, latex,  _, _, _)      => latex
         | Delay(x)                          => "\\delta_" ++ string_of_int(x)
-        | Trace(x, f)               => "\\text{Tr}^" ++ string_of_int(x) ++ "(" ++ printCircuitLatex'(f,0) ++ ")" 
-        | Iter(x, f)                => "\\text{iter}^" ++ string_of_int(x) ++ "(" ++ printCircuitLatex'(f,0) ++ ")" 
+        | Trace(x, f)                       => "\\text{Tr}^" ++ string_of_int(x) ++ "(" ++ printCircuitLatex'(f,0) ++ ")" 
+        | Iter(x, f)                        => "\\text{iter}^" ++ string_of_int(x) ++ "(" ++ printCircuitLatex'(f,0) ++ ")" 
         | Input(int)                        => lookupLink(int,l)   
         | Output(int)                       => lookupLink(int,l)
-        | Link(inlink, outlink, f)    => "\\overline{" ++ lookupLink(inlink,l) ++ "|" ++ lookupLink(outlink,l) ++ "}." ++ printCircuitLatex'(f,i) 
-        | Macro(_, latex, _)                      => latex
+        | Link(inlink, outlink, f)          => "\\overline{" ++ lookupLink(inlink,l) ++ "|" ++ lookupLink(outlink,l) ++ "}." ++ printCircuitLatex'(f,i) 
+        | Macro(_, latex, _)                => latex
         ;}
 } and printComponentLatex = (v, c, l) => printComponentLatex'(v, c, l, 0)
 and printCircuitLatex' = ({v,c,l}, i) => printComponentLatex'(v,c,l,i)
@@ -118,7 +121,8 @@ let rec inputs' = (c) => {
     | Value(_)                  => 0
     | Identity(x)               => x
     | Composition(f, _)         => inputs(f)
-    | Tensor(fs)                => List.fold_left(((no, f) => no + inputs(f)), 0, fs)                        
+    | Tensor(fs)                => List.fold_left(((no, f) => no + inputs(f)), 0, fs)     
+    | Swap(x,y)                 => x + y                   
     | Function(_, _, x, _, _)   => x
     | Delay(_)                  => 1
     | Trace(x, f)               => inputs(f) - x
@@ -138,7 +142,8 @@ let rec outputs' = (c) => {
     | Value(_)                  => 1
     | Identity(x)               => x
     | Composition(_, g)         => outputs(g)
-    | Tensor(fs)                => List.fold_left(((no, f) => no + outputs(f)), 0, fs)    
+    | Tensor(fs)                => List.fold_left(((no, f) => no + outputs(f)), 0, fs)   
+    | Swap(x,y)                 => x + y 
     | Function(_, _, _, y, _)   => y
     | Delay(_)                  => 1
     | Trace(x, f)               => outputs(f) - x
@@ -275,17 +280,7 @@ let stub = (v) => func(v, {js|~|js}, "{\\sim}", 1, 0, (_) => zero(v));
 let specialMorphisms = (v) => [fork(v), join(v), stub(v)];
 
 /* Swap buses of width x and y */
-let swap = (v, x, y) => func(v, {js|×|js} ++ "\{" ++ string_of_int(x) ++ "," ++ string_of_int(y) ++ "\}", 
-                                "\\times_{" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ "}",
-                                x + y, 
-                                x + y, 
-                                (c) => switch(c.c){
-                                | Tensor(xs) => let (top, bot) = split(x, xs); circ(c.v,Tensor(List.concat([bot, top])),c.l);
-                                | _ => failwith("Swap can only swap a tensor")
-                                }
-                            )
-
-
+let swap = (v, x, y) => {v, c:Swap(x, y), l:[]}
 
 /* Fork all wires in a bus */
 let rec dfork = (v,n) => {

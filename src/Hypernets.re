@@ -29,6 +29,7 @@ let printHypernet = (h) => {
 
 
 let floatingEdge = (id,label) => {id, sources:[||], targets:[||], label} 
+let initialisePorts = (x) => Array.init(x, (i => (ref(floatingEdge(0,"")), i)))
 
 let zeroNet = {inputs:floatingEdge(0, "inputs"), edges:[], outputs:floatingEdge(1,"outputs")}
 let identity = (array) => array
@@ -160,6 +161,27 @@ let traceHypernet = (x, h) => {
     
 }
 
+let swapNet = (i, x, y) => {
+    let ine = {id:i, sources:[||], targets:initialisePorts(x+y), label:"inputs"};
+    let oute = {id:i+1, sources:initialisePorts(x+y), targets:[||], label:"outputs"};
+
+    let refin = ref(ine);
+    let refout = ref(oute);
+
+    for(i in 0 to x - 1){
+        refin^.targets[i] = (refout, y+i);
+        refout^.sources[y+i] = (refin, i);
+    };
+
+    for(i in x to x + y - 1){
+        refin^.targets[i] = (refout, i-x);
+        refout^.sources[i-x] = (refin, i);
+    };
+
+    {inputs: refin^, edges: [], outputs: refout^}
+
+}
+
 let delayNet = (i, n) => {
     let subscript = generateUnicodeSubscript(n);
     functionNet({js|ẟ|js} ++ subscript, 1, 1, i)
@@ -201,6 +223,7 @@ and convertCircuitToHypernet' = (circuit, i) => {
     | Tensor([x,...xs])         => List.fold_left((f,g) => { let gh = convertCircuitToHypernet'(g,snd(f));
                                                  (composeParallel(fst(f),fst(gh),snd(gh)), snd(gh) + 2);}, 
                                                  (convertCircuitToHypernet'(x, i)), xs)
+    | Swap(x,y)                 => (swapNet(i,x,y), i+2)
     | Function(id,_,ins,outs,_) => functionNet(id, ins, outs, i)
     | Delay(x)                  => delayNet(i,x)
     | Trace(x, f)               => let (fh,i') = convertCircuitToHypernet'(f,i+1);

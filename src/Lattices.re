@@ -8,17 +8,19 @@
  * such as join and meet. 
  */
 
+type latticeElement = (int, int)
+
 type lattice = {
-    elems     : list((int, int)),                      /* The list of lattice elements */
-    highValues : list((int,int)),                             /* The value in the list that represents true */
-    leq       : ((int,int), (int,int)) => bool,        /* The order relation less than */
-    joinOp    : ((int,int), (int,int)) => (int,int),   /* The least upper bound */
-    meetOp    : ((int,int), (int,int)) => (int,int),   /* The greatest lower bound */
-    andOp     : ((int,int), (int,int)) => (int,int),   /* And operation */
-    orOp      : ((int,int), (int,int)) => (int,int),   /* Or operation */
-    notOp     : ((int,int)) => (int,int),              /* Not operation */
-    print     : ((int,int)) => string,                 /* Print operation */
-    parse     : string => (bool, (int,int))            /* Parse a string and determine if it is a value, and if so which one */
+    elems     : list(latticeElement),                      /* The list of lattice elements */
+    highValues : list(latticeElement),                             /* The value in the list that represents true */
+    leq       : (latticeElement, latticeElement) => bool,        /* The order relation less than */
+    joinOp    : (latticeElement, latticeElement) => latticeElement,   /* The least upper bound */
+    meetOp    : (latticeElement, latticeElement) => latticeElement,   /* The greatest lower bound */
+    andOp     : (latticeElement, latticeElement) => latticeElement,   /* And operation */
+    orOp      : (latticeElement, latticeElement) => latticeElement,   /* Or operation */
+    notOp     : (latticeElement) => latticeElement,              /* Not operation */
+    print     : (latticeElement) => string,                 /* Print operation */
+    parse     : string => (bool, latticeElement)            /* Parse a string and determine if it is a value, and if so which one */
 }
 
 /* A simple lattice containing four elements with the order Bottom < True, False < Top */
