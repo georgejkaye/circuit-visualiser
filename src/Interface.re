@@ -3,9 +3,17 @@ open Parser;
 open Lattices;
 open Hypernets;
 
+type options = {
+    fit: bool,
+    height: int,
+    width: int,
+    zoom: bool,
+    scale: int
+};
+
 module Graphviz = {
     [@bs.module "graphviz-react"][@react.component]
-    external make : (~dot : string) => React.element = "Graphviz"
+    external make : (~dot : string, ~options : options) => React.element = "Graphviz"
 }
 
 module MathJaxNode = {
@@ -129,40 +137,40 @@ let make = () => {
         <div className = "title">
             <h1>(str("Circuit visualiser "))</h1>
         </div>
+        <div className = "input">
+            <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) />
+        </div>
+        <div>
+                (printLatexOrError(str(strn), error))
+        </div>
         <table>
         <tbody>
         <tr>
             <td>
-                <div className = "input">
-                <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) />
-                </div>
-                <div>
-                    (printLatexOrError(str(strn), error))
-                </div>
                 <div className = "instructions">
-                    <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>
-                    <div> <span className = "code">(str("a * b"))</span> <b>(str(" Vertical composition (tensor)"))</b></div>
-                    <div> <span className = "code">(str("a^n"))</span> <b>(str(" Index"))</b> (str(" Composes multiple copies of a circuit together vertically"))</div>
-                    <div> <span className = "code">(str("/\\"))</span> <b>(str(" Fork"))</b>(str(" a bus of width 1 into a bus of width 2"))</div>
-                    <div> <span className = "code">(str("\\/"))</span> <b>(str(" Join"))</b>(str(" a bus of width 2 into a bus of width 1"))</div>
-                    <div> <span className = "code">(str("/\\{n}"))</span> <b>(str(" Diagonal fork"))</b>(str(" a bus of width n into a bus of width 2n"))</div>
-                    <div> <span className = "code">(str("\\/{n}"))</span> <b>(str(" Diagonal join"))</b>(str(" a bus of width 2n into a bus of width n"))</div>
-                    <div> <span className = "code">(str("~"))</span> <b>(str(" Stub"))</b>(str(" a bus of width 1"))</div>
-                    <div> <span className = "code">(str("x{a,b}"))</span> <b>(str(" Swap"))</b> (str(" buses of width a and b"))</div>
-                    <div> <span className = "code">(str("Tr{n}(a)"))</span> <b>(str(" Trace"))</b> (str(" a circuit, using n of its outputs as inputs"))</div>
-                    <div> <span className = "code">(str("iter(a)"))</span> <b>(str(" Iterate"))</b> (str(" a circuit, using all of its outputs as inputs"))</div>
-                    <div> <span className = "code">(str("\\xy."))</span> (str(" or ")) <span className = "code">(str("\\x,y."))</span><b>(str(" Link"))</b> (str(" outlink x with inlink y"))</div>
-                </div>
-                <textarea rows=15 cols=50 value=dot readOnly=true></textarea>
+                <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>
+                <div> <span className = "code">(str("a * b"))</span> <b>(str(" Vertical composition (tensor)"))</b></div>
+                <div> <span className = "code">(str("a^n"))</span> <b>(str(" Index"))</b> (str(" Composes multiple copies of a circuit together vertically"))</div>
+                <div> <span className = "code">(str("/\\"))</span> <b>(str(" Fork"))</b>(str(" a bus of width 1 into a bus of width 2"))</div>
+                <div> <span className = "code">(str("\\/"))</span> <b>(str(" Join"))</b>(str(" a bus of width 2 into a bus of width 1"))</div>
+                <div> <span className = "code">(str("/\\{n}"))</span> <b>(str(" Diagonal fork"))</b>(str(" a bus of width n into a bus of width 2n"))</div>
+                <div> <span className = "code">(str("\\/{n}"))</span> <b>(str(" Diagonal join"))</b>(str(" a bus of width 2n into a bus of width n"))</div>
+                <div> <span className = "code">(str("~"))</span> <b>(str(" Stub"))</b>(str(" a bus of width 1"))</div>
+                <div> <span className = "code">(str("x{a,b}"))</span> <b>(str(" Swap"))</b> (str(" buses of width a and b"))</div>
+                <div> <span className = "code">(str("Tr{n}(a)"))</span> <b>(str(" Trace"))</b> (str(" a circuit, using n of its outputs as inputs"))</div>
+                <div> <span className = "code">(str("iter(a)"))</span> <b>(str(" Iterate"))</b> (str(" a circuit, using all of its outputs as inputs"))</div>
+                <div> <span className = "code">(str("\\xy."))</span> (str(" or ")) <span className = "code">(str("\\x,y."))</span><b>(str(" Link"))</b> (str(" outlink x with inlink y"))</div>
+            </div>
             </td>
             <td>
                 <div className="right">
-                <Graphviz dot=dot/>
+                <textarea rows=15 cols=50 value=dot readOnly=true></textarea>
                 </div>
             </td>
         </tr>
         </tbody>
-        </table>    
+        </table>
+        <Graphviz dot=dot options = {fit: true, height: 1000, width: 2000, zoom: true, scale:1}/>    
     </div>
     
 }

@@ -237,16 +237,25 @@ and convertCircuitToHypernet' = (circuit, i) => {
     }
 }
 
+let tab = "    "
+
 let rec generateGraphvizCode = (net) => {
-    let graph = generateGraphvizCodeEdges([net.inputs, net.outputs, ...List.map((x) => x^, net.edges)], "", "");
-    "digraph{\nrankdir=LR;\n" ++ graph ++ "}"
-} and generateGraphvizCodeEdges = (edges, nodes, transitions) => {
+    let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, List.map((x) => x^, net.edges), "", "");
+    "digraph{\n" ++ tab ++ "rankdir=LR;\n" ++ tab ++ "ranksep=1;\n" ++ graph ++ "}"
+} and generateGraphvizCodeEdges = (inputs, outputs, edges, nodes, transitions) => {
     switch(edges){
-    | [] => nodes ++ transitions
+    | [] => let inedgecode = generateGraphvizCodeEdge(inputs);
+            let inedgedot = fst(inedgecode) == "" ? "" : fst(inedgecode) ++ ";\n";
+            let intransdot = snd(inedgecode);
+            let outedgecode = generateGraphvizCodeEdge(outputs);
+            let outedgedot = fst(outedgecode) == "" ? "" : fst(outedgecode) ++ ";\n";
+            let outtransdot = snd(outedgecode);
+            nodes ++ outedgedot ++ inedgedot ++ intransdot ++ transitions ++ outtransdot
+             
     | [x,...xs] => let edgecode = generateGraphvizCodeEdge(x);
                     let edgedot = fst(edgecode) == "" ? "" : fst(edgecode) ++ ";\n";
                     let transdot = snd(edgecode);
-                    generateGraphvizCodeEdges(xs, nodes ++ edgedot, transitions ++ transdot)
+                    generateGraphvizCodeEdges(inputs, outputs, xs, nodes ++ edgedot, transitions ++ transdot)
     }
 } and generateGraphvizCodeEdge = (edge) => {
     let ins = Array.length(edge.sources);
@@ -258,7 +267,7 @@ let rec generateGraphvizCode = (net) => {
     let instring = inports == "{}" ? "" : inports ++ " | ";
     let outstring = outports == "{}" ? "" : " | " ++ outports; 
 
-    ("    edge" ++ string_of_int(edge.id) ++ 
+    (tab ++ "edge" ++ string_of_int(edge.id) ++ 
         " [shape=Mrecord; label=\"{" ++ 
         instring ++ edge.label ++ outstring
         ++ "}\"]", transitions)  
