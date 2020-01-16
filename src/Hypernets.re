@@ -239,7 +239,7 @@ and convertCircuitToHypernet' = (circuit, i) => {
 
 let rec generateGraphvizCode = (net) => {
     let graph = generateGraphvizCodeEdges([net.inputs, net.outputs, ...List.map((x) => x^, net.edges)], "", "");
-    "digraph{\nnodesep=3;\nranksep=0.5;\nnode [shape=record; constraint=false]\n" ++ graph ++ "}"
+    "digraph{\nrankdir=LR;\n" ++ graph ++ "}"
 } and generateGraphvizCodeEdges = (edges, nodes, transitions) => {
     switch(edges){
     | [] => nodes ++ transitions
@@ -258,26 +258,24 @@ let rec generateGraphvizCode = (net) => {
     let instring = inports == "{}" ? "" : inports ++ " | ";
     let outstring = outports == "{}" ? "" : " | " ++ outports; 
 
-    let rank = edge.label == "inputs" ? "rank = same; " : (edge.label == "outputs" ? "rank = same; " : "");  
-
     ("    edge" ++ string_of_int(edge.id) ++ 
-        " [shape=record; " ++ rank ++ "label=\"" ++ 
+        " [shape=Mrecord; label=\"{" ++ 
         instring ++ edge.label ++ outstring
-        ++ "\"]", transitions)  
+        ++ "}\"]", transitions)  
 } and generatePorts = (n, out) => {
     "{" ++ generatePorts'(0,n, out) ++ "}"
 } and generatePorts' = (x,n,out) => {
     let y = out ? "o" : "i"
     switch(n){
     | 0 => ""
-    | 1 => "<" ++ y ++ string_of_int(x) ++ ">"
-    | n => "<" ++ y ++ string_of_int(x) ++ "> | " ++ generatePorts'(x+1,n-1,out)
+    | 1 => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js}
+    | n => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js} ++ " | " ++ generatePorts'(x+1,n-1,out)
     }
 } and generateTransitions = (x, targets) => {
     let string = ref("");
     for(i in 0 to Array.length(targets) - 1){
         let (e,k) = targets[i];
-        string := string^ ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> \"edge" ++ string_of_int(e^.id) ++ "\":i" ++ string_of_int(k) ++ ":w;\n"
+        string := string^ ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> edge" ++ string_of_int(e^.id) ++ ":i" ++ string_of_int(k) ++ ":w;\n"
     }
     string^;
 }
