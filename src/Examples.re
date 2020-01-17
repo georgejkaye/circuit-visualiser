@@ -21,6 +21,7 @@ let halfAdderApplied = composemany([
 
 let exampleFunctions = List.concat([specialMorphisms(v), 
             [id(v,1),
+                funcBlackBox(v, "k", "\\text{k}", 3, 1),
                 funcBlackBox(v, "F", "\\text{F}", 1, 1),
                 funcBlackBox(v, "G", "\\text{G}", 1, 1), 
                 funcBlackBox(v, "A", "\\text{A}", 2, 2), 

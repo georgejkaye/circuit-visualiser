@@ -7,8 +7,6 @@ type options = {
     fit: bool,
     height: int,
     width: int,
-    zoom: bool,
-    scale: int
 };
 
 module Graphviz = {
@@ -170,7 +168,7 @@ let make = () => {
         </tr>
         </tbody>
         </table>
-        <Graphviz dot=dot options = {fit: true, height: 1000, width: 2000, zoom: true, scale:1}/>    
+        <Graphviz dot=dot options = {fit: true, height: 1000, width: 2000}/>    
     </div>
     
 }
