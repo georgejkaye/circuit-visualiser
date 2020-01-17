@@ -53,7 +53,7 @@ let composeSequential = (f,g) => {
 
 let composeParallel = (f,g,i) => {
 
-    let newInputs = {id: i, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: "in"};
+    let newInputs = {id: 0, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: "in"};
     let newOutputs = {id: i+1, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: "out"};
 
     let finputs = Array.length(f.inputs.targets);
@@ -108,7 +108,7 @@ let functionNet = (id, ins, outs, i) => {
     let ine = ref(floatingEdge(i,""));
     let oute = ref(floatingEdge(i+2,""));
     let fune = ref({id:i+1, sources:Array.init(ins, (n) => (ine, n)), targets:Array.init(outs, (n) => (oute, n)), label:id});
-    ine := {id:i, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:"in"};
+    ine := {id:0, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:"in"};
     oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:"out"};
     ({inputs: ine^, edges:[fune], outputs: oute^}, i+3)
 }
@@ -124,7 +124,7 @@ let traceHypernet = (x, h) => {
         e^.sources[k] = (e',k');
     };
 
-    let newInputs = {id: h.inputs.id, sources: [||], targets:Array.sub(h.inputs.targets, x, (Array.length(h.inputs.targets) - x)), label:"in"};
+    let newInputs = {id: 0, sources: [||], targets:Array.sub(h.inputs.targets, x, (Array.length(h.inputs.targets) - x)), label:"in"};
     let newOutputs = {id: h.outputs.id, sources: Array.sub(h.outputs.sources, x, (Array.length(h.outputs.sources) - x)), targets: [||], label:"out"};
 
     let refInputs = ref(newInputs);
@@ -159,7 +159,7 @@ let traceHypernet = (x, h) => {
 }
 
 let swapNet = (i, x, y) => {
-    let ine = {id:i, sources:[||], targets:initialisePorts(x+y), label:"in"};
+    let ine = {id:0, sources:[||], targets:initialisePorts(x+y), label:"in"};
     let oute = {id:i+1, sources:initialisePorts(x+y), targets:[||], label:"out"};
 
     let refin = ref(ine);
@@ -212,7 +212,7 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
     | Identity(n)               => let rec ine = ref(floatingEdge(i,""));
                                    let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:"out"});
-                                   ine := {id:i, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:"in"};
+                                   ine := {id:0, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:"in"};
                                    ({inputs:ine^, edges: [], outputs: oute^},i+2)
     | Composition(f,g)          => let fh = convertCircuitToHypernet'(f,i);
                                    let gh = convertCircuitToHypernet'(g,snd(fh));
