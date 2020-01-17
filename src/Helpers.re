@@ -16,6 +16,14 @@ let generateUnicodeSubscript = (n) => {
     s2^
 }
 
+/********************/
+/* Triple functions */
+/********************/
+
+let t1 = (a,b,c) => a
+let t2 = (a,b,c) => b
+let t3 = (a,b,c) => c
+
 /******************/
 /* List functions */
 /******************/

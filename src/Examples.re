@@ -8,10 +8,21 @@ open Constructs;
 open Parser;
 
 let halfAdder = {
-    composemany([
+    macro(v, "hadd", "+_{half}", composemany([
         dfork(v,2),
         tensor([xorGate(v), andGate(v)])
-    ])
+    ]),[])
+}
+
+let fullAdder = {
+    macro(v, "fadd", "+_{full}", composemany([
+        tensor([dfork(v,2), identity(v,1)]),
+        tensor([identity(v,2), swap(v,2,1)]),
+        tensor([xorGate(v), identity(v,3)]),
+        tensor([dfork(v,2), identity(v,2)]),
+        tensor([xorGate(v), andGate(v), andGate(v)]),
+        tensor([identity(v,1), orGate(v)])
+    ]),[])
 }
 
 let halfAdderApplied = composemany([
@@ -37,8 +48,9 @@ let exampleFunctions = List.concat([specialMorphisms(v),
                 id(v,2),
 ]])
 
-                       /*
+let exampleMacros = [halfAdder, fullAdder];
 
+/*
 let halfAdderReduced_1 = evaluateOneStep(halfAdderApplied);
 let halfAdderReduced_2 = evaluateOneStep(halfAdderReduced_1);
 let halfAdderReduced_3 = evaluateOneStep(halfAdderReduced_2);
@@ -51,17 +63,6 @@ let halfAdderReduced_9 = evaluateOneStep(halfAdderReduced_8);
 let halfAdderReduced_10 = evaluateOneStep(halfAdderReduced_9);
 let halfAdderReduced_11 = evaluateOneStep(halfAdderReduced_10);
 let halfAdderReduced_12 = evaluateOneStep(halfAdderReduced_11);
-
-let fullAdder = {
-    composemany([
-        tensor([dfork(v,2), identity(v,1)]),
-        tensor([identity(v,2), swap(v,2,1)]),
-        tensor([xorGate(v), identity(v,3)]),
-        tensor([dfork(v,2), identity(v,2)]),
-        tensor([xorGate(v), andGate(v), andGate(v)]),
-        tensor([identity(v,1), orGate(v)])
-    ])
-}
 
 let fullAdderApplied = composemany([
                             tensor([t,f,f]),

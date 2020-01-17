@@ -132,6 +132,17 @@ let functionLookup = (func,funcs) => {
                         
 }
 
+let macroLookup = (macro,macros) => {
+    switch(List.find((x) => switch(x.c){
+                        | Macro(id,_,_) => (id == macro)
+                        | _ => failwith("Unexpected non-macro found in function library")
+                        }, macros)){
+                            | item => Some(item.c)
+                            | exception Not_found => None
+                        }
+                        
+}
+
 let linkLookup = (link,links) => {
     switch(List.find((x) => fst(fst(x)) == link, links)){
     | item => Some(Output(snd(fst(item))))
@@ -142,13 +153,16 @@ let linkLookup = (link,links) => {
     }
 }
 
+let blah = (a,b,c) => c
+
 /* Parses a set of tokens into a circuit. 
  * v: lattice
  * funcs: function library
+ * macros: macro library
  * tokens: the list of tokens 
  */
-let rec parse = (v, funcs, tokens) => parse'(v, funcs, 1, tokens, [], [], false, 0, [])
-and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => {
+let rec parse = (v, funcs, macros, tokens) => parse'(v, 1, tokens, [], [], false, 0, (funcs,macros), [])
+and parse' = (v, i, tokens, stack, lastterm, tensor, nextlink, defs, links) => {
     Js.log("parsing " ++ printStringList(tokens));
     switch(tokens){
         | [] => tensor ? 
@@ -158,56 +172,56 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
                         parseError(i, "unexpected end of term")
                     )
         | [x, ...xs] => switch(x){
-                                | "("   => parseBrackets(")", v, funcs, i, xs, stack, tensor, nextlink, links)
-                                | "["   => parseBrackets("]", v, funcs, i, xs, stack, tensor, nextlink, links)
+                                | "("   => parseBrackets(")", v, i, xs, stack, tensor, nextlink, defs, links)
+                                | "["   => parseBrackets("]", v, i, xs, stack, tensor, nextlink, defs, links)
                                 | ")"   => parseError(i, "unexpected ) encountered")
                                 | "]"   => parseError(i, "unexpected ] encountered")
-                                | "."   => parseComposition(v, funcs, i, xs, stack, tensor, nextlink, links)
-                                | "*"   => parseTensor(v, funcs, i, xs, stack, tensor, nextlink, links)
-                                | "/\\" => parse'(v, funcs, i, [{js|⋏|js},...xs], stack, [], tensor, nextlink, links)
-                                | "\\/" => parse'(v, funcs, i, [{js|⋎|js},...xs], stack, [], tensor, nextlink, links)
+                                | "."   => parseComposition(v, i, xs, stack, tensor, nextlink, defs, links)
+                                | "*"   => parseTensor(v, i, xs, stack, tensor, nextlink, defs, links)
+                                | "/\\" => parse'(v, i, [{js|⋏|js},...xs], stack, [], tensor, nextlink, defs, links)
+                                | "\\/" => parse'(v, i, [{js|⋎|js},...xs], stack, [], tensor, nextlink, defs, links)
                                 | a     =>  let matches = checkForMatches(a);
                                             let m = snd(matches);
                                             let len = String.length(a);
                                             switch(fst(matches)){
                                                 | 0  => let x = int_of_string(m[1]);
                                                         let y = int_of_string(m[2]);
-                                                        parse'(v, funcs, i + 1 + len, xs, stack @ [swap(v,x,y)], [swap(v,x,y)], tensor, nextlink, links)
+                                                        parse'(v,  i + 1 + len, xs, stack @ [swap(v,x,y)], [swap(v,x,y)], tensor, nextlink, defs, links)
                                                 | 1  => let x = int_of_string(m[1]);
-                                                        parse'(v, funcs, i + 1 + len, xs, stack @ [dfork(v,x)], [dfork(v,x)], tensor, nextlink, links)
+                                                        parse'(v, i + 1 + len, xs, stack @ [dfork(v,x)], [dfork(v,x)], tensor, nextlink, defs, links)
                                                 | 2  => let x = int_of_string(m[1]);
-                                                        parse'(v, funcs, i + 1 + len, xs, stack @ [djoin(v,x)], [djoin(v,x)], tensor, nextlink, links)
+                                                        parse'(v, i + 1 + len, xs, stack @ [djoin(v,x)], [djoin(v,x)], tensor, nextlink, defs, links)
                                                 | 3  => let x = int_of_string(m[1]);
-                                                        parse'(v, funcs, i + 1 + len, xs, stack @ [delay(v,x)], [delay(v,x)], tensor, nextlink, links) 
-                                                | 4  => parseTrace(m, v, funcs, i, xs, stack, tensor, nextlink, links)
-                                                | 5  => parseIteration(m, v, funcs, i, xs, stack, tensor, nextlink, links)
-                                                | 6  => parseIteration(m, v, funcs, i, xs, stack, tensor, nextlink, links)
-                                                | 7  => parseExponential(m, v, funcs, i, xs, stack, lastterm, tensor, nextlink, links)
-                                                | 8  => parseLink(m, v, funcs, i, xs, stack, tensor, nextlink, links)
-                                                | 9  => parseLink(m, v, funcs, i, xs, stack, tensor, nextlink, links)
-                                                | -1 => parseTerm(a, v, funcs, i, xs, stack, tensor, nextlink, links)
+                                                        parse'(v, i + 1 + len, xs, stack @ [delay(v,x)], [delay(v,x)], tensor, nextlink, defs, links) 
+                                                | 4  => parseTrace(m, v, i, xs, stack, tensor, nextlink, defs, links)
+                                                | 5  => parseIteration(m, v, i, xs, stack, tensor, nextlink, defs, links)
+                                                | 6  => parseIteration(m, v, i, xs, stack, tensor, nextlink, defs, links)
+                                                | 7  => parseExponential(m, v, i, xs, stack, lastterm, tensor, nextlink, defs, links)
+                                                | 8  => parseLink(m, v, i, xs, stack, tensor, nextlink, defs, links)
+                                                | 9  => parseLink(m, v, i, xs, stack, tensor, nextlink, defs, links)
+                                                | -1 => parseTerm(a, v, i, xs, stack, tensor, nextlink, defs, links)
                                             }
                                         }
     }
-} and parseBrackets = (close, v, funcs, i, xs, stack, tensor, nextlink, links) => {
+} and parseBrackets = (close, v, i, xs, stack, tensor, nextlink, defs, links) => {
     
     let j = scanForClosingBracket(xs, i, close);
 
     let subtermTokens = slice(xs, 0, j-1);
 
-    let parsedSubterm = parse'(v, funcs, i+1, subtermTokens, [], [], false, nextlink, links);
+    let parsedSubterm = parse'(v, i+1, subtermTokens, [], [], false, nextlink, defs, links);
 
     let actualSubterm = fst(parsedSubterm)
     let nextlink = snd(parsedSubterm)
 
-    parse'(v, funcs, i + 1 + lengthOfTokens(subtermTokens), trim(xs,j+1), stack @ [actualSubterm], [actualSubterm], tensor, nextlink, links)
+    parse'(v, i + 1 + lengthOfTokens(subtermTokens), trim(xs,j+1), stack @ [actualSubterm], [actualSubterm], tensor, nextlink, defs, links)
 
-} and parseComposition = (v, funcs, i, xs, stack, tensor, nextlink, links) => {
+} and parseComposition = (v, i, xs, stack, tensor, nextlink, defs, links) => {
 
     if(List.length(stack) == 0){
         parseError(i, "unexpected * encountered")
     } else {
-        let parsedArgument = parse'(v, funcs, i+2, xs, List.tl(stack), [], tensor, nextlink, links);
+        let parsedArgument = parse'(v, i+2, xs, List.tl(stack), [], tensor, nextlink, defs, links);
         
         let actualArgument = fst(parsedArgument);
         let nextlink = snd(parsedArgument);
@@ -215,22 +229,22 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
         (compose(List.hd(stack), actualArgument), nextlink)
     }
 
-} and parseTensor = (v, funcs, i, xs, stack, tensor, nextlink, links) => {
+} and parseTensor = (v, i, xs, stack, tensor, nextlink, defs, links) => {
   
     if(tensor){
-        parse'(v, funcs, i+2, xs, stack, [], tensor, nextlink, links)
+        parse'(v, i+2, xs, stack, [], tensor, nextlink, defs, links)
      } else {
         let j = scanForNextComposition(xs, 0);
                 let tensorTokens = slice(xs,0,j-1);
-                let parsedTensor = parse'(v, funcs, i+2, tensorTokens, stack,[],  true, nextlink, links);
+                let parsedTensor = parse'(v, i+2, tensorTokens, stack,[],  true, nextlink, defs, links);
 
                 let actualTensor = fst(parsedTensor);
                 let nextlink = snd(parsedTensor);
 
-                parse'(v, funcs, i + 2 + lengthOfTokens(tensorTokens), trim(xs,j), drop(stack,1) @ [actualTensor], [], false, nextlink, links);
+                parse'(v, i + 2 + lengthOfTokens(tensorTokens), trim(xs,j), drop(stack,1) @ [actualTensor], [], false, nextlink, defs, links);
      }
 
-} and parseTrace = (m, v, funcs, i, xs, stack, tensor, nextlink, links) => {
+} and parseTrace = (m, v, i, xs, stack, tensor, nextlink, defs, links) => {
     
     let x = int_of_string(m[1]);
     if(List.length(xs) == 0 || List.hd(xs) != "("){ 
@@ -240,15 +254,15 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
 
         let traceTokens = slice(xs,1,j);
 
-        let parsedTrace = parse'(v, funcs, i + 1 + 1 + String.length(m[0]) , traceTokens, [], [], false, nextlink, links)
+        let parsedTrace = parse'(v, i + 1 + 1 + String.length(m[0]) , traceTokens, [], [], false, nextlink, defs, links)
         
         let nextlink = snd(parsedTrace);
         let actualTrace = trace(x,fst(parsedTrace));
         
-        parse'(v, funcs, i + 1 + 1 + String.length(m[0]) + lengthOfTokens(traceTokens) + 1, trim(xs,j+2), stack @ [actualTrace], [actualTrace], tensor, nextlink, links)
+        parse'(v, i + 1 + 1 + String.length(m[0]) + lengthOfTokens(traceTokens) + 1, trim(xs,j+2), stack @ [actualTrace], [actualTrace], tensor, nextlink, defs, links)
     }
 
-} and parseIteration = (m, v, funcs, i, xs, stack, tensor, nextlink, links) => {
+} and parseIteration = (m, v, i, xs, stack, tensor, nextlink, defs, links) => {
     
     /*let x = int_of_string(m[1]);*/
     if(List.length(xs) == 0 || List.hd(xs) != "("){ 
@@ -256,15 +270,15 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
     } else {
         let j = scanForClosingBracket(List.tl(xs), i+6, ")");
         let iterationTokens = slice(xs,1,j);
-        let parsedIteration = parse'(v, funcs, i + 1 + 1 + String.length(m[0]), iterationTokens, [], [], false, nextlink, links);
+        let parsedIteration = parse'(v, i + 1 + 1 + String.length(m[0]), iterationTokens, [], [], false, nextlink, defs, links);
         
         let nextlink = snd(parsedIteration)
         let actualIteration = iter(fst(parsedIteration));
         
-        parse'(v, funcs, i + 1 + 1 + String.length(m[0]) + lengthOfTokens(iterationTokens) + 1, trim(xs,j+2), stack @ [actualIteration], [actualIteration], tensor, nextlink, links)
+        parse'(v, i + 1 + 1 + String.length(m[0]) + lengthOfTokens(iterationTokens) + 1, trim(xs,j+2), stack @ [actualIteration], [actualIteration], tensor, nextlink, defs, links)
     }
 
-} and parseTerm = (a, v, funcs, i, xs, stack, tensor, nextlink, links) => {
+} and parseTerm = (a, v, i, xs, stack, tensor, nextlink, defs, links) => {
 
     if(!tensor && List.length(stack) > 0 ){
         parseError(i, "unexpected term encountered, did you forget a composition or tensor?") 
@@ -274,18 +288,21 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
                         Value(snd(sym)) : 
                         switch(int_of_string(a)){
                         | item        => Identity(item)
-                        | exception _ => switch(functionLookup(a,funcs)){
+                        | exception _ => switch(functionLookup(a,fst(defs))){
                                         | Some(x) => x
-                                        | None    => switch(linkLookup(a, links)){
-                                                     | Some(x) => x
-                                                     | None    => parseError(i,"unable to parse " ++ a)
-                                                     }
+                                        | None    => switch(macroLookup(a, snd(defs))){
+                                                        | Some(x) => x
+                                                        | None    => switch(linkLookup(a, links)){
+                                                                        | Some(x) => x
+                                                                        | None    => parseError(i,"unable to parse " ++ a)
+                                                                        }
+                                                        }
                                         }
-                        };
+                        }
         let subterm = circ(v,subterm,links);
-        parse'(v, funcs, i+String.length(a)+1, xs, stack @ [subterm], [subterm], tensor, nextlink, links)
+        parse'(v, i+String.length(a)+1, xs, stack @ [subterm], [subterm], tensor, nextlink, defs, links)
     }  
-} and parseExponential = (m, v, funcs, i, xs, stack, lastterm, tensor, nextlink, links) => {
+} and parseExponential = (m, v, i, xs, stack, lastterm, tensor, nextlink, defs, links) => {
 
     let n = int_of_string(m[1]);
 
@@ -293,7 +310,7 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
         parseError(i, "exponential used without a valid term")
     } else {
         let newstack = processExponential(v,links,n,List.hd(lastterm),tensor);
-        parse'(v, funcs, i+String.length(m[0]) + 1, xs, drop(stack,1) @ newstack, lastterm, tensor, nextlink, links)
+        parse'(v, i+String.length(m[0]) + 1, xs, drop(stack,1) @ newstack, lastterm, tensor, nextlink, defs, links)
     }
 
 } and processExponential = (v, links, n, term, tensor) => {
@@ -304,7 +321,7 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
            [term, ...processExponential(v,links,n-1, term, tensor)] :
            [circ(v, Tensor([term,...processExponential(v,links,n-1,term,true)]), links)]
     }
-} and parseLink = (m, v, funcs, i, xs, stack, tensor, nextlink, links) => {
+} and parseLink = (m, v, i, xs, stack, tensor, nextlink, defs, links) => {
 
     let oup = m[1];
     let inp = m[2];
@@ -316,19 +333,19 @@ and parse' = (v, funcs, i, tokens, stack, lastterm, tensor, nextlink, links) => 
     let nextlink = nextlink + 2
 
     let j = scanForClosingBracket(List.tl(xs), i+4, "")
-    let parsedScope = parse'(v, funcs, i+6, slice(xs,0,j), [], [], false, nextlink, newLinks)
+    let parsedScope = parse'(v, i+6, slice(xs,0,j), [], [], false, nextlink, defs, newLinks)
 
     let actualScope = fst(parsedScope);
     let nextlink = snd(parsedScope);
 
-    let finalLink = link(v, oux, inx, actualScope,links)
+    let finalLink = link(v, oux, inx, actualScope, links)
 
-    parse'(v, funcs, i+1, trim(xs, j+1), stack @ [finalLink], [finalLink], tensor, nextlink, links)
+    parse'(v, i+1, trim(xs, j+1), stack @ [finalLink], [finalLink], tensor, nextlink, defs, links)
 }
 
-let parseFromString = (v, funcs, string) => {
+let parseFromString = (v, funcs, macros, string) => {
     let tokenisedString = tokenise(string);
-    let parsedString = parse(v, funcs, tokenisedString);
+    let parsedString = parse(v, funcs, macros, tokenisedString);
 
     fst(parsedString)
 }

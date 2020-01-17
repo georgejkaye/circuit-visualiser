@@ -43,6 +43,7 @@ type state = {
     circ: circuit,          /* The current circuit */
     strn: string,           /* The string of the current circuit, or a parse error message */
     funs: list(circuit),    /* The library of functions available */
+    macs: list(circuit),    /* The library of macros available */
     net: hypernet,          /* The corresponding hypernet */
     dot: string,            /* The corresponding dot string */
     error: bool             /* If there's a parse error */
@@ -65,7 +66,7 @@ let printLatexOrError = (string, error) => {
  * If not, returns (false, (zero circuit, error message))
  */
 let generateCircuit = (state, text) => {
-    switch(parseFromString(state.lat, state.funs, text)){ /* hello */
+    switch(parseFromString(state.lat, state.funs, state.macs, text)){ /* hello */
     | item => (true, (item, printCircuitLatex(item)))
     | exception ParseError(e) => (false, (zero(state.lat), e))
     | exception SemanticsError(e) => (false, (zero(state.lat), e))
@@ -116,6 +117,7 @@ let make = () => {
                                         lat: state.lat, 
                                         strn: snd(snd(generatedCircuit)), 
                                         funs: state.funs, 
+                                        macs: state.macs,
                                         net: generatedHypernet,
                                         dot: generatedDot,
                                         error:fst(generatedCircuit)}
@@ -127,6 +129,7 @@ let make = () => {
         circ: zero(simpleLattice),
         strn: "",
         funs: Examples.exampleFunctions,
+        macs: Examples.exampleMacros,
         net: zeroNet,
         dot: zeroDot,
         error: false
