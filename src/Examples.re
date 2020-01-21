@@ -16,12 +16,12 @@ let halfAdder = {
 
 let fullAdder = {
     macro(v, "fadd", "+_{full}", composemany([
-        tensor([dfork(v,2), identity(v,1)]),
-        tensor([identity(v,2), swap(v,2,1)]),
-        tensor([xorGate(v), identity(v,3)]),
-        tensor([dfork(v,2), identity(v,2)]),
+        tensor([dfork(v,2), idcirc(v,1)]),
+        tensor([idcirc(v,2), swap(v,2,1)]),
+        tensor([xorGate(v), idcirc(v,3)]),
+        tensor([dfork(v,2), idcirc(v,2)]),
         tensor([xorGate(v), andGate(v), andGate(v)]),
-        tensor([identity(v,1), orGate(v)])
+        tensor([idcirc(v,1), orGate(v)])
     ]),[])
 }
 

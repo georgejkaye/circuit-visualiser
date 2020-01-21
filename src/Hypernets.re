@@ -303,3 +303,69 @@ let rec generateGraphvizCode = (net) => {
 
 let zeroDot = generateGraphvizCode(zeroNet);
 Js.log(zeroDot);
+
+let rec scanList = (seen, id) => {
+    switch(seen){
+    | []        => (false,-1,-1)
+    | [(x,i,ns),...xs] => (x == id) ? (true, i, ns) : scanList(xs, id)
+    }
+} 
+
+/*let createSymmetry = (es) => {
+    let seen = ref([]);
+    let es' = ref(es);
+
+    let x = 0;
+
+    while(x != Array.length(es)){
+        for(i in 0 to Array.length(es)){
+            let (e,k) = es[i];
+            if(scanList(seen^,e.id)){
+                let i1 = 
+            } else {
+
+            }
+        }
+    }
+
+    ([],[])
+
+}*/
+
+let rec generateTensor = (v,es) => generateTensor'(v,es,[],[||],0)
+and generateTensor' = (v,es,t,es_next,outs) => {
+    switch(es){
+    | [] => (List.rev(t), es_next,outs)
+    | [(e,k),...xs] => let e' = e^; 
+                       (e'.label == "out") ? 
+                       generateTensor'(v, xs, [idcirc(v,1),...t], Array.append(es_next,[|(e,k)|]), outs + 1) : 
+                       generateTensor'(v, xs, [funcBlackBox(v,e'.label,"\\text{" ++ e'.label ++ "}",Array.length(e'.sources),Array.length(e'.targets)),...t],Array.append(es_next,e'.targets), outs)
+    }
+}
+
+let convertHypernetToEquation = (v,net) => {
+    let cat = ref([]);
+    let es_next = ref([||]);
+
+    es_next := net.inputs.targets
+
+    while(Array.length(es_next^) != 0){
+        
+        let es = es_next^;
+
+        /*let (cat', es') = createSymmetry(es^)*/
+        /*cat := List.rev_append(cat^,cat')*/
+        
+        let (t,es_next',outs) = generateTensor(v,Array.to_list(es));
+
+        if(outs == Array.length(es_next')){
+            es_next := [||]
+        } else {
+            es_next := es_next';
+            cat := List.append(cat^, [tensor(t)]);
+        }
+    }
+
+    Js.log(printCircuitListCommas(cat^));
+    composemany(cat^);
+}

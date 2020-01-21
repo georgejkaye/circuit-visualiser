@@ -169,8 +169,8 @@ let zero = (v) => {v:v, c:Identity(0), l:[]}
 /* Create a value */
 let value = (v,x) => {v:v, c:Value(x), l:[]}
 
-/* Create an identity */
-let identity = (v, n) => {v:v, c:Identity(n),l:[]}
+/* Create an identity circuit */
+let idcirc = (v, n) => {v:v, c:Identity(n),l:[]}
 
 /* Create a composition circuit */
 let compose = (c, c') => {
@@ -274,7 +274,7 @@ let rec join = (v) => func(v,{js|⋎|js}, "\\curlyvee",
                                     }
                         )  
 
-/* Stub a wire, leading to the unique identity on 0 */
+/* Stub a wire, leading to the unique idcirc on 0 */
 let stub = (v) => func(v, {js|~|js}, "{\\sim}", 1, 0, (_) => zero(v));
 
 let specialMorphisms = (v) => [fork(v), join(v), stub(v)];
@@ -289,7 +289,7 @@ let rec dfork = (v,n) => {
         | 1 => fork(v).c
         | n => composemany([
                         tensor([dfork(v,n-1), fork(v)]),
-                        tensor([identity(v,n-1), swap(v, n-1, 1), identity(v,1)])
+                        tensor([idcirc(v,n-1), swap(v, n-1, 1), idcirc(v,1)])
                         ]).c
         };
     macro(v, {js|Δ{|js} ++ string_of_int(n) ++ "}", "\\Delta_" ++ string_of_int(n), circ(v,comp,[]), [])
@@ -301,7 +301,7 @@ let rec djoin = (v,n) => {
         | 0 => Identity(0)
         | 1 => join(v).c
         | n => composemany([
-                        tensor([identity(v,n-1), swap(v, 1, n-1), identity(v,1)]),
+                        tensor([idcirc(v,n-1), swap(v, 1, n-1), idcirc(v,1)]),
                         tensor([djoin(v,n-1), join(v)])
                         ]).c
         };
