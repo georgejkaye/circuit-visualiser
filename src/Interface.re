@@ -110,7 +110,6 @@ let make = () => {
                                     } else { 
                                         let generatedCircuit = generateCircuit(state, text);
                                         let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
-                                        Js.log("back again " ++ printCircuit(convertHypernetToEquation(state.lat,generatedHypernet)));
                                         let generatedDot = generateGraphvizCode(generatedHypernet);
                                         Js.log(generatedDot);
                                         {circ: fst(snd(generatedCircuit)), 
