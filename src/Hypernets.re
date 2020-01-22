@@ -235,19 +235,26 @@ and convertCircuitToHypernet' = (circuit, i) => {
 }
 
 let tab = "    "
+let getTraceText = (x, e, left) => {
+    let dir = left ? "l" : "r";
+    let name = "trace" ++ dir ++ string_of_int(x) ++ "to" ++ string_of_int(e^.id);
+    (name, name ++ "[shape=point, width=0.01]\n");
+}
 
 let rec generateGraphvizCode = (net) => {
-    let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, List.map((x) => x^, net.edges), "", "");
+    let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, List.map((x) => x^, net.edges), "", "", "", "");
     "digraph{\n" ++ tab ++ "rankdir=LR;\n" ++ tab ++ "ranksep=1;\n" ++ graph ++ "}"
-} and generateGraphvizCodeEdges = (inputs, outputs, edges, nodes, transitions) => {
+} and generateGraphvizCodeEdges = (inputs, outputs, edges, ranks, nodes, traces, transitions) => {
+    let inid = inputs.id;
+    let outid = outputs.id;
     switch(edges){
     | [] => let (inedgedot, intransdot) = 
                 if(Array.length(inputs.targets) == 0){
                     ("","")
                 } else {
-                    let inedgecode = generateGraphvizCodeEdge(inputs);
+                    let inedgecode = generateGraphvizCodeEdge(inputs,inid,outid);
                     let edgedot = fst(inedgecode) == "" ? "" : fst(inedgecode) ++ ";\n";
-                    let transdot = snd(inedgecode);
+                    let transdot = snd(inedgecode)[2];
                     (edgedot, transdot)
                 };
             
@@ -255,26 +262,28 @@ let rec generateGraphvizCode = (net) => {
                 if(Array.length(outputs.sources) == 0){
                     ("","")
                 } else {
-                    let outedgecode = generateGraphvizCodeEdge(outputs);
+                    let outedgecode = generateGraphvizCodeEdge(outputs,inid,outid);
                     let edgedot = fst(outedgecode) == "" ? "" : fst(outedgecode) ++ ";\n";
-                    let transdot = snd(outedgecode);
+                    let transdot = snd(outedgecode)[2];
                     (edgedot, transdot)
                 }
 
-            nodes ++ outedgedot ++ inedgedot ++ "\n" ++ intransdot ++ transitions ++ outtransdot
+            ranks ++ nodes ++ outedgedot ++ inedgedot ++ "\n" ++ intransdot ++ traces ++ transitions ++ outtransdot
              
-    | [x,...xs] => let edgecode = generateGraphvizCodeEdge(x);
+    | [x,...xs] => let edgecode = generateGraphvizCodeEdge(x,inid,outid);
                     let edgedot = fst(edgecode) == "" ? "" : fst(edgecode) ++ ";\n";
-                    let transdot = snd(edgecode);
-                    generateGraphvizCodeEdges(inputs, outputs, xs, nodes ++ edgedot, transitions ++ transdot)
+                    let ranksdot = snd(edgecode)[0];
+                    let tracedot = snd(edgecode)[1];
+                    let transdot = snd(edgecode)[2];
+                    generateGraphvizCodeEdges(inputs, outputs, xs, ranks ++ ranksdot, nodes ++ edgedot, traces ++ tracedot, transitions ++ transdot)
     }
-} and generateGraphvizCodeEdge = (edge) => {
+} and generateGraphvizCodeEdge = (edge, inid, outid) => {
 
     let ins = Array.length(edge.sources);
     let outs = Array.length(edge.targets);
     let inports = generatePorts(ins, false);
     let outports = generatePorts(outs, true);
-    let transitions = generateTransitions(edge.id, edge.targets);
+    let transitionsdata = generateTransitions(edge.id, inid, outid, edge.targets);
 
     let instring = inports == "{}" ? "" : inports ++ " | ";
     let outstring = outports == "{}" ? "" : " | " ++ outports; 
@@ -282,7 +291,7 @@ let rec generateGraphvizCode = (net) => {
     (tab ++ "edge" ++ string_of_int(edge.id) ++ 
         " [shape=Mrecord; label=\"{" ++ 
         instring ++ edge.label ++ outstring
-        ++ "}\"]", transitions)  
+        ++ "}\"]", transitionsdata)  
 } and generatePorts = (n, out) => {
     "{" ++ generatePorts'(0,n, out) ++ "}"
 } and generatePorts' = (x,n,out) => {
@@ -292,13 +301,36 @@ let rec generateGraphvizCode = (net) => {
     | 1 => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js}
     | n => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js} ++ " | " ++ generatePorts'(x+1,n-1,out)
     }
-} and generateTransitions = (x, targets) => {
+} and generateTransitions = (x, inid, outid, targets) => {
     let string = ref("");
+    let tracenodes = ref("");
+    let ranks = ref("");
+
     for(i in 0 to Array.length(targets) - 1){
         let (e,k) = targets[i];
-        string := string^ ++ tab ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> edge" ++ string_of_int(e^.id) ++ ":i" ++ string_of_int(k) ++ ":w;\n"
-    }
-    string^;
+        /* trace! */
+        if(e^.id < x){
+
+            Js.log("trace!");
+
+            let (idl, tracel) = getTraceText(x,e,true);
+            let (idr, tracer) = getTraceText(x,e,false);
+
+            tracenodes := tracenodes^ ++ tab ++ tracel ++ tracer
+
+            string := string^ ++ tab ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> " ++ idr ++ ":s;\n" ++
+                                    tab ++ idr ++ ":n -> " ++ idl ++ ":n;\n" ++
+                                    tab ++ idl ++ ":s -> edge" ++ string_of_int(e^.id) ++ ":i" ++ string_of_int(k) ++ ":w;\n";
+
+            ranks := ranks^ ++ tab ++ "{rank=same; edge" ++ string_of_int(inid) ++ ", " ++ idl ++ "}\n" ++ tab ++ "{rank=same; edge" ++ string_of_int(outid) ++ ", " ++ idr ++ "}\n"
+
+        } else {
+            string := string^ ++ tab ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> edge" ++ string_of_int(e^.id) ++ ":i" ++ string_of_int(k) ++ ":w;\n"
+        }
+        
+    };
+
+    [|ranks^, tracenodes^, string^|];
 }
 
 let zeroDot = generateGraphvizCode(zeroNet);
