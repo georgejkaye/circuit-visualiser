@@ -20,9 +20,9 @@ let generateUnicodeSubscript = (n) => {
 /* Triple functions */
 /********************/
 
-let t1 = (a,b,c) => a
-let t2 = (a,b,c) => b
-let t3 = (a,b,c) => c
+let t1 = (a,_,_) => a
+let t2 = (_,b,_) => b
+let t3 = (_,_,c) => c
 
 /******************/
 /* List functions */
@@ -108,7 +108,7 @@ let rec trim = (xs, b) => trim'(xs, b-1, 0)
 and trim' = (xs, b, n) => {
     switch(xs){
     | [] => failwith("not enough list!")
-    | [x,...xs] => n == b ? xs : trim'(xs, b, n + 1)      
+    | [_,...xs] => n == b ? xs : trim'(xs, b, n + 1)      
     }
 }
 

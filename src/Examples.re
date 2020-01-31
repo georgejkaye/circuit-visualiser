@@ -3,9 +3,7 @@
  */
 
 open Circuits;
-open Rewrites;
 open Constructs;
-open Parser;
 
 let halfAdder = {
     macro(v, "hadd", "+_{half}", composemany([
@@ -42,6 +40,7 @@ let exampleFunctions = List.concat([specialMorphisms(v),
                 funcBlackBox(v, "b", "\\text{b}", 1, 1),
                 funcBlackBox(v, "c", "\\text{c}", 1, 1),
                 funcBlackBox(v, "d", "\\text{d}", 1, 1),
+                funcBlackBox(v, "e", "\\text{e}", 2, 1),
                 andGate(v),
                 orGate(v),
                 xorGate(v),

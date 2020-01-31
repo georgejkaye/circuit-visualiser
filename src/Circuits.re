@@ -186,17 +186,10 @@ let tensor = (xs) => {
     {v:List.hd(xs).v, c:Tensor(xs), l:List.fold_left(((x,y) => x @ y.l), [], xs)}
 }
 
-/* Create a tensor component */
-let tensor' = (v, xs) => {
-    Tensor(xs)
-}
-
-/* Create a function component */
-let func' = (id, latex, ins, outs, f) => Function(id,latex,ins,outs,f)
-
 /* Create a function circuit */
-let func = (v, id, latex, ins, outs, f) => {v, c: func'(id,latex,ins,outs,f), l:[]}
+let func = (v, id, latex, ins, outs, f) => {v, c: Function(id,latex,ins,outs,f), l:[]}
 
+/* Create a link circuit */
 let link = (v, oux, inx, f, l) => {v, c: Link(oux,inx,f),l}
 
 /* Create a macro circuit */
@@ -336,16 +329,27 @@ let iter = (f) => {
 /***********************/
 
 /* Regexes for various constructs */
-let exponentialSoloRegEx = [%bs.re "/\^([0-9]+)/"]
-let exponentialRegEx = [%bs.re "/(.+)?\^([0-9]+)/"]
-let delayRegEx = [%bs.re "/o\{([0-9]+)\}/"];
-let djoinRegEx = [%bs.re "/\\\\\/\{([0-9]+)\}/"];
-let swapRegEx = [%bs.re "/x\{([0-9]+),([0-9]+)\}/"];
-let dforkRegEx = [%bs.re "/\/\\\{([0-9]+)\}/"];
-let traceRegEx = [%bs.re "/Tr\{([0-9]+)\}/"]
+let exponentialSoloRegEx = [%bs.re "/\\^([0-9]+)/"]
+let exponentialRegEx = [%bs.re "/(.+)?\\^([0-9]+)/"]
+let delayRegEx = [%bs.re "/o\\{([0-9]+)\\}/"];
+let djoinRegEx = [%bs.re "/\\\\\\/\\{([0-9]+)\\}/"];
+let swapRegEx = [%bs.re "/x\\{([0-9]+),([0-9]+)\\}/"];
+let dforkRegEx = [%bs.re "/\\/\\\\{([0-9]+)\\}/"];
+let traceRegEx = [%bs.re "/Tr\\{([0-9]+)\\}/"]
 let iterRegEx = [%bs.re "/iter\\{([0-9]+)\\}/"]
 let iterRegEx2 = [%bs.re "/iter/"]
-let linkIntroRegEx = [%bs.re "/\\\\([a-z]+),([a-z]+)\./"]
-let linkIntroRegEx2 = [%bs.re "/\\\\([a-z])([a-z])\./"]
+let linkIntroRegEx = [%bs.re "/\\\\([a-z]+),([a-z]+)\\./"]
+let linkIntroRegEx2 = [%bs.re "/\\\\([a-z])([a-z])\\./"]
 
-let constructRegExes = [swapRegEx, dforkRegEx, djoinRegEx, delayRegEx, traceRegEx, iterRegEx, iterRegEx2, exponentialSoloRegEx, linkIntroRegEx, linkIntroRegEx2]
+let constructRegExes = [
+    swapRegEx, 
+    dforkRegEx, 
+    djoinRegEx, 
+    delayRegEx, 
+    traceRegEx, 
+    iterRegEx, 
+    iterRegEx2, 
+    exponentialSoloRegEx, 
+    linkIntroRegEx, 
+    linkIntroRegEx2
+]

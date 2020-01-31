@@ -19,10 +19,10 @@ let stringToChars = (s) => {List.map((i => String.get(s,i)), range(String.length
 /* Regular expressions */
 /***********************/
 
-let openingBracketsRegEx = [%bs.re "/(\(|\[])/"]
-let closingBracketsRegEx = [%bs.re "/(\)|\])(\^[0-9]+)?/"]
-let roundBracketsClosingRegEx   = [%bs.re "/(\))(\^[0-9]+)?/"]
-let squareBracketsClosingRegEx   = [%bs.re "/(\])(\^[0-9]+)?/"]
+let openingBracketsRegEx = [%bs.re "/(\\(|\\[])/"]
+let closingBracketsRegEx = [%bs.re "/(\\)|\\])(\\^[0-9]+)?/"]
+let roundBracketsClosingRegEx   = [%bs.re "/(\\))(\\^[0-9]+)?/"]
+let squareBracketsClosingRegEx   = [%bs.re "/(\\])(\\^[0-9]+)?/"]
 
 let match = (regex, string) =>{
     Js.String.match(regex, string)
@@ -153,8 +153,6 @@ let linkLookup = (link,links) => {
     }
 }
 
-let blah = (a,b,c) => c
-
 /* Parses a set of tokens into a circuit. 
  * v: lattice
  * funcs: function library
@@ -200,6 +198,7 @@ and parse' = (v, i, tokens, stack, lastterm, tensor, nextlink, defs, links) => {
                                                 | 8  => parseLink(m, v, i, xs, stack, tensor, nextlink, defs, links)
                                                 | 9  => parseLink(m, v, i, xs, stack, tensor, nextlink, defs, links)
                                                 | -1 => parseTerm(a, v, i, xs, stack, tensor, nextlink, defs, links)
+                                                | _ => failwith("Bad regex match code")
                                             }
                                         }
     }

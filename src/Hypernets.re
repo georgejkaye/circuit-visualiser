@@ -59,11 +59,6 @@ let composeParallel = (f,g,i) => {
     let finputs = Array.length(f.inputs.targets);
     let foutputs = Array.length(f.outputs.sources);
 
-    let finputsID = f.inputs.id;
-    let ginputsID = g.inputs.id;
-    let foutputsID = f.outputs.id;
-    let goutputsID = g.outputs.id;
-
     let refInputs = ref(newInputs);
     let refOutputs = ref(newOutputs);
 
@@ -126,9 +121,6 @@ let traceHypernet = (x, h) => {
 
     let newInputs = {id: 0, sources: [||], targets:Array.sub(h.inputs.targets, x, (Array.length(h.inputs.targets) - x)), label:"in"};
     let newOutputs = {id: h.outputs.id, sources: Array.sub(h.outputs.sources, x, (Array.length(h.outputs.sources) - x)), targets: [||], label:"out"};
-
-    let refInputs = ref(newInputs);
-    let refOutputs = ref(newOutputs);
 
     for(i in 0 to Array.length(newInputs.targets) - 1){
         let (e, k) = newInputs.targets[i];
@@ -210,7 +202,7 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    and ine = ref(floatingEdge(i,"in")) 
                                    and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:"out"});
                                    ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
-    | Identity(n)               => let rec ine = ref(floatingEdge(i,""));
+    | Identity(n)               => let ine = ref(floatingEdge(i,""));
                                    let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:"out"});
                                    ine := {id:0, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:"in"};
                                    ({inputs:ine^, edges: [], outputs: oute^},i+2)
@@ -225,10 +217,14 @@ and convertCircuitToHypernet' = (circuit, i) => {
     | Delay(x)                  => delayNet(i,x)
     | Trace(x, f)               => let (fh,i') = convertCircuitToHypernet'(f,i+1);
                                    (traceHypernet(x,fh), i')
-    | Iter(x, f)                => let f' = compose(f, dfork(circuit.v, outputs(f)));
+    | Iter(_, f)                => let f' = compose(f, dfork(circuit.v, outputs(f)));
                                    let (fh,i') = convertCircuitToHypernet'(f',i+1);
                                    (traceHypernet(outputs(f), fh), i');  
     | Macro(_,_,f)              => convertCircuitToHypernet'(f,i);
+    | Input(x)                  => failwith("todo");
+    | Output(x)                 => failwith("todo");
+    | Link(_,_,f)               => convertCircuitToHypernet'(f,i);
+    | _                         => failwith("badly formed circuit");
                              
                                     
     }
