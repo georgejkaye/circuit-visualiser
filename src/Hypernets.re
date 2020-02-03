@@ -44,6 +44,15 @@ let initialisePorts = (x) => Array.init(x, (i => (ref(floatingEdge(0,"")), i)))
 let zeroNet = {inputs:floatingEdge(0, "in"), edges:[], outputs:floatingEdge(1,"out")}
 let identity = (array) => array
 
+let rec removeEdge = ({inputs,edges,outputs},edge) => {inputs,edges:removeEdge'(edge, edges,[]),outputs}
+and removeEdge' = (edge, edges, acc) => {
+    switch(edges){
+    | [] => acc
+    | [x,...xs] => x^.id == edge^.id ? acc @ xs :
+                                     removeEdge'(edge,xs,[x,...acc])
+    }
+}
+
 let composeSequential = (f,g) => {
 
     assert(Array.length(f.outputs.sources) == Array.length(g.inputs.targets));
@@ -209,10 +218,16 @@ let joinLinks = (net, l, outlink, inlink) => {
     let outedge = List.hd(findEdges(lookupLink(outlink, l), net));
     let inedge = List.hd(findEdges(lookupLink(inlink, l), net));
     
-    outedge^.targets[0] = (inedge, 0)
-    inedge^.sources[0] = (outedge, 0)
+    let (e,k) = outedge^.sources[0];
+    let (e',k') = inedge^.targets[0];
+    
+    e^.targets[k] = (e', k');
+    e'^.sources[k'] = (e, k);
 
-    net
+    let newNet = removeEdge(net, outedge)
+    let newerNet = removeEdge(newNet,inedge)
+
+    newerNet;
 
 }
 
@@ -243,11 +258,11 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    let (fh,i') = convertCircuitToHypernet'(f',i+1);
                                    (traceHypernet(outputs(f), fh), i');  
     | Macro(_,_,f)              => convertCircuitToHypernet'(f,i);
-    | Inlink(x)                 => let rec e = ref({id: i+1, sources:[|(e,0)|], targets:[|(oute,0)|], label:lookupLink(x,circuit.l)})
+    | Inlink(x)                 => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:lookupLink(x,circuit.l)})
                                    and ine = ref(floatingEdge(i,"in")) 
                                    and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:"out"});
                                    ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
-    | Outlink(x)                => let rec e = ref({id: i+1, sources:[|(ine,0)|], targets:[|(e,0)|], label:lookupLink(x,circuit.l)})
+    | Outlink(x)                => let rec e = ref({id: i+1, sources:[|(ine,0)|], targets:[||], label:lookupLink(x,circuit.l)})
                                    and ine = ref({id: i, sources:[||], targets:[|(e,0)|], label:"in"})
                                    and oute = ref(floatingEdge(i+2,"out")); 
                                    ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
