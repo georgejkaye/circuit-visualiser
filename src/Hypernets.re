@@ -16,6 +16,16 @@ type edge = {
     outputs: edge
 }
 
+/* Find all the edges with a given label in a net */
+let rec findEdges = (string, net) => findEdges'(string, net.edges, []) 
+and findEdges' = (string, edges, acc) => {
+    switch(edges){
+    | [] => acc
+    | [x,...xs] => x^.label == string ? findEdges'(string, xs, [x,...acc]) :
+                                       findEdges'(string, xs, acc)
+    }
+}
+
 let rec printEdge = (e) => {
     "edge " ++ string_of_int(e.id) ++ ": " ++ e.label ++ ", sources: " ++ printEdgeRefPortPairArray(e.sources) ++ ", targets: " ++ printEdgeRefPortPairArray(e.targets)
 } and printEdgeArray = (es) => printArray(es, printEdge)
@@ -194,6 +204,18 @@ let iterHypernet = (circuit, i) => {
 
 }
 
+let joinLinks = (net, l, outlink, inlink) => {
+
+    let outedge = List.hd(findEdges(lookupLink(outlink, l), net));
+    let inedge = List.hd(findEdges(lookupLink(inlink, l), net));
+    
+    outedge^.targets[0] = (inedge, 0)
+    inedge^.sources[0] = (outedge, 0)
+
+    net
+
+}
+
 let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(circuit, 0))
 and convertCircuitToHypernet' = (circuit, i) => {
     Js.log(printCircuit(circuit));
@@ -221,15 +243,16 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    let (fh,i') = convertCircuitToHypernet'(f',i+1);
                                    (traceHypernet(outputs(f), fh), i');  
     | Macro(_,_,f)              => convertCircuitToHypernet'(f,i);
-    | Inlink(x)                 => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:lookupLink(x,circuit.l)})
+    | Inlink(x)                 => let rec e = ref({id: i+1, sources:[|(e,0)|], targets:[|(oute,0)|], label:lookupLink(x,circuit.l)})
                                    and ine = ref(floatingEdge(i,"in")) 
                                    and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:"out"});
                                    ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
-    | Outlink(x)                => let rec e = ref({id: i+1, sources:[|(ine,0)|], targets:[||], label:lookupLink(x,circuit.l)})
+    | Outlink(x)                => let rec e = ref({id: i+1, sources:[|(ine,0)|], targets:[|(e,0)|], label:lookupLink(x,circuit.l)})
                                    and ine = ref({id: i, sources:[||], targets:[|(e,0)|], label:"in"})
                                    and oute = ref(floatingEdge(i+2,"out")); 
                                    ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
-    | Link(_,_,f)               => convertCircuitToHypernet'(f,i);
+    | Link(x,y,f)               => let f = convertCircuitToHypernet'(f,i);
+                                   (joinLinks(fst(f),circuit.l,x,y), snd(f))
     | _                         => failwith("badly formed circuit");
                              
                                     
