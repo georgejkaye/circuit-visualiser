@@ -221,8 +221,14 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    let (fh,i') = convertCircuitToHypernet'(f',i+1);
                                    (traceHypernet(outputs(f), fh), i');  
     | Macro(_,_,f)              => convertCircuitToHypernet'(f,i);
-    | Input(x)                  => failwith("todo");
-    | Output(x)                 => failwith("todo");
+    | Inlink(x)                 => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:lookupLink(x,circuit.l)})
+                                   and ine = ref(floatingEdge(i,"in")) 
+                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:"out"});
+                                   ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
+    | Outlink(x)                => let rec e = ref({id: i+1, sources:[|(ine,0)|], targets:[||], label:lookupLink(x,circuit.l)})
+                                   and ine = ref({id: i, sources:[||], targets:[|(e,0)|], label:"in"})
+                                   and oute = ref(floatingEdge(i+2,"out")); 
+                                   ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
     | Link(_,_,f)               => convertCircuitToHypernet'(f,i);
     | _                         => failwith("badly formed circuit");
                              
@@ -338,27 +344,6 @@ let rec scanList = (seen, id) => {
     | [(x,i,ns),...xs] => (x == id) ? (true, i, ns) : scanList(xs, id)
     }
 } 
-
-/*let createSymmetry = (es) => {
-    let seen = ref([]);
-    let es' = ref(es);
-
-    let x = 0;
-
-    while(x != Array.length(es)){
-        for(i in 0 to Array.length(es)){
-            let (e,k) = es[i];
-            if(scanList(seen^,e.id)){
-                let i1 = 
-            } else {
-
-            }
-        }
-    }
-
-    ([],[])
-
-}*/
 
 let rec generateTensor = (v,es) => generateTensor'(v,es,[],[||],0)
 and generateTensor' = (v,es,t,es_next,outs) => {

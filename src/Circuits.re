@@ -22,8 +22,8 @@ type component =
     | Delay(int)
     | Trace(int, circuit)
     | Iter(int, circuit)
-    | Input(int)
-    | Output(int)
+    | Inlink(int)
+    | Outlink(int)
     | Link(int, int, circuit)
     | Macro(string, string, circuit)
 and circuit = { 
@@ -35,7 +35,7 @@ and circuit = {
 /* Look up the string of a link from its number */
 let rec lookupLink = (i, l) => {
     switch(l){
-    | [] => failwith("link not in list")
+    | [] => failwith("")
     | [l, ...ls] => snd(fst(l)) == i ? fst(fst(l)) 
                                      : (snd(snd(l))) == i ? fst(snd(l)) 
                                                           : lookupLink(i,ls)
@@ -61,8 +61,8 @@ let rec printComponent' = (v, c, l, i) => {
     | Delay(x)                          => {js|ẟ{|js} ++ string_of_int(x) ++ "}"
     | Trace(x, f)                       => "Tr{" ++ string_of_int(x) ++ "}(" ++ printCircuit'(f,0) ++ ")" 
     | Iter(x, f)                        => "iter{" ++ string_of_int(x) ++ "}(" ++ printCircuit'(f,0) ++ ")" 
-    | Input(int)                        => lookupLink(int,l)   
-    | Output(int)                       => lookupLink(int,l)
+    | Inlink(int)                        => lookupLink(int,l)   
+    | Outlink(int)                       => lookupLink(int,l)
     | Link(inlink, outlink, f)          => "\\" ++ lookupLink(inlink,l) ++ "," ++ lookupLink(outlink,l) ++ ". " ++ printCircuit'(f,i) 
     | Macro(id, _, _)                   => id
     ;}
@@ -84,9 +84,9 @@ let rec printComponentLatex' = (v, c, l, i) => {
         | Delay(x)                          => "\\delta_" ++ string_of_int(x)
         | Trace(x, f)                       => "\\text{Tr}^" ++ string_of_int(x) ++ "(" ++ printCircuitLatex'(f,0) ++ ")" 
         | Iter(x, f)                        => "\\text{iter}^" ++ string_of_int(x) ++ "(" ++ printCircuitLatex'(f,0) ++ ")" 
-        | Input(int)                        => lookupLink(int,l)   
-        | Output(int)                       => lookupLink(int,l)
-        | Link(inlink, outlink, f)          => "\\overline{" ++ lookupLink(inlink,l) ++ "|" ++ lookupLink(outlink,l) ++ "}." ++ printCircuitLatex'(f,i) 
+        | Inlink(int)                        => lookupLink(int,l)   
+        | Outlink(int)                       => lookupLink(int,l)
+        | Link(inlink, outlink, f)          => "\\overline{" ++ lookupLink(inlink,l) ++ "\\to " ++ lookupLink(outlink,l) ++ "}." ++ printCircuitLatex'(f,i) 
         | Macro(_, latex, _)                => latex
         ;}
 } and printComponentLatex = (v, c, l) => printComponentLatex'(v, c, l, 0)
@@ -127,8 +127,8 @@ let rec inputs' = (c) => {
     | Delay(_)                  => 1
     | Trace(x, f)               => inputs(f) - x
     | Iter(x, f)                => inputs(f) - x
-    | Input(_)                  => 0   
-    | Output(_)                 => 1
+    | Inlink(_)                  => 0   
+    | Outlink(_)                 => 1
     | Link(_, _, f)             => inputs(f)
     | Macro(_,_,f)              => inputs(f)
     ;}
@@ -148,8 +148,8 @@ let rec outputs' = (c) => {
     | Delay(_)                  => 1
     | Trace(x, f)               => outputs(f) - x
     | Iter(_, f)                => outputs(f)
-    | Input(_)                  => 1   
-    | Output(_)                 => 0
+    | Inlink(_)                  => 1   
+    | Outlink(_)                 => 0
     | Link(_, _, f)             => outputs(f)
     | Macro(_,_,f)              => outputs(f)
     ;}

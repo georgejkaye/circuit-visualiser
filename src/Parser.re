@@ -145,9 +145,9 @@ let macroLookup = (macro,macros) => {
 
 let linkLookup = (link,links) => {
     switch(List.find((x) => fst(fst(x)) == link, links)){
-    | item => Some(Output(snd(fst(item))))
+    | item => Some(Outlink(snd(fst(item))))
     | exception Not_found => switch(List.find((x) => fst(snd(x)) == link, links)){
-                             | item => Some(Input(snd(snd(item))))
+                             | item => Some(Inlink(snd(snd(item))))
                              | exception Not_found => None 
                              }
     }
@@ -322,24 +322,25 @@ and parse' = (v, i, tokens, stack, lastterm, tensor, nextlink, defs, links) => {
     }
 } and parseLink = (m, v, i, xs, stack, tensor, nextlink, defs, links) => {
 
+    /* Strings representing the links */
     let oup = m[1];
     let inp = m[2];
 
+    /* Numbers representing the links - how links are resolved */
     let oux = nextlink;
     let inx = nextlink + 1;
 
     let newLinks = [((oup, oux), (inp, inx)),...links]
     let nextlink = nextlink + 2
 
-    let j = scanForClosingBracket(List.tl(xs), i+4, "")
-    let parsedScope = parse'(v, i+6, slice(xs,0,j), [], [], false, nextlink, defs, newLinks)
+    let parsedScope = parse'(v, i+6, xs, [], [], false, nextlink, defs, newLinks)
 
     let actualScope = fst(parsedScope);
     let nextlink = snd(parsedScope);
 
-    let finalLink = link(v, oux, inx, actualScope, links)
+    let finalLink = link(v, oux, inx, actualScope, newLinks)
 
-    parse'(v, i+1, trim(xs, j+1), stack @ [finalLink], [finalLink], tensor, nextlink, defs, links)
+    parse'(v, i+1, [], stack @ [finalLink], [finalLink], tensor, nextlink, defs, links)
 }
 
 let parseFromString = (v, funcs, macros, string) => {
