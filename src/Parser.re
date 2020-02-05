@@ -326,6 +326,14 @@ and parse' = (v, i, tokens, stack, lastterm, tensor, nextlink, defs, links) => {
     let oup = m[1];
     let inp = m[2];
 
+    if(oup == inp) {
+        semanticsError("Outlink and Inlink cannot be the same string!")
+    } else if(doesLinkStringExist(oup,links)){
+        semanticsError("Link " ++ oup ++ " already exists!")
+    } else if (doesLinkStringExist(inp, links)){
+        semanticsError("Link " ++ inp ++ " already exists!")
+    }
+
     /* Numbers representing the links - how links are resolved */
     let oux = nextlink;
     let inx = nextlink + 1;

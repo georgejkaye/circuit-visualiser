@@ -35,10 +35,30 @@ and circuit = {
 /* Look up the string of a link from its number */
 let rec lookupLink = (i, l) => {
     switch(l){
-    | [] => failwith("")
+    | [] => failwith("Link does not exist, maybe you should be using the option version?")
     | [l, ...ls] => snd(fst(l)) == i ? fst(fst(l)) 
                                      : (snd(snd(l))) == i ? fst(snd(l)) 
                                                           : lookupLink(i,ls)
+    }
+}
+
+/* Check if a link int exists in the linklist */
+let rec doesLinkNumberExist = (i, l) => {
+    switch(l){
+    | [] => false
+    | [l, ...ls] => snd(fst(l)) == i ? true
+                                     : (snd(snd(l))) == i ? true
+                                                          : doesLinkNumberExist(i,ls)
+    }
+}
+
+/* Check if a link string exists in the linklist */
+let rec doesLinkStringExist = (i, l) => {
+    switch(l){
+    | [] => false
+    | [l, ...ls] => fst(fst(l)) == i ? true
+                                     : (fst(snd(l))) == i ? true
+                                                          : doesLinkStringExist(i,ls)
     }
 }
 
@@ -189,8 +209,43 @@ let tensor = (xs) => {
 /* Create a function circuit */
 let func = (v, id, latex, ins, outs, f) => {v, c: Function(id,latex,ins,outs,f), l:[]}
 
+/* Check that the input and output link exist before stringing them together */
+let rec findLink = (x, out, c) => {
+    switch (c.c) {
+        | Value(_)                  => false
+        | Identity(_)               => false
+        | Composition(f, g)         => findLink(x, out, f) || findLink(x, out, g)
+        | Tensor(fs)                => List.fold_left((f,g) => (findLink(x,out,g) || f), false, fs)   
+        | Swap(_,_)                 => false
+        | Function(_, _, _, _, _)   => false
+        | Delay(_)                  => false
+        | Trace(_, f)               => findLink(x, out, f)
+        | Iter(_, f)                => findLink(x, out, f)
+        | Inlink(y)                 => x == y ? (out ? false : true) : false
+        | Outlink(y)                => x == y ? (out ? true : false) : false
+        | Link(_, _, f)             => findLink(x, out, f)
+        | Macro(_,_,f)              => findLink(x, out, f)
+    }
+}
+
 /* Create a link circuit */
-let link = (v, oux, inx, f, l) => {v, c: Link(oux,inx,f),l}
+let link = (v, oux, inx, f, l) => {
+    if(findLink(oux, true, f)){
+        if(findLink(inx, false, f)){
+            {v, c: Link(oux,inx,f),l}
+        } else {
+
+        let ins = lookupLink(inx,l);
+        semanticsError("Link " ++ ins ++ " does not exist in circuit");
+
+        }
+    } else {
+    
+        let outs = lookupLink(oux,l);
+        semanticsError("Link " ++ outs ++ " does not exist in circuit");
+    }
+    
+}
 
 /* Create a macro circuit */
 let macro = (v, id, latex, f, l) =>
@@ -209,16 +264,6 @@ let rec composemany = (xs) => {
     | [x, ...xs] => compose(x, composemany(xs))
     }
 }
-
-/* Compose many components at once */
-/*let rec composemany' = (v, xs) => {
-    switch(xs){
-    | []         => failwith("no args")
-    | [x]        => x
-    | [x, ...xs] => compose'(v, x, composemany'(v, xs))
-    }
-}*/
-
 
 /* Helper function for exp */
 let rec exp' = (f, x) => {
