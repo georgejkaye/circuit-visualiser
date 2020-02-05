@@ -283,7 +283,7 @@ let getTraceText = (x, e, left) => {
 
 let rec generateGraphvizCode = (net) => {
     let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, List.map((x) => x^, net.edges), "", "", "", "");
-    "digraph{\n" ++ tab ++ "rankdir=LR;\n" ++ tab ++ "ranksep=1;\n" ++ graph ++ "}"
+    "digraph{\n\n" ++ tab ++ "rankdir=LR;\n" ++ tab ++ "ranksep=1;" ++ graph ++ "}"
 } and generateGraphvizCodeEdges = (inputs, outputs, edges, ranks, nodes, traces, transitions) => {
     let inid = inputs.id;
     let outid = outputs.id;
@@ -306,9 +306,9 @@ let rec generateGraphvizCode = (net) => {
                     let edgedot = fst(outedgecode) == "" ? "" : fst(outedgecode) ++ ";\n";
                     let transdot = snd(outedgecode)[2];
                     (edgedot, transdot)
-                }
+                };
 
-            ranks ++ nodes ++ outedgedot ++ inedgedot ++ "\n" ++ intransdot ++ traces ++ transitions ++ outtransdot
+            "\n" ++ ranks ++ "\n" ++ nodes ++ outedgedot ++ inedgedot ++ traces ++ "\n" ++ intransdot ++ transitions ++ outtransdot ++ "\n"
              
     | [x,...xs] => let edgecode = generateGraphvizCodeEdge(x,inid,outid);
                     let edgedot = fst(edgecode) == "" ? "" : fst(edgecode) ++ ";\n";
@@ -356,7 +356,7 @@ let rec generateGraphvizCode = (net) => {
             let (idl, tracel) = getTraceText(x,e,true);
             let (idr, tracer) = getTraceText(x,e,false);
 
-            tracenodes := tracenodes^ ++ tab ++ tracel ++ tracer
+            tracenodes := tracenodes^ ++ tab ++ tracel ++ tab ++ tracer
 
             string := string^ ++ tab ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> " ++ idr ++ ":s;\n" ++
                                     tab ++ idr ++ ":n -> " ++ idl ++ ":n;\n" ++

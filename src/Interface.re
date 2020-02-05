@@ -165,13 +165,13 @@ let make = () => {
             </td>
             <td>
                 <div className="right">
-                <textarea rows=15 cols=50 value=dot readOnly=true></textarea>
+                <textarea rows=15 cols=100 value=dot readOnly=true></textarea>
                 </div>
             </td>
         </tr>
         </tbody>
         </table>
-        <Graphviz dot=dot options = {fit: true, height: 1000, width: 2000}/>    
+        <Graphviz dot=dot options = {fit: true, height: 1000, width: 1000}/>    
     </div>
     
 }
