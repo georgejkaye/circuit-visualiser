@@ -86,7 +86,7 @@ let composeParallel = (f,g,i) => {
         
         e^.label == "out" ? 
             refOutputs^.sources[k] = (refInputs, i) :
-            e^.sources[k] = (refOutputs, i)
+            e^.sources[k] = (refInputs, i)
     };
 
     for(i in 0 to Array.length(g.inputs.targets) - 1){
