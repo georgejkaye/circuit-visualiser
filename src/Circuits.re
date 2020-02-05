@@ -81,8 +81,8 @@ let rec printComponent' = (v, c, l, i) => {
     | Delay(x)                          => {js|ẟ{|js} ++ string_of_int(x) ++ "}"
     | Trace(x, f)                       => "Tr{" ++ string_of_int(x) ++ "}(" ++ printCircuit'(f,0) ++ ")" 
     | Iter(x, f)                        => "iter{" ++ string_of_int(x) ++ "}(" ++ printCircuit'(f,0) ++ ")" 
-    | Inlink(int)                        => lookupLink(int,l)   
-    | Outlink(int)                       => lookupLink(int,l)
+    | Inlink(int)                        => string_of_int(int)/*lookupLink(int,l)   */
+    | Outlink(int)                       => string_of_int(int)/*lookupLink(int,l)*/
     | Link(inlink, outlink, f)          => "\\" ++ lookupLink(inlink,l) ++ "," ++ lookupLink(outlink,l) ++ ". " ++ printCircuit'(f,i) 
     | Macro(id, _, _)                   => id
     ;}
@@ -211,6 +211,7 @@ let func = (v, id, latex, ins, outs, f) => {v, c: Function(id,latex,ins,outs,f),
 
 /* Check that the input and output link exist before stringing them together */
 let rec findLink = (x, out, c) => {
+    Js.log("searching for " ++ string_of_int(x) ++ " in " ++ printCircuit(c))
     switch (c.c) {
         | Value(_)                  => false
         | Identity(_)               => false

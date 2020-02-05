@@ -1,1 +1,5 @@
+The combinational circuit from the paper
 Tr{1}((x{1,1} * /\) . (/\ * x{1,1} * 1) . (/\ * (m . G . /\) * 1) . (3 * x{1,1}) . (1 * (m . F) * 1) . (x{1,1} * 1) . (/\ * 2)) . (x{1,1} * 1) . m
+
+Nice example with links
+\xy.\zw.\pq.x * x{1,1} * q * y . A * \/ . w * 2 * z . x{1,2} . m . /\ . p * 1

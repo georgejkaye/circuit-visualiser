@@ -218,18 +218,26 @@ and parse' = (v, i, tokens, stack, lastterm, tensor, nextlink, defs, links) => {
 } and parseComposition = (v, i, xs, stack, tensor, nextlink, defs, links) => {
 
     if(List.length(stack) == 0){
-        parseError(i, "unexpected * encountered")
-    } else {
-        let parsedArgument = parse'(v, i+2, xs, List.tl(stack), [], tensor, nextlink, defs, links);
-        
-        let actualArgument = fst(parsedArgument);
-        let nextlink = snd(parsedArgument);
+        parseError(i, "Unexpected . encountered")
+    } else if(List.length(xs) == 0){
+            parseError(i, "Unexpected end of term encountered after .")
+    };
+    
+    let parsedArgument = parse'(v, i+2, xs, List.tl(stack), [], tensor, nextlink, defs, links);
+    
+    let actualArgument = fst(parsedArgument);
+    let nextlink = snd(parsedArgument);
 
-        (compose(List.hd(stack), actualArgument), nextlink)
-    }
+    (compose(List.hd(stack), actualArgument), nextlink)
 
 } and parseTensor = (v, i, xs, stack, tensor, nextlink, defs, links) => {
   
+    if(List.length(stack) == 0){
+        parseError(i, "Unexpected * encountered")
+    } else if(List.length(xs) == 0){
+        parseError(i, "Unexpected end of term encountered after *")
+    };
+
     if(tensor){
         parse'(v, i+2, xs, stack, [], tensor, nextlink, defs, links)
      } else {
@@ -326,6 +334,7 @@ and parse' = (v, i, tokens, stack, lastterm, tensor, nextlink, defs, links) => {
     let oup = m[1];
     let inp = m[2];
 
+    /* Check that we don't have duplicate links */
     if(oup == inp) {
         semanticsError("Outlink and Inlink cannot be the same string!")
     } else if(doesLinkStringExist(oup,links)){
