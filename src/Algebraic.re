@@ -30,18 +30,44 @@ and normaliseEdgeIds' = (edges, next, acc) => {
 /* Get the number of vertices in a hypernet, i.e. number of target ports */
 let rec numberOfVertices = (net) => numberOfVertices' (net.edges, 0, [], [], [])
 and numberOfVertices' = (edges, num, is, os, k) => {
-    switch(edges){
-    | [] => (num + 2, List.rev(is), List.rev(os), List.rev(k))
-    | [e,...es] => numberOfVertices' (es, num + Array.length(e^.targets), is, os, k)
-    }
+    
 }
 
-let inputsFunction = (net) => {}
+let rec generateInputsAndOutputs = (i, o, edge) => {
+
+    let sources = edge^.sources;
+    let targets = edge^.targets;
+    let id = edge^.id;
+
+    let is = ref([]);
+    let os = ref([]);
+
+    for (j in 0 to Array.length(sources) - 1){
+        let x = j + i
+        is := [(x,id)]
+    };
+
+    for (j in 0 to Array.length(targets) - 1){
+        let x = j + o
+        os := [(x,id)]
+    };
+
+    (is, os)
+
+}
 
 /* Generate the algebraic definition of a hypernet */
 let rec generateAlgebraicDefinition = (net) => {
-    let numEdges = numberOfEdges(net);
-    let numVertices = numberOfVertices(net);
+    let defs = generateAlgebraicDefinition' ([ref(net.inputs)] @ net.edges @ [ref(net.outputs)])
+
+} and generateAlgebraicDefinition' = (edges) => generateAlgebraicDefinition''(edges, 0, 0, [], [], [], [], [], [])
+and generateAlgebraicDefinition'' = (edges, i, o, eds, is, os, k, l, f) => {
+    switch(edges){
+        | [] => (v, eds, List.rev(is), List.rev(os), List.rev(k), List.rev(l), List.rev(l))
+        | [e,...es] => let (is', os') = generateInputsAndOutputs(i,o,e)
+
+                       generateAlgebraicDefinition'' (es, v + Array.length(e^.targets), [e^.id,...eds], is, os, k, l, f)
+        }
 
 
 

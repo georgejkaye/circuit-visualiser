@@ -16,16 +16,6 @@ type edge = {
     outputs: edge
 }
 
-let numberOfEdges = (net) => List.length (net.edges)
-
-let rec numberOfVertices = (net) => numberOfVertices' (net.edges, 0) + Array.length(net.inputs.targets)
-and numberOfVertices' = (edges, acc) => {
-    switch(edges){
-    | [] => acc
-    | [e,...es] => numberOfVertices' (es, acc + Array.length(e^.targets))
-    }
-}
-
 /* Find all the edges with a given label in a net */
 let rec findEdges = (string, net) => findEdges'(string, net.edges, []) 
 and findEdges' = (string, edges, acc) => {
