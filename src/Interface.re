@@ -2,6 +2,7 @@ open Circuits;
 open Parser;
 open Lattices;
 open Hypernets;
+open Algebraic;
 
 type options = {
     fit: bool,
@@ -46,6 +47,7 @@ type state = {
     macs: list(circuit),    /* The library of macros available */
     net: hypernet,          /* The corresponding hypernet */
     dot: string,            /* The corresponding dot string */
+    alg: string,            /* The corresponding algebraic notation */
     error: bool             /* If there's a parse error */
 }
 
@@ -103,7 +105,7 @@ module Input = {
 
 [@react.component]
 let make = () => {
-    let({strn,dot,error},dispatch) = React.useReducer((state,action) => {
+    let({strn,dot,alg,error},dispatch) = React.useReducer((state,action) => {
         switch(action) {
         | ParseNewCircuit(text) =>  if(state.old == text){
                                         state
@@ -111,7 +113,8 @@ let make = () => {
                                         let generatedCircuit = generateCircuit(state, text);
                                         let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
                                         let generatedDot = generateGraphvizCode(generatedHypernet);
-                                        Js.log(generatedDot);
+                                        let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(generatedHypernet));
+                                        Js.log(generatedAlg);
                                         {circ: fst(snd(generatedCircuit)), 
                                         old: text,
                                         lat: state.lat, 
@@ -120,6 +123,7 @@ let make = () => {
                                         macs: state.macs,
                                         net: generatedHypernet,
                                         dot: generatedDot,
+                                        alg: generatedAlg,
                                         error:fst(generatedCircuit)}
                                     }
                                 }
@@ -132,6 +136,7 @@ let make = () => {
         macs: Examples.exampleMacros,
         net: zeroNet,
         dot: zeroDot,
+        alg: "",
         error: false
     });
     <div className = "main">
@@ -143,6 +148,9 @@ let make = () => {
         </div>
         <div>
                 (printLatexOrError(str(strn), error))
+        </div>
+        <div>
+                <MathJax string=str(alg) />
         </div>
         <table>
         <tbody>
