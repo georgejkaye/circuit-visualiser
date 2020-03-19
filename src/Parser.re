@@ -161,7 +161,6 @@ let linkLookup = (link,links) => {
  */
 let rec parse = (v, funcs, macros, tokens) => parse'(v, 1, tokens, [], [], false, 0, (funcs,macros), [])
 and parse' = (v, i, tokens, stack, lastterm, tensor, nextlink, defs, links) => {
-    Js.log("parsing " ++ printStringList(tokens));
     switch(tokens){
         | [] => tensor ? 
                     (circ(v,Tensor(stack), links), nextlink) : 

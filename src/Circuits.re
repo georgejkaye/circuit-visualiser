@@ -76,7 +76,7 @@ let rec printComponent' = (v, c, l, i) => {
     | Tensor([])                        => ""
     | Tensor([x])                       => printCircuit'(x,i+1)
     | Tensor([f, ...tl])                => List.fold_left(((string, f') => string ++ {js| ⊗ |js} ++ printCircuit'(f',i+1)), printCircuit'(f,i+1), tl)
-    | Swap(x,y)                         => {js|×{|js} ++ string_of_int(x) ++ ", " ++ string_of_int(y)
+    | Swap(x,y)                         => {js|×{|js} ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ "}"
     | Function(id, _, _, _, _)          => id
     | Delay(x)                          => {js|ẟ{|js} ++ string_of_int(x) ++ "}"
     | Trace(x, f)                       => "Tr{" ++ string_of_int(x) ++ "}(" ++ printCircuit'(f,0) ++ ")" 

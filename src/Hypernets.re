@@ -233,7 +233,6 @@ let joinLinks = (net, l, outlink, inlink) => {
 
 let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(circuit, 0))
 and convertCircuitToHypernet' = (circuit, i) => {
-    Js.log(printCircuit(circuit));
     switch(circuit.c){
     | Value(x)                  => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:circuit.v.print(x)})
                                    and ine = ref(floatingEdge(i,"in")) 

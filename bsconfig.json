@@ -1,12 +1,11 @@
-
 {
   "name": "circuit-visualiser",
   "reason": {
     "react-jsx": 3
   },
   "sources": {
-    "dir" : "src",
-    "subdirs" : true
+    "dir": "src",
+    "subdirs": true
   },
   "package-specs": [{
     "module": "es6-global",

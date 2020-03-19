@@ -114,7 +114,6 @@ let make = () => {
                                         let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
                                         let generatedDot = generateGraphvizCode(generatedHypernet);
                                         let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(generatedHypernet));
-                                        Js.log(generatedAlg);
                                         {circ: fst(snd(generatedCircuit)), 
                                         old: text,
                                         lat: state.lat, 
@@ -149,13 +148,10 @@ let make = () => {
         <div>
                 (printLatexOrError(str(strn), error))
         </div>
-        <div>
-                <MathJax string=str(alg) />
-        </div>
         <table>
         <tbody>
         <tr>
-            <td>
+            <td width="500px">
                 <div className = "instructions">
                 <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>
                 <div> <span className = "code">(str("a * b"))</span> <b>(str(" Vertical composition (tensor)"))</b></div>
@@ -172,14 +168,19 @@ let make = () => {
             </div>
             </td>
             <td>
-                <div className="right">
+                <div>
+                <MathJax string=str(alg) />
+                </div>
+            </td>
+            <td>
+                <div>
                 <textarea rows=15 cols=100 value=dot readOnly=true></textarea>
                 </div>
             </td>
         </tr>
         </tbody>
         </table>
-        <Graphviz dot=dot options = {fit: true, height: 1000, width: 1000}/>    
+        <Graphviz dot=dot options = {fit: true, height: 500, width: 1000}/>    
     </div>
     
 }

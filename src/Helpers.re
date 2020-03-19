@@ -17,8 +17,10 @@ let generateUnicodeSubscript = (n) => {
 }
 
 /********************/
-/* Triple functions */
+/* Tuple functions */
 /********************/
+
+let swap (a,b) = (b,a)
 
 let t1 = (a,_,_) => a
 let t2 = (_,b,_) => b

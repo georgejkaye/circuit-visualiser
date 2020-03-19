@@ -19,5 +19,6 @@ div {
 }
 
 td {
-    vertical-align: top
+    vertical-align: top;
+    padding: 1px;
 }
