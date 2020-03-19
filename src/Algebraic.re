@@ -118,7 +118,7 @@ let generateConnections = (edge, is, os) => {
     let id = edge^.id;
 
     let ks = ref([]);
-    let ous = List.filter((((v,e)) => e == id), os);
+    let ous = List.filter((((_,e)) => e == id), os);
     Js.log("ous: " ++ printListCommas(ous, (((x,y)) => "(" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ ")")))
 
 
@@ -127,7 +127,7 @@ let generateConnections = (edge, is, os) => {
         let v1 = fst(List.nth(ous, j));
         let (e, k) = targets[j];
 
-        let ins = List.filter((((v',e')) => e^.id == e'), is);
+        let ins = List.filter((((_,e')) => e^.id == e'), is);
         Js.log("ins: " ++ printListCommas(ins, (((x,y)) => "(" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ ")")))
         let v2 = fst(List.nth(ins,k))
        
@@ -151,7 +151,7 @@ and generateAllConnections' = (os, is, es, acc) => {
 /* Generate the algebraic definition of a hypernet */
 let rec generateAlgebraicDefinition = (net) => {
     let allEdges = [ref(net.inputs)] @ net.edges @ [ref(net.outputs)];
-    let (i,o,eds,is,os,l,f) = generateAlgebraicDefinition' (allEdges);
+    let (i,eds,is,os,l,f) = generateAlgebraicDefinition' (allEdges);
     let ks = generateAllConnections(os,is,allEdges);
     let (is,os,f) = normaliseEdgeIds(net.inputs.id, net.outputs.id, eds, is, os, f);
     
@@ -167,7 +167,7 @@ let rec generateAlgebraicDefinition = (net) => {
 } and generateAlgebraicDefinition' = (edges) => generateAlgebraicDefinition''(edges, 0, 0, [], [], [], [], [])
 and generateAlgebraicDefinition'' = (edges, i, o, eds, is, os, l, f) => {
     switch(edges){
-        | [] => (i, o, List.rev(eds), is, os, List.rev(l), List.rev(f))
+        | [] => (i, List.rev(eds), is, os, List.rev(l), List.rev(f))
         | [e,...es] => let (is', os') = generateInputsAndOutputs(i,o,e);
                        let l' = List.mem(e^.label, l) || e^.label == "in" || e^.label == "out" ? l : [e^.label,...l];
                        let f' = e^.label == "in" || e^.label == "out" ? f : [(e^.id, e^.label),...f];
