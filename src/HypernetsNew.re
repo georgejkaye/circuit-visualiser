@@ -1,3 +1,8 @@
+open Circuits;
+open Lattices;
+
+let alpha = {js|α|js}
+let omega = {js|ω|js}
 
 type connection = Edge(ref(edge), int) | Vertex(ref(vertex))
 and vertex = {
@@ -13,8 +18,8 @@ and vertex = {
     invertices: list(ref(vertex)),
     outvertices: list(ref(vertex)),
     edges: list(ref(edge)),
-    input: edge,
-    output: edge,
+    input: ref(edge),
+    output: ref(edge),
     ins : int,
     outs : int
 }
@@ -22,7 +27,7 @@ and vertex = {
 /* Get the sources of an edge */
 let rec sources = (edge, hyp) => {
     let placeholder = List.hd(hyp.outvertices);
-    sources'(edge, hyp.outvertices, Array.make(edge.m, placeholder))  
+    sources'(edge^, hyp.outvertices, Array.make(edge^.m, placeholder))  
 } and sources' = (edge, vs, acc) => {
     switch(vs){
     | [] => acc
@@ -37,7 +42,7 @@ let rec sources = (edge, hyp) => {
 /* Get the targets of an edge */
 let rec targets = (edge, hyp) => {
     let placeholder = List.hd(hyp.invertices);
-    targets'(edge, hyp.invertices, Array.make(edge.n, placeholder))  
+    targets'(edge^, hyp.invertices, Array.make(edge^.n, placeholder))  
 } and targets' = (edge, vs, acc) => {
     switch(vs){
     | [] => acc
@@ -68,4 +73,36 @@ let rec composeSequential = (f,g) => {
 
     {invertices: f.invertices @ g.invertices, outvertices: f.outvertices @ g.outvertices, edges:f.edges @ g.edges, input: f.input, output: g.input, ins: f.ins, outs: g.outs}
 
+}
+
+let rec generateSetOfVertices = (x, i) => {
+
+}
+
+let rec convertCircuitToHypernet = (circuit) => convertCircuitToHypernet'(circuit, 0, 0, 0)
+and convertCircuitToHypernet' = (circuit, oi, ii, ei) => {
+    switch(circuit.c){
+    | Value(x)                  => let ine  = ref({id:ei, label:alpha, m: 0, n: 0});
+                                   let vale = ref({id:ei+1, label:circuit.v.print(x), m: 0, n: 1});
+                                   let oute = ref({id:ei+1, label:omega, m: 1, n:0});
+                                   let rec vo = ref({id: oi, connin: Edge(vale, 0), connout: Vertex(vi)}) and
+                                        vi = ref({id: ii, connin: Vertex(vo), connout: Edge(oute, 0)});
+                                    {invertices: [vi], outvertices: [vo], edges: [vale], input: ine, output: oute, ins: 0, outs: 1}
+    | Identity(n)               => failwith("todo")
+    | Composition(f,g)          => failwith("todo")
+    | Tensor([x,...xs])         => failwith("todo")
+    | Swap(x,y)                 => failwith("todo")
+    | Function(id,_,ins,outs,_) => failwith("todo")
+    | Delay(x)                  => failwith("todo")
+    | Trace(x, f)               => failwith("todo")
+    | Iter(_, f)                => failwith("todo")
+    | Macro(_,_,f)              => failwith("todo")
+    | Inlink(x)                 => failwith("todo")
+    | Outlink(x)                => failwith("todo")
+    | Link(x,y,f)               => failwith("todo")
+                                   failwith("todo")
+    | _                         => failwith("todo")
+                             
+                                    
+    }
 }
