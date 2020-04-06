@@ -1,5 +1,9 @@
 # To-do list
 
+## Parsing
+
+* Rewrite parser using menhir
+
 ## Visualisation
 
 * Colours for special morphisms
