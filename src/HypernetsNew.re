@@ -106,3 +106,52 @@ and convertCircuitToHypernet' = (circuit, oi, ii, ei) => {
                                     
     }
 }
+
+let tab = "    "
+let nl = "\n"
+
+let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=""]"
+let helperVertexOptions = "[label="", fixedsize=\"false\", width=0, height=0, shape=none]"
+let arrowWireOptions = "[arrowhead=vee; arrowsize=0.5]"
+let noArrowWireOptions = "[arrowhead=none]"
+
+let generateGraphvizCode = (net) => {
+   
+    let options = tab ++ "rankdir=LR;" ++ nl ++ "ranksep=1;" ++ nl;
+
+    /* generate vertices */
+
+    /* generate edges */
+
+    /* generate arrow vertices */
+
+    /* assemble transitions */
+
+
+} and generateGraphvizCodeVertices = (net) => {
+
+
+} and generateGraphvizCodeEdges = (net) => {
+
+} and generateGraphvizCodeEdge = (edge) => {
+
+    let inports = generatePorts(edge.m, true);
+    let outports = generatePorts(edge.n, false);
+
+    let instring = inports == "{}" ? "" : inports ++ " | ";
+    let outstring = outports == "{}" ? "" : " | " ++ outports; 
+
+    tab ++ "edge" ++ string_of_int(edge.id) ++ 
+        " [shape=Mrecord; label=\"{" ++
+        instring ++ edge.label ++ outstring ++ "}\"]" 
+
+} and generatePorts = (n, st) => {
+    "{" ++ generatePorts'(0, n, st) ++ "}"
+} and generatePorts' = (x, n, st) => {
+    let y = st ? "s" : "t";
+    switch(n){
+        | 0 => ""
+        | 1 => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js}
+        | n => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js} ++ " | " ++ generatePorts'(x+1,n-1,st)
+        }
+}
