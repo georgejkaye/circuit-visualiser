@@ -1,6 +1,7 @@
 open Circuits;
 open Lattices;
 
+/*
 let alpha = {js|α|js}
 let omega = {js|ω|js}
 
@@ -154,4 +155,4 @@ let generateGraphvizCode = (net) => {
         | 1 => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js}
         | n => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js} ++ " | " ++ generatePorts'(x+1,n-1,st)
         }
-}
+} */

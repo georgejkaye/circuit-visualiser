@@ -1,6 +1,10 @@
 open Circuits;
 open Helpers;
 
+let alpha = {js|α|js}
+let omega = {js|ω|js}
+let dot = {js|•|js}
+
 exception GraphError(string);
 let graphError = (message) => raise(GraphError(message));
 
@@ -41,7 +45,7 @@ let printHypernet = (h) => {
 let floatingEdge = (id,label) => {id, sources:[||], targets:[||], label} 
 let initialisePorts = (x) => Array.init(x, (i => (ref(floatingEdge(0,"")), i)))
 
-let zeroNet = {inputs:floatingEdge(0, "in"), edges:[], outputs:floatingEdge(1,"out")}
+let zeroNet = {inputs:floatingEdge(0, alpha), edges:[], outputs:floatingEdge(1,omega)}
 let identity = (array) => array
 
 let rec removeEdge = ({inputs,edges,outputs},edge) => {inputs,edges:removeEdge'(edge, edges,[]),outputs}
@@ -72,8 +76,8 @@ let composeSequential = (f,g) => {
 
 let composeParallel = (f,g,i) => {
 
-    let newInputs = {id: 0, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: "in"};
-    let newOutputs = {id: i+1, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: "out"};
+    let newInputs = {id: 0, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: alpha};
+    let newOutputs = {id: i+1, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: omega};
 
     let finputs = Array.length(f.inputs.targets);
     let foutputs = Array.length(f.outputs.sources);
@@ -84,7 +88,7 @@ let composeParallel = (f,g,i) => {
     for(i in 0 to Array.length(f.inputs.targets) - 1){
         let (e,k) = f.inputs.targets[i];
         
-        e^.label == "out" ? 
+        e^.label == omega ? 
             refOutputs^.sources[k] = (refInputs, i) :
             e^.sources[k] = (refInputs, i)
     };
@@ -92,7 +96,7 @@ let composeParallel = (f,g,i) => {
     for(i in 0 to Array.length(g.inputs.targets) - 1){
         let (e,k) = g.inputs.targets[i];
         
-        e^.label == "out" ? 
+        e^.label == omega ? 
             refOutputs^.sources[k+foutputs] = (refInputs, i + finputs) : 
             e^.sources[k] = (refInputs, i + finputs)
     };
@@ -100,7 +104,7 @@ let composeParallel = (f,g,i) => {
     for(i in 0 to Array.length(f.outputs.sources) - 1){
         let (e,k) = f.outputs.sources[i];
         
-        e^.label == "in" ? 
+        e^.label == alpha ? 
             refInputs^.targets[k] = (refOutputs, i) :
             e^.targets[k] = (refOutputs, i)
     };
@@ -108,7 +112,7 @@ let composeParallel = (f,g,i) => {
     for(i in 0 to Array.length(g.outputs.sources) - 1){
         let (e,k) = g.outputs.sources[i];
         
-        e^.label == "in" ? 
+        e^.label == alpha ? 
             refInputs^.targets[k+finputs] = (refOutputs, i + foutputs) : 
             e^.targets[k] = (refOutputs, i + foutputs)
     };
@@ -122,8 +126,8 @@ let functionNet = (id, ins, outs, i) => {
     let ine = ref(floatingEdge(i,""));
     let oute = ref(floatingEdge(i+2,""));
     let fune = ref({id:i+1, sources:Array.init(ins, (n) => (ine, n)), targets:Array.init(outs, (n) => (oute, n)), label:id});
-    ine := {id:0, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:"in"};
-    oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:"out"};
+    ine := {id:0, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:alpha};
+    oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:omega};
     ({inputs: ine^, edges:[fune], outputs: oute^}, i+3)
 }
 
@@ -138,18 +142,18 @@ let traceHypernet = (x, h) => {
         e^.sources[k] = (e',k');
     };
 
-    let newInputs = {id: 0, sources: [||], targets:Array.sub(h.inputs.targets, x, (Array.length(h.inputs.targets) - x)), label:"in"};
-    let newOutputs = {id: h.outputs.id, sources: Array.sub(h.outputs.sources, x, (Array.length(h.outputs.sources) - x)), targets: [||], label:"out"};
+    let newInputs = {id: 0, sources: [||], targets:Array.sub(h.inputs.targets, x, (Array.length(h.inputs.targets) - x)), label:alpha};
+    let newOutputs = {id: h.outputs.id, sources: Array.sub(h.outputs.sources, x, (Array.length(h.outputs.sources) - x)), targets: [||], label:omega};
 
     for(i in 0 to Array.length(newInputs.targets) - 1){
         let (e, k) = newInputs.targets[i];
-        let k = (e^.label == "out") ? k - x : k;
+        let k = (e^.label == omega) ? k - x : k;
         newInputs.targets[i] = (e,k)
     };
 
     for(i in 0 to Array.length(newOutputs.targets) - 1){
         let (e, k) = newInputs.sources[i];
-        let k = (e^.label == "in") ? k - x : k;
+        let k = (e^.label == alpha) ? k - x : k;
         newInputs.sources[i] = (e,k)
     };
 
@@ -170,8 +174,8 @@ let traceHypernet = (x, h) => {
 }
 
 let swapNet = (i, x, y) => {
-    let ine = {id:0, sources:[||], targets:initialisePorts(x+y), label:"in"};
-    let oute = {id:i+1, sources:initialisePorts(x+y), targets:[||], label:"out"};
+    let ine = {id:0, sources:[||], targets:initialisePorts(x+y), label:alpha};
+    let oute = {id:i+1, sources:initialisePorts(x+y), targets:[||], label:omega};
 
     let refin = ref(ine);
     let refout = ref(oute);
@@ -235,12 +239,12 @@ let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(ci
 and convertCircuitToHypernet' = (circuit, i) => {
     switch(circuit.c){
     | Value(x)                  => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:circuit.v.print(x)})
-                                   and ine = ref(floatingEdge(i,"in")) 
-                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:"out"});
+                                   and ine = ref(floatingEdge(i,alpha)) 
+                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:omega});
                                    ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
     | Identity(n)               => let ine = ref(floatingEdge(i,""));
-                                   let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:"out"});
-                                   ine := {id:0, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:"in"};
+                                   let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:omega});
+                                   ine := {id:0, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:alpha};
                                    ({inputs:ine^, edges: [], outputs: oute^},i+2)
     | Composition(f,g)          => let fh = convertCircuitToHypernet'(f,i);
                                    let gh = convertCircuitToHypernet'(g,snd(fh));
@@ -258,12 +262,12 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    (traceHypernet(outputs(f), fh), i');  
     | Macro(_,_,f)              => convertCircuitToHypernet'(f,i);
     | Inlink(x)                 => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:lookupLink(x,circuit.l)})
-                                   and ine = ref(floatingEdge(i,"in")) 
-                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:"out"});
+                                   and ine = ref(floatingEdge(i,alpha)) 
+                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:omega});
                                    ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
     | Outlink(x)                => let rec e = ref({id: i+1, sources:[|(ine,0)|], targets:[||], label:lookupLink(x,circuit.l)})
-                                   and ine = ref({id: i, sources:[||], targets:[|(e,0)|], label:"in"})
-                                   and oute = ref(floatingEdge(i+2,"out")); 
+                                   and ine = ref({id: i, sources:[||], targets:[|(e,0)|], label:alpha})
+                                   and oute = ref(floatingEdge(i+2,omega)); 
                                    ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
     | Link(x,y,f)               => let f = convertCircuitToHypernet'(f,i);
                                    (joinLinks(fst(f),circuit.l,x,y), snd(f))
@@ -274,20 +278,20 @@ and convertCircuitToHypernet' = (circuit, i) => {
 }
 
 let tab = "    "
+let nl = "\n"
+
+let graphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.5;" ++ nl;
+let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=\"\"];"
+let outputWireOptions = "[headclip=false; tailclip=false; arrowhead=vee; arrowsize=0.5]"
+let inputWireOptions = "[arrowhead=none; arrowsize=0.5]"
+
 let getTraceText = (x, e, left) => {
     let dir = left ? "l" : "r";
     let name = "trace" ++ dir ++ string_of_int(x) ++ "to" ++ string_of_int(e^.id);
     (name, name ++ "[shape=point, width=0.01]\n");
 }
 
-let rec generateGraphvizCode = (net) => {
-    let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, List.map((x) => x^, net.edges), "", "", "", "");
-    "digraph{\n\n" ++ tab ++ "rankdir=LR;\n" ++ tab ++ "ranksep=1;" ++ graph ++ "}"
-} and generateGraphvizCodeEdges = (inputs, outputs, edges, ranks, nodes, traces, transitions) => {
-    let inid = inputs.id;
-    let outid = outputs.id;
-    switch(edges){
-    | [] => let (inedgedot, intransdot) = 
+/*  let (inedgedot, intransdot) = 
                 if(Array.length(inputs.targets) == 0){
                     ("","")
                 } else {
@@ -305,16 +309,37 @@ let rec generateGraphvizCode = (net) => {
                     let edgedot = fst(outedgecode) == "" ? "" : fst(outedgecode) ++ ";\n";
                     let transdot = snd(outedgecode)[2];
                     (edgedot, transdot)
-                };
+                }; */
 
-            "\n" ++ ranks ++ "\n" ++ nodes ++ outedgedot ++ inedgedot ++ traces ++ "\n" ++ intransdot ++ transitions ++ outtransdot ++ "\n"
-             
+let rec generateGraphvizCode = (net) => {
+    
+    let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, [net.inputs] @ List.map((x) => x^, net.edges) @ [net.outputs], "", "", "", "", "", "");
+    
+    Js.log("digraph{" ++ nl ++ nl ++ graphOptions ++ nl ++ graph ++ "}");
+
+    "digraph{" ++ nl ++ nl ++ graphOptions ++ nl ++ graph ++ "}"
+
+} and generateGraphvizCodeEdges = (inputs, outputs, es, ranks, edges, traces, vertices, inputWires, outputWires) => {
+    let inid = inputs.id;
+    let outid = outputs.id;
+    switch(es){
+    | [] => let finalString = ref("");      
+    
+            ranks == "" ? () : finalString := finalString^ ++ ranks ++ nl;
+            edges == "" ? () : finalString := finalString^ ++ edges ++ nl;
+            vertices == "" ? () : finalString := finalString^ ++ vertices ++ nl;
+            inputWires == "" ? () : finalString := finalString^ ++ inputWires ++ nl;
+            outputWires == "" ? () : finalString := finalString^ ++ outputWires ++ nl;
+
+            finalString^
     | [x,...xs] => let edgecode = generateGraphvizCodeEdge(x,inid,outid);
                     let edgedot = fst(edgecode) == "" ? "" : fst(edgecode) ++ ";\n";
                     let ranksdot = snd(edgecode)[0];
                     let tracedot = snd(edgecode)[1];
-                    let transdot = snd(edgecode)[2];
-                    generateGraphvizCodeEdges(inputs, outputs, xs, ranks ++ ranksdot, nodes ++ edgedot, traces ++ tracedot, transitions ++ transdot)
+                    let vertexDot = snd(edgecode)[2];
+                    let inputWireDot = snd(edgecode)[3];
+                    let outputWireDot = snd(edgecode)[4];
+                    generateGraphvizCodeEdges(inputs, outputs, xs, ranks ++ ranksdot, edges ++ edgedot, traces ++ tracedot, vertices ++ vertexDot, inputWires ++ inputWireDot, outputWires ++ outputWireDot)
     }
 } and generateGraphvizCodeEdge = (edge, inid, outid) => {
 
@@ -322,26 +347,29 @@ let rec generateGraphvizCode = (net) => {
     let outs = Array.length(edge.targets);
     let inports = generatePorts(ins, false);
     let outports = generatePorts(outs, true);
+    
     let transitionsdata = generateTransitions(edge.id, inid, outid, edge.targets);
 
     let instring = inports == "{}" ? "" : inports ++ " | ";
     let outstring = outports == "{}" ? "" : " | " ++ outports; 
 
-    (tab ++ "edge" ++ string_of_int(edge.id) ++ 
+    (tab ++ "e" ++ string_of_int(edge.id) ++ 
         " [shape=Mrecord; label=\"{" ++ 
         instring ++ edge.label ++ outstring
         ++ "}\"]", transitionsdata)  
 } and generatePorts = (n, out) => {
     "{" ++ generatePorts'(0,n, out) ++ "}"
 } and generatePorts' = (x,n,out) => {
-    let y = out ? "o" : "i"
+    let y = out ? "t" : "s"
     switch(n){
     | 0 => ""
     | 1 => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js}
     | n => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js} ++ " | " ++ generatePorts'(x+1,n-1,out)
     }
 } and generateTransitions = (x, inid, outid, targets) => {
-    let string = ref("");
+    let vertexString = ref("");
+    let inputWireString = ref("");
+    let outputWireString = ref("");
     let tracenodes = ref("");
     let ranks = ref("");
 
@@ -357,19 +385,24 @@ let rec generateGraphvizCode = (net) => {
 
             tracenodes := tracenodes^ ++ tab ++ tracel ++ tab ++ tracer
 
-            string := string^ ++ tab ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> " ++ idr ++ ":s;\n" ++
+            vertexString := vertexString^ ++ tab ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> " ++ idr ++ ":s;\n" ++
                                     tab ++ idr ++ ":n -> " ++ idl ++ ":n;\n" ++
                                     tab ++ idl ++ ":s -> edge" ++ string_of_int(e^.id) ++ ":i" ++ string_of_int(k) ++ ":w;\n";
 
             ranks := ranks^ ++ tab ++ "{rank=same; edge" ++ string_of_int(inid) ++ ", " ++ idl ++ "}\n" ++ tab ++ "{rank=same; edge" ++ string_of_int(outid) ++ ", " ++ idr ++ "}\n"
 
         } else {
-            string := string^ ++ tab ++ "edge" ++ string_of_int(x) ++ ":o" ++ string_of_int(i) ++ ":e -> edge" ++ string_of_int(e^.id) ++ ":i" ++ string_of_int(k) ++ ":w;\n"
+
+            let vertexId = "v" ++ string_of_int(x) ++ "_" ++ string_of_int(e^.id)
+
+            vertexString := vertexString^ ++ tab ++ vertexId ++ vertexOptions ++ nl;
+            inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ vertexId ++ ":w " ++ inputWireOptions ++ nl
+            outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl
         }
         
     };
 
-    [|ranks^, tracenodes^, string^|];
+    [|ranks^, tracenodes^, vertexString^, inputWireString^, outputWireString^|];
 }
 
 let zeroDot = generateGraphvizCode(zeroNet);
@@ -387,7 +420,7 @@ and generateTensor' = (v,es,t,es_next,outs) => {
     switch(es){
     | [] => (List.rev(t), es_next,outs)
     | [(e,k),...xs] => let e' = e^; 
-                       (e'.label == "out") ? 
+                       (e'.label == omega) ? 
                        generateTensor'(v, xs, [idcirc(v,1),...t], Array.append(es_next,[|(e,k)|]), outs + 1) : 
                        generateTensor'(v, xs, [funcBlackBox(v,e'.label,"\\text{" ++ e'.label ++ "}",Array.length(e'.sources),Array.length(e'.targets)),...t],Array.append(es_next,e'.targets), outs)
     }
