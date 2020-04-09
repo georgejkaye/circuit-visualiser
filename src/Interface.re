@@ -3,6 +3,7 @@ open Parser;
 open Lattices;
 open Hypernets;
 open Algebraic;
+open Drawing;
 
 type options = {
     fit: bool,
