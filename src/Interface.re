@@ -68,11 +68,17 @@ let printLatexOrError = (string, error) => {
  * If not, returns (false, (zero circuit, error message))
  */
 let generateCircuit = (state, text) => {
+
+    if(text == ""){
+        (true, (zero(state.lat), ""))
+    } else {
+
     switch(parseFromString(state.lat, state.funs, state.macs, text)){ /* hello */
     | item => (true, (item, printCircuitLatex(item)))
     | exception ParseError(e) => (false, (zero(state.lat), e))
     | exception SemanticsError(e) => (false, (zero(state.lat), e))
     }
+}
 }
 
 type action =

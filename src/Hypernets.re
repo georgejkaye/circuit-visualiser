@@ -282,7 +282,7 @@ let nl = "\n"
 
 let graphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.5;" ++ nl;
 let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=\"\"];"
-let outputWireOptions = "[headclip=false; tailclip=false; arrowhead=vee; arrowsize=0.5]"
+let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
 let inputWireOptions = "[arrowhead=none; arrowsize=0.5]"
 let invisibleWireOptions = "[style=invis]"
 
@@ -312,16 +312,42 @@ let getTraceText = (x, e, left) => {
                     (edgedot, transdot)
                 }; */
 
+let rec makeTransitionToAllEdgesWithNoSources = (inid, edges) => {
+    Js.log("aaaa");
+    switch(edges){
+    | [] => ""
+    | [x,...xs] => let result = (Array.length(x.sources) == 0) ? tab ++ "e" ++ string_of_int(inid) ++ "->" ++ "e" ++ string_of_int(x.id) ++ " " ++ invisibleWireOptions ++ nl : "" ;
+                    result ++ makeTransitionToAllEdgesWithNoSources(inid, xs);
+    }
+}
+
+let rec makeTransitionToAllEdgesWithNoTargets = (outid, edges) => {
+    Js.log("aaaa");
+    switch(edges){
+    | [] => ""
+    | [x,...xs] => let result = (Array.length(x.targets) == 0) ? tab ++ "e" ++ string_of_int(x.id) ++ "->" ++ "e" ++ string_of_int(outid) ++ " " ++ invisibleWireOptions ++ nl : "" ;
+                    result ++ makeTransitionToAllEdgesWithNoTargets(outid, xs);
+    }
+}
+
 let rec generateGraphvizCode = (net) => {
     
-    let allEdges = [net.inputs] @ List.map((x) => x^, net.edges) @ [net.outputs]
+    let derefedEdges = List.map((x) => x^, net.edges) 
+    let allEdges = [net.inputs] @ derefedEdges @ [net.outputs]
     let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, allEdges, "", "", "", "", "", "");
-    
-    Js.log("digraph{" ++ nl ++ nl ++ graphOptions ++ nl ++ graph ++ "}");
 
-    let outputAtEndString = generateOutputTransitions(net.outputs.id, allEdges);
+    let emptyGraph = List.length(net.edges) == 0;
 
-    "digraph{" ++ nl ++ nl ++ graphOptions ++ nl ++ graph ++ nl ++ outputAtEndString ++ "}"
+    let inputWires = !emptyGraph ? ((Array.length(net.inputs.targets) == 0) ? nl ++ makeTransitionToAllEdgesWithNoSources(net.inputs.id, derefedEdges) : "") : "";
+    let outputWires = !emptyGraph ? ((Array.length(net.outputs.sources) == 0) ? nl ++ makeTransitionToAllEdgesWithNoTargets(net.outputs.id, derefedEdges) : "") : "";
+
+    let inputOutputWires = (List.length(net.edges) == 0) ? nl ++ tab ++ "e" ++ string_of_int(net.inputs.id) ++ "->" ++ "e" ++ string_of_int(net.outputs.id) ++ invisibleWireOptions ++ nl : "";
+
+    let finalGraph = "digraph{" ++ nl ++ nl ++ graphOptions ++ graph ++ inputWires ++ outputWires ++ inputOutputWires ++ nl ++ "}"
+
+    Js.log(finalGraph);
+
+    finalGraph
 
 } and generateGraphvizCodeEdges = (inputs, outputs, es, ranks, edges, traces, vertices, inputWires, outputWires) => {
     let inid = inputs.id;
@@ -329,11 +355,11 @@ let rec generateGraphvizCode = (net) => {
     switch(es){
     | [] => let finalString = ref("");      
     
-            ranks == "" ? () : finalString := finalString^ ++ ranks ++ nl;
-            edges == "" ? () : finalString := finalString^ ++ edges ++ nl;
-            vertices == "" ? () : finalString := finalString^ ++ vertices ++ nl;
-            inputWires == "" ? () : finalString := finalString^ ++ inputWires ++ nl;
-            outputWires == "" ? () : finalString := finalString^ ++ outputWires ++ nl;
+            ranks == "" ? () : finalString := finalString^ ++ ranks;
+            edges == "" ? () : finalString := finalString^ ++ nl ++ edges;
+            vertices == "" ? () : finalString := finalString^ ++ nl ++ vertices;
+            inputWires == "" ? () : finalString := finalString^ ++ nl ++ inputWires;
+            outputWires == "" ? () : finalString := finalString^ ++ nl ++ outputWires;
 
             finalString^
     | [x,...xs] => let edgecode = generateGraphvizCodeEdge(x,inid,outid);
