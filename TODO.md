@@ -6,6 +6,8 @@
 
 ## Visualisation
 
+* Get trace working properly
+* Visualise the formal representation as well
 * Colours for special morphisms
 
 ## Reductions
