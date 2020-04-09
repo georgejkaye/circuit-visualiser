@@ -1,6 +1,8 @@
 open Circuits;
 open Hypernets;
 
+let dot = {js|•|js}
+
 let tab = "    "
 let nl = "\n"
 
@@ -17,7 +19,7 @@ let getTraceText = (x, e, left) => {
 }
 
 /*  let (inedgedot, intransdot) = 
-                if(Array.length(inputs.targets) == 0){
+                if(Array.length(inputs^.targets) == 0){
                     ("","")
                 } else {
                     let inedgecode = generateGraphvizCodeEdge(inputs,inid,outid);
@@ -27,7 +29,7 @@ let getTraceText = (x, e, left) => {
                 };
             
             let (outedgedot, outtransdot) = 
-                if(Array.length(outputs.sources) == 0){
+                if(Array.length(outputs^.sources) == 0){
                     ("","")
                 } else {
                     let outedgecode = generateGraphvizCodeEdge(outputs,inid,outid);
@@ -37,7 +39,6 @@ let getTraceText = (x, e, left) => {
                 }; */
 
 let rec makeTransitionToAllEdgesWithNoSources = (inid, edges) => {
-    Js.log("aaaa");
     switch(edges){
     | [] => ""
     | [x,...xs] => let result = (Array.length(x.sources) == 0) ? tab ++ "e" ++ string_of_int(inid) ++ "->" ++ "e" ++ string_of_int(x.id) ++ " " ++ invisibleWireOptions ++ nl : "" ;
@@ -46,7 +47,6 @@ let rec makeTransitionToAllEdgesWithNoSources = (inid, edges) => {
 }
 
 let rec makeTransitionToAllEdgesWithNoTargets = (outid, edges) => {
-    Js.log("aaaa");
     switch(edges){
     | [] => ""
     | [x,...xs] => let result = (Array.length(x.targets) == 0) ? tab ++ "e" ++ string_of_int(x.id) ++ "->" ++ "e" ++ string_of_int(outid) ++ " " ++ invisibleWireOptions ++ nl : "" ;
@@ -57,15 +57,15 @@ let rec makeTransitionToAllEdgesWithNoTargets = (outid, edges) => {
 let rec generateGraphvizCode = (net) => {
     
     let derefedEdges = List.map((x) => x^, net.edges) 
-    let allEdges = [net.inputs] @ derefedEdges @ [net.outputs]
+    let allEdges = [net.inputs^] @ derefedEdges @ [net.outputs^]
     let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, allEdges, "", "", "", "", "", "");
 
     let emptyGraph = List.length(net.edges) == 0;
 
-    let inputWires = !emptyGraph ? ((Array.length(net.inputs.targets) == 0) ? nl ++ makeTransitionToAllEdgesWithNoSources(net.inputs.id, derefedEdges) : "") : "";
-    let outputWires = !emptyGraph ? ((Array.length(net.outputs.sources) == 0) ? nl ++ makeTransitionToAllEdgesWithNoTargets(net.outputs.id, derefedEdges) : "") : "";
+    let inputWires = !emptyGraph ? ((Array.length(net.inputs^.targets) == 0) ? nl ++ makeTransitionToAllEdgesWithNoSources(net.inputs^.id, derefedEdges) : "") : "";
+    let outputWires = !emptyGraph ? ((Array.length(net.outputs^.sources) == 0) ? nl ++ makeTransitionToAllEdgesWithNoTargets(net.outputs^.id, derefedEdges) : "") : "";
 
-    let inputOutputWires = (List.length(net.edges) == 0) ? nl ++ tab ++ "e" ++ string_of_int(net.inputs.id) ++ "->" ++ "e" ++ string_of_int(net.outputs.id) ++ invisibleWireOptions ++ nl : "";
+    let inputOutputWires = (List.length(net.edges) == 0) ? nl ++ tab ++ "e" ++ string_of_int(net.inputs^.id) ++ "->" ++ "e" ++ string_of_int(net.outputs^.id) ++ invisibleWireOptions ++ nl : "";
 
     let finalGraph = "digraph{" ++ nl ++ nl ++ graphOptions ++ graph ++ inputWires ++ outputWires ++ inputOutputWires ++ nl ++ "}"
 
@@ -74,8 +74,8 @@ let rec generateGraphvizCode = (net) => {
     finalGraph
 
 } and generateGraphvizCodeEdges = (inputs, outputs, es, ranks, edges, traces, vertices, inputWires, outputWires) => {
-    let inid = inputs.id;
-    let outid = outputs.id;
+    let inid = inputs^.id;
+    let outid = outputs^.id;
     switch(es){
     | [] => let finalString = ref("");      
     
@@ -156,49 +156,3 @@ let rec generateGraphvizCode = (net) => {
 }
 
 let zeroDot = generateGraphvizCode(zeroNet);
-Js.log(zeroDot);
-
-let rec scanList = (seen, id) => {
-    switch(seen){
-    | []        => (false,-1,-1)
-    | [(x,i,ns),...xs] => (x == id) ? (true, i, ns) : scanList(xs, id)
-    }
-} 
-
-let rec generateTensor = (v,es) => generateTensor'(v,es,[],[||],0)
-and generateTensor' = (v,es,t,es_next,outs) => {
-    switch(es){
-    | [] => (List.rev(t), es_next,outs)
-    | [(e,k),...xs] => let e' = e^; 
-                       (e'.label == omega) ? 
-                       generateTensor'(v, xs, [idcirc(v,1),...t], Array.append(es_next,[|(e,k)|]), outs + 1) : 
-                       generateTensor'(v, xs, [funcBlackBox(v,e'.label,"\\text{" ++ e'.label ++ "}",Array.length(e'.sources),Array.length(e'.targets)),...t],Array.append(es_next,e'.targets), outs)
-    }
-}
-
-let convertHypernetToEquation = (v,net) => {
-    let cat = ref([]);
-    let es_next = ref([||]);
-
-    es_next := net.inputs.targets
-
-    while(Array.length(es_next^) != 0){
-        
-        let es = es_next^;
-
-        /*let (cat', es') = createSymmetry(es^)*/
-        /*cat := List.rev_append(cat^,cat')*/
-        
-        let (t,es_next',outs) = generateTensor(v,Array.to_list(es));
-
-        if(outs == Array.length(es_next')){
-            es_next := [||]
-        } else {
-            es_next := es_next';
-            cat := List.append(cat^, [tensor(t)]);
-        }
-    }
-
-    Js.log(printCircuitListCommas(cat^));
-    composemany(cat^);
-}

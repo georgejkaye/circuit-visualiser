@@ -150,10 +150,10 @@ and generateAllConnections' = (os, is, es, acc) => {
 
 /* Generate the algebraic definition of a hypernet */
 let rec generateAlgebraicDefinition = (net) => {
-    let allEdges = [ref(net.inputs)] @ net.edges @ [ref(net.outputs)];
+    let allEdges = [net.inputs] @ net.edges @ [net.outputs];
     let (i,eds,is,os,l,f) = generateAlgebraicDefinition' (allEdges);
     let ks = generateAllConnections(os,is,allEdges);
-    let (is,os,f) = normaliseEdgeIds(net.inputs.id, net.outputs.id, eds, is, os, f);
+    let (is,os,f) = normaliseEdgeIds(net.inputs^.id, net.outputs^.id, eds, is, os, f);
     
     {v: i, 
      e: List.length(eds) - 2, 

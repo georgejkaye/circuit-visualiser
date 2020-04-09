@@ -40,7 +40,7 @@ module MathJax = {
 let str = React.string;
 
 type state = {
-    old: string,             /* Currently to stop multiple things happening */
+    old: string,            /* Currently to stop multiple things happening */
     lat: lattice,           /* The lattice being used */
     circ: circuit,          /* The current circuit */
     strn: string,           /* The string of the current circuit, or a parse error message */
@@ -119,8 +119,9 @@ let make = () => {
                                     } else { 
                                         let generatedCircuit = generateCircuit(state, text);
                                         let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
+                                        let generatedHypernet = minimise(generatedHypernet);
                                         let generatedDot = generateGraphvizCode(generatedHypernet);
-                                        let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(generatedHypernet));
+                                        /*let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(generatedHypernet));*/
                                         {circ: fst(snd(generatedCircuit)), 
                                         old: text,
                                         lat: state.lat, 
@@ -129,7 +130,7 @@ let make = () => {
                                         macs: state.macs,
                                         net: generatedHypernet,
                                         dot: generatedDot,
-                                        alg: generatedAlg,
+                                        alg: "",
                                         error:fst(generatedCircuit)}
                                     }
                                 }

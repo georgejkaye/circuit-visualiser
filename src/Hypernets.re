@@ -15,9 +15,9 @@ type edge = {
     targets: array((ref(edge), int)),
     label: string
 } and hypernet = {
-    inputs: edge,
+    inputs: ref(edge),
     edges: list(ref(edge)),
-    outputs: edge
+    outputs: ref(edge)
 }
 
 /* Find all the edges with a given label in a net */
@@ -38,12 +38,12 @@ and printEdgeRefPortPairArray = (es) => printArray(es, ((x,n)) => (x^.label) ++ 
 and printEdgeRefList = (es) => printList(es, (x) => printEdge(x^))
 
 let printHypernet = (h) => {
-    "hypernet inputs " ++ printEdge(h.inputs) ++ ", outputs " ++ printEdge(h.outputs) ++ ", edges " ++ printEdgeRefList(h.edges)
+    "hypernet inputs " ++ printEdge(h.inputs^) ++ ", outputs " ++ printEdge(h.outputs^) ++ ", edges " ++ printEdgeRefList(h.edges)
 }
 
 
-let floatingEdge = (id,label) => {id, sources:[||], targets:[||], label} 
-let initialisePorts = (x) => Array.init(x, (i => (ref(floatingEdge(0,"")), i)))
+let floatingEdge = (id,label) => ref({id, sources:[||], targets:[||], label})
+let initialisePorts = (x) => Array.init(x, (i => (floatingEdge(0,""), i)))
 
 let zeroNet = {inputs:floatingEdge(0, alpha), edges:[], outputs:floatingEdge(1,omega)}
 let identity = (array) => array
@@ -59,11 +59,11 @@ and removeEdge' = (edge, edges, acc) => {
 
 let composeSequential = (f,g) => {
 
-    assert(Array.length(f.outputs.sources) == Array.length(g.inputs.targets));
+    assert(Array.length(f.outputs^.sources) == Array.length(g.inputs^.targets));
 
-    for (i in 0 to Array.length(f.outputs.sources) - 1){
-        let (e,k) = f.outputs.sources[i];
-        let (e',k') = g.inputs.targets[i];
+    for (i in 0 to Array.length(f.outputs^.sources) - 1){
+        let (e,k) = f.outputs^.sources[i];
+        let (e',k') = g.inputs^.targets[i];
     
         e^.targets[k] = (e',k');
         e'^.sources[k'] = (e,k);
@@ -76,41 +76,41 @@ let composeSequential = (f,g) => {
 
 let composeParallel = (f,g,i) => {
 
-    let newInputs = {id: 0, sources: [||], targets: Array.append(f.inputs.targets, g.inputs.targets), label: alpha};
-    let newOutputs = {id: i+1, sources: Array.append(f.outputs.sources, g.outputs.sources), targets: [||], label: omega};
+    let newInputs = {id: 0, sources: [||], targets: Array.append(f.inputs^.targets, g.inputs^.targets), label: alpha};
+    let newOutputs = {id: i+1, sources: Array.append(f.outputs^.sources, g.outputs^.sources), targets: [||], label: omega};
 
-    let finputs = Array.length(f.inputs.targets);
-    let foutputs = Array.length(f.outputs.sources);
+    let finputs = Array.length(f.inputs^.targets);
+    let foutputs = Array.length(f.outputs^.sources);
 
     let refInputs = ref(newInputs);
     let refOutputs = ref(newOutputs);
 
-    for(i in 0 to Array.length(f.inputs.targets) - 1){
-        let (e,k) = f.inputs.targets[i];
+    for(i in 0 to Array.length(f.inputs^.targets) - 1){
+        let (e,k) = f.inputs^.targets[i];
         
         e^.label == omega ? 
             refOutputs^.sources[k] = (refInputs, i) :
             e^.sources[k] = (refInputs, i)
     };
 
-    for(i in 0 to Array.length(g.inputs.targets) - 1){
-        let (e,k) = g.inputs.targets[i];
+    for(i in 0 to Array.length(g.inputs^.targets) - 1){
+        let (e,k) = g.inputs^.targets[i];
         
         e^.label == omega ? 
             refOutputs^.sources[k+foutputs] = (refInputs, i + finputs) : 
             e^.sources[k] = (refInputs, i + finputs)
     };
 
-    for(i in 0 to Array.length(f.outputs.sources) - 1){
-        let (e,k) = f.outputs.sources[i];
+    for(i in 0 to Array.length(f.outputs^.sources) - 1){
+        let (e,k) = f.outputs^.sources[i];
         
         e^.label == alpha ? 
             refInputs^.targets[k] = (refOutputs, i) :
             e^.targets[k] = (refOutputs, i)
     };
 
-    for(i in 0 to Array.length(g.outputs.sources) - 1){
-        let (e,k) = g.outputs.sources[i];
+    for(i in 0 to Array.length(g.outputs^.sources) - 1){
+        let (e,k) = g.outputs^.sources[i];
         
         e^.label == alpha ? 
             refInputs^.targets[k+finputs] = (refOutputs, i + foutputs) : 
@@ -118,32 +118,32 @@ let composeParallel = (f,g,i) => {
     };
 
 
-    {inputs: refInputs^, edges: f.edges @ g.edges, outputs: refOutputs^}
+    {inputs: refInputs, edges: f.edges @ g.edges, outputs: refOutputs}
 
 }
 
 let functionNet = (id, ins, outs, i) => {
-    let ine = ref(floatingEdge(i,""));
-    let oute = ref(floatingEdge(i+2,""));
+    let ine = floatingEdge(i,"");
+    let oute = floatingEdge(i+2,"");
     let fune = ref({id:i+1, sources:Array.init(ins, (n) => (ine, n)), targets:Array.init(outs, (n) => (oute, n)), label:id});
     ine := {id:0, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:alpha};
     oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:omega};
-    ({inputs: ine^, edges:[fune], outputs: oute^}, i+3)
+    ({inputs: ine, edges:[fune], outputs: oute}, i+3)
 }
 
 let traceHypernet = (x, h) => {
 
     for(i in 0 to x-1){
 
-        let (e, k) = h.inputs.targets[i];
-        let (e', k') = h.outputs.sources[i];
+        let (e, k) = h.inputs^.targets[i];
+        let (e', k') = h.outputs^.sources[i];
 
         e'^.targets[k'] = (e, k);
         e^.sources[k] = (e',k');
     };
 
-    let newInputs = {id: 0, sources: [||], targets:Array.sub(h.inputs.targets, x, (Array.length(h.inputs.targets) - x)), label:alpha};
-    let newOutputs = {id: h.outputs.id, sources: Array.sub(h.outputs.sources, x, (Array.length(h.outputs.sources) - x)), targets: [||], label:omega};
+    let newInputs = {id: 0, sources: [||], targets:Array.sub(h.inputs^.targets, x, (Array.length(h.inputs^.targets) - x)), label:alpha};
+    let newOutputs = {id: h.outputs^.id, sources: Array.sub(h.outputs^.sources, x, (Array.length(h.outputs^.sources) - x)), targets: [||], label:omega};
 
     for(i in 0 to Array.length(newInputs.targets) - 1){
         let (e, k) = newInputs.targets[i];
@@ -169,7 +169,7 @@ let traceHypernet = (x, h) => {
         e^.targets[k] = (e',k'-x);
     };
 
-    {inputs: newInputs, edges: h.edges, outputs: newOutputs}
+    {inputs: ref(newInputs), edges: h.edges, outputs: ref(newOutputs)}
     
 }
 
@@ -190,7 +190,7 @@ let swapNet = (i, x, y) => {
         refout^.sources[i-x] = (refin, i);
     };
 
-    {inputs: refin^, edges: [], outputs: refout^}
+    {inputs: refin, edges: [], outputs: refout}
 
 }
 
@@ -210,7 +210,7 @@ let dforkNet = (i, n) => {
 
 let iterHypernet = (circuit, i) => {
 
-    let n = Array.length(circuit.outputs.sources);
+    let n = Array.length(circuit.outputs^.sources);
     let nfork = dforkNet(i, n)
     let newCircuit = composeSequential(circuit, fst(nfork));
     (traceHypernet(n, newCircuit), snd(nfork));    
@@ -239,13 +239,13 @@ let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(ci
 and convertCircuitToHypernet' = (circuit, i) => {
     switch(circuit.c){
     | Value(x)                  => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:circuit.v.print(x)})
-                                   and ine = ref(floatingEdge(i,alpha)) 
+                                   and ine = floatingEdge(i,alpha)
                                    and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:omega});
-                                   ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
-    | Identity(n)               => let ine = ref(floatingEdge(i,""));
+                                   ({inputs: ine, edges: [e], outputs: oute}, i+3)
+    | Identity(n)               => let ine = floatingEdge(i,"");
                                    let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:omega});
                                    ine := {id:0, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:alpha};
-                                   ({inputs:ine^, edges: [], outputs: oute^},i+2)
+                                   ({inputs:ine, edges: [], outputs: oute},i+2)
     | Composition(f,g)          => let fh = convertCircuitToHypernet'(f,i);
                                    let gh = convertCircuitToHypernet'(g,snd(fh));
                                    (composeSequential(fst(fh),fst(gh)), snd(gh))
@@ -262,17 +262,63 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    (traceHypernet(outputs(f), fh), i');  
     | Macro(_,_,f)              => convertCircuitToHypernet'(f,i);
     | Inlink(x)                 => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:lookupLink(x,circuit.l)})
-                                   and ine = ref(floatingEdge(i,alpha)) 
+                                   and ine = floatingEdge(i,alpha) 
                                    and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:omega});
-                                   ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
+                                   ({inputs: ine, edges: [e], outputs: oute}, i+3)
     | Outlink(x)                => let rec e = ref({id: i+1, sources:[|(ine,0)|], targets:[||], label:lookupLink(x,circuit.l)})
                                    and ine = ref({id: i, sources:[||], targets:[|(e,0)|], label:alpha})
-                                   and oute = ref(floatingEdge(i+2,omega)); 
-                                   ({inputs: ine^, edges: [e], outputs: oute^}, i+3)
+                                   and oute = floatingEdge(i+2,omega); 
+                                   ({inputs: ine, edges: [e], outputs: oute}, i+3)
     | Link(x,y,f)               => let f = convertCircuitToHypernet'(f,i);
                                    (joinLinks(fst(f),circuit.l,x,y), snd(f))
     | _                         => failwith("badly formed circuit");
                              
                                     
     }
+}
+
+let rec reachable = (input, output, edge) => {
+    if(edge^.id == output.id || edge^.id == input.id) {
+        true;
+    } else {
+
+        let result = ref(false);
+
+        for(i in 0 to Array.length(edge^.targets) - 1){
+            result := (result^ || reachable(input, output, fst(edge^.targets[i])))
+        }
+
+        result^;
+    }
+}
+
+let stubEdge = (i, e, k) => ref({id: i, sources: [|(e,k)|], targets: [||], label: "~"});
+
+let rec minimise = (net) => { 
+    let newStubs = minimise'(net.inputs, net.outputs, net.inputs);
+    let edges = List.filter(((e) => reachable(net.inputs^, net.outputs^, e) || e^.label == "~"), net.edges) @ newStubs;
+    {inputs: net.inputs, edges: edges, outputs: net.outputs}
+} and minimise' = (input, output, edge) => {
+
+    let newStubs = ref([]);
+
+    if(edge^.id == output^.id){
+        ();
+    } else {
+
+        for(i in 0 to Array.length(edge^.targets) - 1) {
+            let (e,k) = edge^.targets[i];
+
+            if(!reachable(input^,output^,e)){
+                let newStubEdge = stubEdge(fst(edge^.targets[i])^.id, edge, i);
+                edge^.targets[i] = (newStubEdge, 0);
+                newStubs := newStubs^ @ [newStubEdge];
+            } else {
+                newStubs := newStubs^ @ minimise'(input, output, e);
+            };
+        };
+    }
+
+    newStubs^
+
 }
