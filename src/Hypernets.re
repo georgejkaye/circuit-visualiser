@@ -294,6 +294,8 @@ let rec reachable = (input, output, edge) => {
 
 let stubEdge = (i, e, k) => ref({id: i, sources: [|(e,k)|], targets: [||], label: "~"});
 
+/* TRACE BREAKS THIS (obviously) */
+
 let rec minimise = (net) => { 
     let newStubs = minimise'(net.inputs, net.outputs, net.inputs);
     let edges = List.filter(((e) => reachable(net.inputs^, net.outputs^, e) || e^.label == "~"), net.edges) @ newStubs;

@@ -40,6 +40,21 @@ let orGate = (v) => {v:v, c:Function({js|OR|js}, "\\vee", 2, 1, (c) =>
                                    )
                      ,l:[]}
 
+
+let norGate = (v) => {v:v, c:Function({js|NOR|js}, "\\downarrow", 2, 1, (c) => 
+                                          switch(c.c){
+                                          | Tensor([{v:_, c:Value(a), l:_}, {v:_, c:Value(b), l:_}]) => value(v, v.notOp(v.orOp(a,b))) 
+                                          | Tensor([a, b])                => func(v, printCircuit(a) ++ " OR " ++ printCircuit(b),
+                                                                                    printCircuitLatex(a) ++ " \\downarrow " ++ printCircuit(b),
+                                                                                    inputs(a) + inputs(b), 
+                                                                                    1, 
+                                                                                    (_) => failwith("not implemented")
+                                                                             ) 
+                                          | _ => failwith("Bad input")
+                                          }
+                                   )
+                     ,l:[]}
+
 let xorGate = (v) => {v:v, c:Function({js|XOR|js}, "\\oplus", 2, 1, (c) => 
                      switch(c.c){
                      | Tensor([{v:_, c:Value(a), l:_}, {v:_, c:Value(b), l:_}]) => value(v, v.andOp(v.notOp(v.andOp(a, b)), v.orOp(a,b)))

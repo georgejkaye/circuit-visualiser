@@ -23,6 +23,34 @@ let fullAdder = {
     ]),[])
 }
 
+let flipFlop = {
+    macro(v, "sr_nor", "SR_{\downarrow}", composemany([
+        trace(1,
+        composemany([
+            tensor([
+                composemany([
+                    norGate(v),
+                    fork(v)
+                ]),
+                idcirc(v,1)
+            ]),
+            tensor([
+                idcirc(v,1),
+                composemany([
+                    swap(v,1,1),
+                    norGate(v),
+                    fork(v)
+                ])
+            ]),
+            tensor([
+                swap(v,1,1),
+                idcirc(v,1)
+            ])
+        ])),
+        swap(v,1,1)
+    ]), [])
+}
+
 let halfAdderApplied = composemany([
                             tensor([t, f]),
                             halfAdder
@@ -52,7 +80,7 @@ let exampleFunctions = List.concat([specialMorphisms(v),
                 id(v,2),
 ]])
 
-let exampleMacros = [halfAdder, fullAdder];
+let exampleMacros = [halfAdder, fullAdder, flipFlop];
 
 /*
 let halfAdderReduced_1 = evaluateOneStep(halfAdderApplied);

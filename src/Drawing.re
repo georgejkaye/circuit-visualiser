@@ -11,6 +11,8 @@ let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=tru
 let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
 let inputWireOptions = "[arrowhead=none; arrowsize=0.5]"
 let invisibleWireOptions = "[style=invis]"
+let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false]"
+let traceVertexOptions = "[shape=circle, fillcolor=black; fixedsize=true; width=0.05; label=\"\"]"
 
 let getTraceText = (x, e, left) => {
     let dir = left ? "l" : "r";
@@ -58,7 +60,7 @@ let rec generateGraphvizCode = (net) => {
     
     let derefedEdges = List.map((x) => x^, net.edges) 
     let allEdges = [net.inputs^] @ derefedEdges @ [net.outputs^]
-    let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, allEdges, "", "", "", "", "", "");
+    let graph = generateGraphvizCodeEdges(net.inputs, net.outputs, allEdges, "", "", "", "", "", "", "");
 
     let emptyGraph = List.length(net.edges) == 0;
 
@@ -73,7 +75,7 @@ let rec generateGraphvizCode = (net) => {
 
     finalGraph
 
-} and generateGraphvizCodeEdges = (inputs, outputs, es, ranks, edges, traces, vertices, inputWires, outputWires) => {
+} and generateGraphvizCodeEdges = (inputs, outputs, es, ranks, edges, traces, vertices, inputWires, outputWires, traceWires) => {
     let inid = inputs^.id;
     let outid = outputs^.id;
     switch(es){
@@ -82,8 +84,10 @@ let rec generateGraphvizCode = (net) => {
             ranks == "" ? () : finalString := finalString^ ++ ranks;
             edges == "" ? () : finalString := finalString^ ++ nl ++ edges;
             vertices == "" ? () : finalString := finalString^ ++ nl ++ vertices;
+            traces == "" ? () : finalString := finalString^ ++ nl ++ traces;
             inputWires == "" ? () : finalString := finalString^ ++ nl ++ inputWires;
             outputWires == "" ? () : finalString := finalString^ ++ nl ++ outputWires;
+            traceWires == "" ? () : finalString := finalString^ ++ nl ++ traceWires;
 
             finalString^
     | [x,...xs] => let edgecode = generateGraphvizCodeEdge(x,inid,outid);
@@ -93,7 +97,8 @@ let rec generateGraphvizCode = (net) => {
                     let vertexDot = snd(edgecode)[2];
                     let inputWireDot = snd(edgecode)[3];
                     let outputWireDot = snd(edgecode)[4];
-                    generateGraphvizCodeEdges(inputs, outputs, xs, ranks ++ ranksdot, edges ++ edgedot, traces ++ tracedot, vertices ++ vertexDot, inputWires ++ inputWireDot, outputWires ++ outputWireDot)
+                    let traceWireDot = snd(edgecode)[5];
+                    generateGraphvizCodeEdges(inputs, outputs, xs, ranks ++ ranksdot, edges ++ edgedot, traces ++ tracedot, vertices ++ vertexDot, inputWires ++ inputWireDot, outputWires ++ outputWireDot, traceWires ++ traceWireDot)
     }
 } and generateGraphvizCodeEdge = (edge, inid, outid) => {
 
@@ -124,30 +129,41 @@ let rec generateGraphvizCode = (net) => {
     let vertexString = ref("");
     let inputWireString = ref("");
     let outputWireString = ref("");
-    let tracenodes = ref("");
+    let traceVertexString = ref("");
+    let traceWireString = ref("");
     let ranks = ref("");
 
     for(i in 0 to Array.length(targets) - 1){
         let (e,k) = targets[i];
-        /* trace! */
+        
+        let vertexId = "v" ++ string_of_int(x) ++ "_t" ++ string_of_int(i) ++ "_e" ++ string_of_int(e^.id) ++ "_s" ++ string_of_int(k)
+        vertexString := vertexString^ ++ tab ++ vertexId ++ vertexOptions ++ nl;
+
         if(e^.id <= x){
 
             Js.log("Trace!");
 
-            ()
+            let traceVertexInId = vertexId ++ "_Tr_i";
+            let traceVertexOutId = vertexId ++ "_Tr_o";
+
+            traceVertexString := traceVertexString^ ++ tab ++ traceVertexInId ++ traceVertexOptions ++ nl;
+            traceVertexString := traceVertexString^ ++ tab ++ traceVertexOutId ++ traceVertexOptions ++ nl;
+            
+            inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ traceVertexInId ++ ":n " ++ inputWireOptions ++ nl;
+            traceWireString := traceWireString^ ++ tab ++ traceVertexInId ++ ":s -> " ++ vertexId ++ ":w " ++ traceWireOptions ++ nl;
+            traceWireString := traceWireString^ ++ tab ++ vertexId ++ ":e -> " ++ traceVertexOutId ++ ":s " ++ traceWireOptions ++ nl;
+            outputWireString := outputWireString^ ++ tab ++ traceVertexOutId ++ ":n -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl
+
 
         } else {
 
-            let vertexId = "v" ++ string_of_int(x) ++ "_t" ++ string_of_int(i) ++ "_e" ++ string_of_int(e^.id) ++ "_s" ++ string_of_int(k)
-
-            vertexString := vertexString^ ++ tab ++ vertexId ++ vertexOptions ++ nl;
             inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ vertexId ++ ":w " ++ inputWireOptions ++ nl
             outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl
         }
         
     };
 
-    [|ranks^, tracenodes^, vertexString^, inputWireString^, outputWireString^|];
+    [|ranks^, traceVertexString^, vertexString^, inputWireString^, outputWireString^, traceWireString^|];
 } and generateOutputTransitions = (outid, edges) => {
     switch(edges){
     | [] => ""
