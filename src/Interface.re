@@ -119,7 +119,7 @@ let make = () => {
                                     } else { 
                                         let generatedCircuit = generateCircuit(state, text);
                                         let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
-                                        /*let generatedHypernet = minimise(generatedHypernet);*/
+                                        let generatedHypernet = minimise(generatedHypernet);
                                         let generatedDot = generateGraphvizCode(generatedHypernet);
                                         /*let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(generatedHypernet));*/
                                         {circ: fst(snd(generatedCircuit)), 

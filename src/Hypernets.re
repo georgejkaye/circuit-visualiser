@@ -277,15 +277,18 @@ and convertCircuitToHypernet' = (circuit, i) => {
     }
 }
 
-let rec reachable = (input, output, edge) => {
-    if(edge^.id == output.id || edge^.id == input.id) {
+let rec reachable = (input, output, edge) => reachable'(input, output, edge, [])
+and reachable' = (input, output, edge, traversed) => {
+    if(edge^.id == output.id) {
         true;
+    } else if (List.mem(edge^.id, traversed)) {
+        false;
     } else {
 
         let result = ref(false);
 
         for(i in 0 to Array.length(edge^.targets) - 1){
-            result := (result^ || reachable(input, output, fst(edge^.targets[i])))
+            result := (result^ || reachable'(input, output, fst(edge^.targets[i]), traversed @ [edge^.id]))
         }
 
         result^;
@@ -297,14 +300,16 @@ let stubEdge = (i, e, k) => ref({id: i, sources: [|(e,k)|], targets: [||], label
 /* TRACE BREAKS THIS (obviously) */
 
 let rec minimise = (net) => { 
-    let newStubs = minimise'(net.inputs, net.outputs, net.inputs);
-    let edges = List.filter(((e) => reachable(net.inputs^, net.outputs^, e) || e^.label == "~"), net.edges) @ newStubs;
+    let newStubs = minimise'(net.inputs, net.outputs, net.inputs, []);
+    let edges = List.filter(((e) => reachable(net.inputs^, net.outputs^, e)), net.edges) @ newStubs;
     {inputs: net.inputs, edges: edges, outputs: net.outputs}
-} and minimise' = (input, output, edge) => {
+} and minimise' = (input, output, edge, traversed) => {
 
     let newStubs = ref([]);
 
     if(edge^.id == output^.id){
+        ();
+    } else if (List.mem(edge^.id, traversed)){
         ();
     } else {
 
@@ -316,7 +321,7 @@ let rec minimise = (net) => {
                 edge^.targets[i] = (newStubEdge, 0);
                 newStubs := newStubs^ @ [newStubEdge];
             } else {
-                newStubs := newStubs^ @ minimise'(input, output, e);
+                newStubs := newStubs^ @ minimise'(input, output, e, traversed @ [edge^.id]);
             };
         };
     }

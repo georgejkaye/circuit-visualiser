@@ -11,7 +11,7 @@ let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=tru
 let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
 let inputWireOptions = "[arrowhead=none; arrowsize=0.5]"
 let invisibleWireOptions = "[style=invis]"
-let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false]"
+let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false; weight=1000]"
 let traceVertexOptions = "[shape=circle, fillcolor=black; fixedsize=true; width=0.05; label=\"\"]"
 
 let getTraceText = (x, e, left) => {
@@ -150,8 +150,8 @@ let rec generateGraphvizCode = (net) => {
             traceVertexString := traceVertexString^ ++ tab ++ traceVertexOutId ++ traceVertexOptions ++ nl;
             
             inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ traceVertexInId ++ ":n " ++ inputWireOptions ++ nl;
-            traceWireString := traceWireString^ ++ tab ++ traceVertexInId ++ ":s -> " ++ vertexId ++ ":w " ++ traceWireOptions ++ nl;
-            traceWireString := traceWireString^ ++ tab ++ vertexId ++ ":e -> " ++ traceVertexOutId ++ ":s " ++ traceWireOptions ++ nl;
+            traceWireString := traceWireString^ ++ tab ++ traceVertexInId ++ ":s -> " ++ vertexId ++ ":e " ++ traceWireOptions ++ nl;
+            traceWireString := traceWireString^ ++ tab ++ vertexId ++ ":w -> " ++ traceVertexOutId ++ ":s " ++ traceWireOptions ++ nl;
             outputWireString := outputWireString^ ++ tab ++ traceVertexOutId ++ ":n -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl
 
 
