@@ -6,12 +6,12 @@ let dot = {js|•|js}
 let tab = "    "
 let nl = "\n"
 
-let graphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.5;" ++ nl;
+let graphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.5;" ++ nl ++ tab ++ "nodesep=0.5;" ++ nl;
 let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=\"\"];"
 let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
 let inputWireOptions = "[arrowhead=none; arrowsize=0.5]"
 let invisibleWireOptions = "[style=invis]"
-let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false; weight=1000]"
+let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false]"
 let traceVertexOptions = "[shape=circle, fillcolor=black; fixedsize=true; width=0.05; label=\"\"]"
 
 let getTraceText = (x, e, left) => {
@@ -146,13 +146,13 @@ let rec generateGraphvizCode = (net) => {
             let traceVertexInId = vertexId ++ "_Tr_i";
             let traceVertexOutId = vertexId ++ "_Tr_o";
 
-            traceVertexString := traceVertexString^ ++ tab ++ traceVertexInId ++ traceVertexOptions ++ nl;
-            traceVertexString := traceVertexString^ ++ tab ++ traceVertexOutId ++ traceVertexOptions ++ nl;
+            /*traceVertexString := traceVertexString^ ++ tab ++ traceVertexInId ++ traceVertexOptions ++ nl;*/
+            /*traceVertexString := traceVertexString^ ++ tab ++ traceVertexOutId ++ traceVertexOptions ++ nl;*/
             
-            inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ traceVertexInId ++ ":n " ++ inputWireOptions ++ nl;
-            traceWireString := traceWireString^ ++ tab ++ traceVertexInId ++ ":s -> " ++ vertexId ++ ":e " ++ traceWireOptions ++ nl;
-            traceWireString := traceWireString^ ++ tab ++ vertexId ++ ":w -> " ++ traceVertexOutId ++ ":s " ++ traceWireOptions ++ nl;
-            outputWireString := outputWireString^ ++ tab ++ traceVertexOutId ++ ":n -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl
+            inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ vertexId ++ ":w " ++ traceWireOptions ++ nl;
+            /*traceWireString := traceWireString^ ++ tab ++ traceVertexInId ++ ":s -> " ++ vertexId ++ ":e " ++ traceWireOptions ++ nl;*/
+            /*traceWireString := traceWireString^ ++ tab ++ vertexId ++ ":w -> " ++ traceVertexOutId ++ ":s " ++ traceWireOptions ++ nl;*/
+            outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl;
 
 
         } else {

@@ -24,7 +24,7 @@ let fullAdder = {
 }
 
 let flipFlop = {
-    macro(v, "sr_nor", "SR_{\downarrow}", composemany([
+    macro(v, "sr_nor", "SR_{\\downarrow}", composemany([
         trace(1,
         composemany([
             tensor([

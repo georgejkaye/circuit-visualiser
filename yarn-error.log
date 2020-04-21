@@ -1,8 +1,8 @@
 Arguments: 
-  /usr/bin/node /usr/share/yarn/bin/yarn.js upgrade minimise@^1.2.2
+  /usr/bin/node /usr/share/yarn/bin/yarn.js run start
 
 PATH: 
-  /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+  /home/george/.cabal/bin:/home/george/gems/bin:/home/george/.opam/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 
 Yarn version: 
   1.22.4
@@ -14,17 +14,17 @@ Platform:
   linux x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/minimise: Not found
-      at Request.params.callback [as _callback] (/usr/share/yarn/lib/cli.js:66987:18)
-      at Request.self.callback (/usr/share/yarn/lib/cli.js:140748:22)
-      at Request.emit (events.js:189:13)
-      at Request.<anonymous> (/usr/share/yarn/lib/cli.js:141720:10)
-      at Request.emit (events.js:189:13)
-      at IncomingMessage.<anonymous> (/usr/share/yarn/lib/cli.js:141642:12)
-      at Object.onceWrapper (events.js:277:13)
-      at IncomingMessage.emit (events.js:194:15)
-      at endReadableNT (_stream_readable.js:1103:12)
-      at process._tickCallback (internal/process/next_tick.js:63:19)
+  Error: write EIO
+      at afterWriteDispatched (internal/stream_base_commons.js:78:25)
+      at writeGeneric (internal/stream_base_commons.js:73:3)
+      at WriteStream.Socket._writeGeneric (net.js:707:5)
+      at WriteStream.Socket._write (net.js:719:8)
+      at doWrite (_stream_writable.js:410:12)
+      at writeOrBuffer (_stream_writable.js:394:5)
+      at WriteStream.Writable.write (_stream_writable.js:294:11)
+      at Object.clearLine (readline.js:1122:12)
+      at clearLine (/usr/share/yarn/lib/cli.js:49657:12)
+      at ConsoleReporter._log (/usr/share/yarn/lib/cli.js:96768:43)
 
 npm manifest: 
   {
@@ -53,6 +53,7 @@ npm manifest:
       "babel-loader": "^8.0.6",
       "css-loader": "^3.3.0",
       "graphviz-react": "^1.0.4",
+      "minimist": "^1.2.2",
       "react": "^16.8.1",
       "react-dom": "^16.8.1",
       "react-mathjax2": "^0.0.2",
@@ -3586,6 +3587,11 @@ Lockfile:
     version "1.2.0"
     resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.0.tgz#a35008b20f41383eec1fb914f4cd5df79a264284"
     integrity sha1-o1AIsg9BOD7sH7kU9M1d95omQoQ=
+  
+  minimist@^1.2.2:
+    version "1.2.5"
+    resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.5.tgz#67d66014b66a6a8aaa0c083c5fd58df4e4e97602"
+    integrity sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==
   
   mississippi@^3.0.0:
     version "3.0.0"
