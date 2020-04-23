@@ -121,7 +121,7 @@ let make = () => {
                                         let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
                                         /*let generatedHypernet = minimise(generatedHypernet);*/
                                         let generatedDot = generateGraphvizCode(generatedHypernet);
-                                        /*let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(generatedHypernet));*/
+                                        let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(generatedHypernet));
                                         {circ: fst(snd(generatedCircuit)), 
                                         old: text,
                                         lat: state.lat, 
@@ -130,7 +130,7 @@ let make = () => {
                                         macs: state.macs,
                                         net: generatedHypernet,
                                         dot: generatedDot,
-                                        alg: "",
+                                        alg: generatedAlg,
                                         error:fst(generatedCircuit)}
                                     }
                                 }

@@ -100,12 +100,12 @@ let generateInputsAndOutputs = (i, o, edge) => {
 
     for (j in 0 to Array.length(sources) - 1){
         let x = j + i
-        is := [(x,id),...is^]
+        os := [(x,id),...os^]
     };
 
     for (j in 0 to Array.length(targets) - 1){
         let x = j + o
-        os := [(x,id),...os^]
+        is := [(x,id),...is^]
     };
 
     (List.rev(is^), List.rev(os^))
@@ -118,7 +118,7 @@ let generateConnections = (edge, is, os) => {
     let id = edge^.id;
 
     let ks = ref([]);
-    let ous = List.filter((((_,e)) => e == id), os);
+    let ous = List.filter((((_,e)) => e == id), is);
     Js.log("ous: " ++ printListCommas(ous, (((x,y)) => "(" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ ")")))
 
 
@@ -127,7 +127,7 @@ let generateConnections = (edge, is, os) => {
         let v1 = fst(List.nth(ous, j));
         let (e, k) = targets[j];
 
-        let ins = List.filter((((_,e')) => e^.id == e'), is);
+        let ins = List.filter((((_,e')) => e^.id == e'), os);
         Js.log("ins: " ++ printListCommas(ins, (((x,y)) => "(" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ ")")))
         let v2 = fst(List.nth(ins,k))
        
@@ -169,7 +169,7 @@ and generateAlgebraicDefinition'' = (edges, i, o, eds, is, os, l, f) => {
     switch(edges){
         | [] => (i, List.rev(eds), is, os, List.rev(l), List.rev(f))
         | [e,...es] => let (is', os') = generateInputsAndOutputs(i,o,e);
-                       let l' = List.mem(e^.label, l) || e^.label == "in" || e^.label == "out" ? l : [e^.label,...l];
+                       let l' = List.mem(e^.label, l) || e^.label == alpha || e^.label == omega ? l : [e^.label,...l];
                        let f' = e^.label == "in" || e^.label == "out" ? f : [(e^.id, e^.label),...f];
                        generateAlgebraicDefinition'' (es, i + Array.length(e^.sources), 
                                                       o + Array.length(e^.targets), 
