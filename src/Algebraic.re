@@ -47,13 +47,16 @@ let printFunctionLatex = (func, x, prnt) => {
 }
 
 let algebraicNetLatex = ({v,e,i,o,k,l,f}) => {
-    "V^I = V^O = " ++ generateFin("v", v) ++ "\\\\" ++
+    let result = "V^I = V^O = " ++ generateFin("v", v) ++ "\\\\" ++
     "E = " ++ generateFin("e", e) ++ "\\\\" ++
     "i = " ++ printFunctionLatex(i, "v", edgePlusTwoLatex) ++ "\\\\" ++
     "o = " ++ printFunctionLatex(o, "v", edgePlusTwoLatex) ++ "\\\\" ++
     "\\kappa = " ++ printFunctionLatex(k, "v", vertexLatex) ++ "\\\\ " ++
     "L = \\{" ++ printListCommas(l, (x) => x) ++ "\\}\\\\" ++
     "l = " ++ printFunctionLatex(f, "e", (x) => x)
+
+    Js.log(result);
+    result
 }
 
 /* Get the number of edges in a hypernet */
@@ -169,8 +172,8 @@ and generateAlgebraicDefinition'' = (edges, i, o, eds, is, os, l, f) => {
     switch(edges){
         | [] => (i, List.rev(eds), is, os, List.rev(l), List.rev(f))
         | [e,...es] => let (is', os') = generateInputsAndOutputs(i,o,e);
-                       let l' = List.mem(e^.label, l) || e^.label == alpha || e^.label == omega ? l : [e^.label,...l];
-                       let f' = e^.label == "in" || e^.label == "out" ? f : [(e^.id, e^.label),...f];
+                       let l' = List.mem(e^.latex, l) || e^.latex == alphaLatex || e^.latex == omegaLatex ? l : [e^.latex,...l];
+                       let f' = e^.latex == alphaLatex || e^.latex == omegaLatex ? f : [(e^.id, e^.latex),...f];
                        generateAlgebraicDefinition'' (es, i + Array.length(e^.sources), 
                                                       o + Array.length(e^.targets), 
                                                       [e^.id,...eds], 

@@ -82,8 +82,13 @@ let generateCircuit = (state, text) => {
 }
 }
 
+let minimiseHypergraph = (state) => {
+
+}
+
 type action =
-  | ParseNewCircuit(string);
+  | ParseNewCircuit(string)
+  | MinimiseHypergraph;
 
 let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
 
@@ -119,7 +124,7 @@ let make = () => {
                                     } else { 
                                         let generatedCircuit = generateCircuit(state, text);
                                         let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
-                                        /*let generatedHypernet = minimise(generatedHypernet);*/
+                                        
                                         let generatedDot = generateGraphvizCode(generatedHypernet);
                                         let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(generatedHypernet));
                                         {circ: fst(snd(generatedCircuit)), 
@@ -133,7 +138,21 @@ let make = () => {
                                         alg: generatedAlg,
                                         error:fst(generatedCircuit)}
                                     }
-                                }
+        | MinimiseHypergraph =>     let minimisedHypernet = minimise(state.net);
+                                    let generatedDot = generateGraphvizCode(minimisedHypernet);
+                                let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(minimisedHypernet));
+                                    {circ: state.circ, 
+                                        old: "",
+                                        lat: state.lat, 
+                                        strn: state.strn,
+                                        funs: state.funs, 
+                                        macs: state.macs,
+                                        net: minimisedHypernet,
+                                        dot: generatedDot,
+                                        alg: generatedAlg,
+                                        error:state.error
+                                    }
+        }
     }, {
         old: "",
         lat: simpleLattice,
@@ -151,7 +170,7 @@ let make = () => {
             <h1>(str("Circuit visualiser "))</h1>
         </div>
         <div className = "input">
-            <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) />
+            <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) /> <button onClick={_ => dispatch(MinimiseHypergraph)}>{str("Minimise")}</button>
         </div>
         <div>
                 (printLatexOrError(str(strn), error))

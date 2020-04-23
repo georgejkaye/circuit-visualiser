@@ -5,6 +5,14 @@ let alpha = {js|α|js}
 let omega = {js|ω|js}
 let dot = {js|•|js}
 
+let alphaLatex = "\\alpha";
+let omegaLatex = "\\omega";
+let stubLatex = "\\sim";
+let forkLatex = "\\curlywedge";
+let joinLatex = "\\curlyvee";
+let dforkLatex = "\\Delta";
+let djoinLatex = "\\nabla";
+
 exception GraphError(string);
 let graphError = (message) => raise(GraphError(message));
 
@@ -13,7 +21,8 @@ type edge = {
     id: int,
     sources: array((ref(edge), int)),                    
     targets: array((ref(edge), int)),
-    label: string
+    label: string,
+    latex: string
 } and hypernet = {
     inputs: ref(edge),
     edges: list(ref(edge)),
@@ -42,10 +51,10 @@ let printHypernet = (h) => {
 }
 
 
-let floatingEdge = (id,label) => ref({id, sources:[||], targets:[||], label})
-let initialisePorts = (x) => Array.init(x, (i => (floatingEdge(0,""), i)))
+let floatingEdge = (id,label,latex) => ref({id, sources:[||], targets:[||], label, latex})
+let initialisePorts = (x) => Array.init(x, (i => (floatingEdge(0,"",""), i)))
 
-let zeroNet = {inputs:floatingEdge(0, alpha), edges:[], outputs:floatingEdge(1,omega)}
+let zeroNet = {inputs:floatingEdge(0, alpha, alphaLatex), edges:[], outputs:floatingEdge(1,omega,omegaLatex)}
 let identity = (array) => array
 
 let rec removeEdge = ({inputs,edges,outputs},edge) => {inputs,edges:removeEdge'(edge, edges,[]),outputs}
@@ -76,8 +85,8 @@ let composeSequential = (f,g) => {
 
 let composeParallel = (f,g,i) => {
 
-    let newInputs = {id: 0, sources: [||], targets: Array.append(f.inputs^.targets, g.inputs^.targets), label: alpha};
-    let newOutputs = {id: i+1, sources: Array.append(f.outputs^.sources, g.outputs^.sources), targets: [||], label: omega};
+    let newInputs = {id: 0, sources: [||], targets: Array.append(f.inputs^.targets, g.inputs^.targets), label: alpha, latex: alphaLatex};
+    let newOutputs = {id: i+1, sources: Array.append(f.outputs^.sources, g.outputs^.sources), targets: [||], label: omega, latex: omegaLatex};
 
     let finputs = Array.length(f.inputs^.targets);
     let foutputs = Array.length(f.outputs^.sources);
@@ -122,12 +131,12 @@ let composeParallel = (f,g,i) => {
 
 }
 
-let functionNet = (id, ins, outs, i) => {
-    let ine = floatingEdge(i,"");
-    let oute = floatingEdge(i+2,"");
-    let fune = ref({id:i+1, sources:Array.init(ins, (n) => (ine, n)), targets:Array.init(outs, (n) => (oute, n)), label:id});
-    ine := {id:0, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:alpha};
-    oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:omega};
+let functionNet = (label, latex, ins, outs, i) => {
+    let ine = floatingEdge(i,"","");
+    let oute = floatingEdge(i+2,"","");
+    let fune = ref({id:i+1, sources:Array.init(ins, (n) => (ine, n)), targets:Array.init(outs, (n) => (oute, n)), label, latex});
+    ine := {id:0, sources:[||], targets:Array.init(ins, (n) => (fune, n)), label:alpha, latex: alphaLatex};
+    oute := {id:i+2, sources:Array.init(outs, (n) => (fune, n)), targets:[||], label:omega, latex: omegaLatex};
     ({inputs: ine, edges:[fune], outputs: oute}, i+3)
 }
 
@@ -142,8 +151,8 @@ let traceHypernet = (x, h) => {
         e^.sources[k] = (e',k');
     };
 
-    let newInputs = {id: 0, sources: [||], targets:Array.sub(h.inputs^.targets, x, (Array.length(h.inputs^.targets) - x)), label:alpha};
-    let newOutputs = {id: h.outputs^.id, sources: Array.sub(h.outputs^.sources, x, (Array.length(h.outputs^.sources) - x)), targets: [||], label:omega};
+    let newInputs = {id: 0, sources: [||], targets:Array.sub(h.inputs^.targets, x, (Array.length(h.inputs^.targets) - x)), label:alpha, latex:alphaLatex};
+    let newOutputs = {id: h.outputs^.id, sources: Array.sub(h.outputs^.sources, x, (Array.length(h.outputs^.sources) - x)), targets: [||], label:omega, latex: omegaLatex};
 
     for(i in 0 to Array.length(newInputs.targets) - 1){
         let (e, k) = newInputs.targets[i];
@@ -174,8 +183,8 @@ let traceHypernet = (x, h) => {
 }
 
 let swapNet = (i, x, y) => {
-    let ine = {id:0, sources:[||], targets:initialisePorts(x+y), label:alpha};
-    let oute = {id:i+1, sources:initialisePorts(x+y), targets:[||], label:omega};
+    let ine = {id:0, sources:[||], targets:initialisePorts(x+y), label:alpha, latex: alphaLatex};
+    let oute = {id:i+1, sources:initialisePorts(x+y), targets:[||], label:omega, latex: omegaLatex};
 
     let refin = ref(ine);
     let refout = ref(oute);
@@ -196,16 +205,16 @@ let swapNet = (i, x, y) => {
 
 let delayNet = (i, n) => {
     let subscript = generateUnicodeSubscript(n);
-    functionNet({js|ẟ|js} ++ subscript, 1, 1, i)
+    functionNet({js|ẟ|js} ++ subscript, "\\delta_{" ++ subscript ++ "}", 1, 1, i)
 }
 
 let forkNet = (i) => {
-    functionNet({js|⋏|js}, 1, 2, i)
+    functionNet({js|⋏|js}, forkLatex, 1, 2, i)
 }
 
 let dforkNet = (i, n) => {
     let subscript = generateUnicodeSubscript(n);
-    functionNet({js|Δ|js} ++ subscript, n, n*2, i)
+    functionNet({js|Δ|js} ++ subscript, dforkLatex ++ "_{" ++ subscript ++ "}", n, n*2, i)
 }
 
 let iterHypernet = (circuit, i) => {
@@ -238,13 +247,13 @@ let joinLinks = (net, l, outlink, inlink) => {
 let rec convertCircuitToHypernet = (circuit) => fst(convertCircuitToHypernet'(circuit, 0))
 and convertCircuitToHypernet' = (circuit, i) => {
     switch(circuit.c){
-    | Value(x)                  => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:circuit.v.print(x)})
-                                   and ine = floatingEdge(i,alpha)
-                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:omega});
+    | Value(x)                  => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:circuit.v.print(x), latex:circuit.v.printLatex(x)})
+                                   and ine = floatingEdge(i,alpha,alphaLatex)
+                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:omega, latex:omegaLatex});
                                    ({inputs: ine, edges: [e], outputs: oute}, i+3)
-    | Identity(n)               => let ine = floatingEdge(i,"");
-                                   let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:omega});
-                                   ine := {id:0, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:alpha};
+    | Identity(n)               => let ine = floatingEdge(i,"","");
+                                   let oute = ref({id:i+1, sources:Array.init(n, (n) => (ine, n)), targets:[||], label:omega, latex:omegaLatex});
+                                   ine := {id:0, sources:[||], targets:Array.init(n, (n) => (oute, n)), label:alpha, latex:alphaLatex};
                                    ({inputs:ine, edges: [], outputs: oute},i+2)
     | Composition(f,g)          => let fh = convertCircuitToHypernet'(f,i);
                                    let gh = convertCircuitToHypernet'(g,snd(fh));
@@ -253,7 +262,7 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                                  (composeParallel(fst(f),fst(gh),snd(gh)), snd(gh) + 2);}, 
                                                  (convertCircuitToHypernet'(x, i)), xs)
     | Swap(x,y)                 => (swapNet(i,x,y), i+2)
-    | Function(id,_,ins,outs,_) => functionNet(id, ins, outs, i)
+    | Function(id,latex,ins,outs,_) => functionNet(id, latex, ins, outs, i)
     | Delay(x)                  => delayNet(i,x)
     | Trace(x, f)               => let (fh,i') = convertCircuitToHypernet'(f,i+1);
                                    (traceHypernet(x,fh), i')
@@ -261,13 +270,13 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    let (fh,i') = convertCircuitToHypernet'(f',i+1);
                                    (traceHypernet(outputs(f), fh), i');  
     | Macro(_,_,f)              => convertCircuitToHypernet'(f,i);
-    | Inlink(x)                 => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:lookupLink(x,circuit.l)})
-                                   and ine = floatingEdge(i,alpha) 
-                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:omega});
+    | Inlink(x)                 => let rec e = ref({id: i+1, sources:[||], targets:[|(oute,0)|], label:lookupLink(x,circuit.l), latex:lookupLink(x,circuit.l) })
+                                   and ine = floatingEdge(i,alpha,alphaLatex) 
+                                   and oute = ref({id: i+2, sources:[|(e,0)|], targets:[||], label:omega, latex:omegaLatex});
                                    ({inputs: ine, edges: [e], outputs: oute}, i+3)
-    | Outlink(x)                => let rec e = ref({id: i+1, sources:[|(ine,0)|], targets:[||], label:lookupLink(x,circuit.l)})
-                                   and ine = ref({id: i, sources:[||], targets:[|(e,0)|], label:alpha})
-                                   and oute = floatingEdge(i+2,omega); 
+    | Outlink(x)                => let rec e = ref({id: i+1, sources:[|(ine,0)|], targets:[||], label:lookupLink(x,circuit.l), latex:lookupLink(x,circuit.l)})
+                                   and ine = ref({id: i, sources:[||], targets:[|(e,0)|], label:alpha, latex:alphaLatex})
+                                   and oute = floatingEdge(i+2,omega,omegaLatex); 
                                    ({inputs: ine, edges: [e], outputs: oute}, i+3)
     | Link(x,y,f)               => let f = convertCircuitToHypernet'(f,i);
                                    (joinLinks(fst(f),circuit.l,x,y), snd(f))
@@ -295,7 +304,7 @@ and reachable' = (input, output, edge, traversed) => {
     }
 }
 
-let stubEdge = (i, e, k) => ref({id: i, sources: [|(e,k)|], targets: [||], label: "~"});
+let stubEdge = (i, e, k) => ref({id: i, sources: [|(e,k)|], targets: [||], label: "~", latex: stubLatex});
 
 /* TRACE BREAKS THIS (obviously) */
 

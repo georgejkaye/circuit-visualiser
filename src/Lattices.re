@@ -20,6 +20,7 @@ type lattice = {
     orOp        : (latticeElement, latticeElement) => latticeElement,   /* Or operation */
     notOp       : (latticeElement) => latticeElement,                   /* Not operation */
     print       : (latticeElement) => string,                           /* Print operation */
+    printLatex  : (latticeElement) => string,                           /* Print operation but latex */
     parse       : string => (bool, latticeElement)                      /* Parse a string and determine if it is a value, and if so which one */
 }
 
@@ -61,6 +62,16 @@ let printSimpleLattice = (elem) => {
     | (1,1) => "t"
     | (2,0) => "T"
     | _     => latticeError("not a lattice element")
+    }
+}
+
+let printSimpleLatticeLatex = (elem) => {
+    switch (elem) {
+        | (0,0) => "\\bot"
+        | (1,0) => "f"
+        | (1,1) => "t"
+        | (2,0) => "\\top"
+        | _     => latticeError("not a lattice element")
     }
 }
 
@@ -145,6 +156,7 @@ let simpleLattice: lattice = {
     orOp:       simpleOr,
     notOp:      simpleNot,
     print:      printSimpleLattice,
+    printLatex: printSimpleLatticeLatex,
     parse:      simpleParse
 }
 
