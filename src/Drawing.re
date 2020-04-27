@@ -1,7 +1,9 @@
 open Circuits;
 open Hypernets;
+open Algebraic;
 
 let dot = {js|•|js}
+let arrow = {js|→|js}
 
 let tab = "    "
 let nl = "\n"
@@ -14,31 +16,14 @@ let invisibleWireOptions = "[style=invis]"
 let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false]"
 let traceVertexOptions = "[shape=circle, fillcolor=black; fixedsize=true; width=0.05; label=\"\"]"
 
+let formalInputVertexOptions = (iv, ov) => "[arrowhead=vee; arrowsize=0.5; headlabel=\"" ++ string_of_int(iv) ++ arrow ++  string_of_int(ov) ++ "\"; labeldistance=3; labelangle=180]";
+let formalOutputVertexOptions = (ov) => "[arrowhead=vee; arrowsize=0.5; taillabel=\"" ++ string_of_int(ov) ++ "\"; labeldistance=2; labelangle=180]";
+
 let getTraceText = (x, e, left) => {
     let dir = left ? "l" : "r";
     let name = "trace" ++ dir ++ string_of_int(x) ++ "to" ++ string_of_int(e^.id);
     (name, name ++ "[shape=point, width=0.01]\n");
 }
-
-/*  let (inedgedot, intransdot) = 
-                if(Array.length(inputs^.targets) == 0){
-                    ("","")
-                } else {
-                    let inedgecode = generateGraphvizCodeEdge(inputs,inid,outid);
-                    let edgedot = fst(inedgecode) == "" ? "" : fst(inedgecode) ++ ";\n";
-                    let transdot = snd(inedgecode)[2];
-                    (edgedot, transdot)
-                };
-            
-            let (outedgedot, outtransdot) = 
-                if(Array.length(outputs^.sources) == 0){
-                    ("","")
-                } else {
-                    let outedgecode = generateGraphvizCodeEdge(outputs,inid,outid);
-                    let edgedot = fst(outedgecode) == "" ? "" : fst(outedgecode) ++ ";\n";
-                    let transdot = snd(outedgecode)[2];
-                    (edgedot, transdot)
-                }; */
 
 let rec makeTransitionToAllEdgesWithNoSources = (inid, edges) => {
     switch(edges){
@@ -136,7 +121,7 @@ let rec generateGraphvizCode = (net) => {
     for(i in 0 to Array.length(targets) - 1){
         let (e,k) = targets[i];
         
-        let vertexId = "v" ++ string_of_int(x) ++ "_t" ++ string_of_int(i) ++ "_e" ++ string_of_int(e^.id) ++ "_s" ++ string_of_int(k)
+        let vertexId = "v" ++ string_of_int(x) ++ "_t" ++ string_of_int(i) ++ "_e" ++ string_of_int(e^.id) ++ "_s" ++ string_of_int(k);
         vertexString := vertexString^ ++ tab ++ vertexId ++ vertexOptions ++ nl;
 
         if(e^.id <= x){
@@ -145,16 +130,9 @@ let rec generateGraphvizCode = (net) => {
 
             let traceVertexInId = vertexId ++ "_Tr_i";
             let traceVertexOutId = vertexId ++ "_Tr_o";
-
-            /*traceVertexString := traceVertexString^ ++ tab ++ traceVertexInId ++ traceVertexOptions ++ nl;*/
-            /*traceVertexString := traceVertexString^ ++ tab ++ traceVertexOutId ++ traceVertexOptions ++ nl;*/
-            
             let inport = (e^.id == x) ? ":n" : ""; 
-
             
             inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ vertexId ++ inport ++ " " ++ traceWireOptions ++ nl;
-            /*traceWireString := traceWireString^ ++ tab ++ traceVertexInId ++ ":s -> " ++ vertexId ++ ":e " ++ traceWireOptions ++ nl;*/
-            /*traceWireString := traceWireString^ ++ tab ++ vertexId ++ ":w -> " ++ traceVertexOutId ++ ":s " ++ traceWireOptions ++ nl;*/
             outputWireString := outputWireString^ ++ tab ++ vertexId ++ " -> e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl;
 
 
@@ -175,3 +153,32 @@ let rec generateGraphvizCode = (net) => {
 }
 
 let zeroDot = generateGraphvizCode(zeroNet);
+
+/*let generateFormalGraphvizCode = ({v,e,i,o,k,l,f}) => {
+
+    let edgeString = ref("");
+    let inputVertexString = ref("");
+    let outputVertexString = ref("");
+
+    for(i in 0 to (e - 1)) {
+
+        /*let inports = generatePorts(ins, false);
+        let outports = generatePorts(outs, true);
+        
+        let instring = inports == "{}" ? "" : inports ++ " | ";
+        let outstring = outports == "{}" ? "" : " | " ++ outports; */
+
+        let instring = "";
+        let outstring = "";
+
+        let newEdgeString = "e" ++ string_of_int(i) ++ "[shape=Mrecord; label=\"" ++
+        instring ++ f[i] ++ outstring
+        ++ "}\"]"
+
+        edgeString := edgeString^ ++ tab ++ newEdgeString;
+
+    }
+
+
+
+}*/
