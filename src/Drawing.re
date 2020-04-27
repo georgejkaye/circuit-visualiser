@@ -148,37 +148,50 @@ let rec generateGraphvizCode = (net) => {
 } and generateOutputTransitions = (outid, edges) => {
     switch(edges){
     | [] => ""
-    | [x,...xs] => Js.log(x.id); "e" ++ string_of_int(x.id) ++ " -> e" ++ string_of_int(outid) ++ invisibleWireOptions ++ nl; 
+    | [x,...xs] => "e" ++ string_of_int(x.id) ++ " -> e" ++ string_of_int(outid) ++ invisibleWireOptions ++ nl; 
     }
 }
 
 let zeroDot = generateGraphvizCode(zeroNet);
 
-/*let generateFormalGraphvizCode = ({v,e,i,o,k,l,f}) => {
+let generateFormalGraphvizEdge = (i,s,t,l) => {
+    
+        let ins = List.length(s);
+        let outs = List.length(t);
+
+        let inports = generatePorts(ins, false);
+        let outports = generatePorts(outs, true);
+        
+        let instring = inports == "{}" ? "" : inports ++ " | ";
+        let outstring = outports == "{}" ? "" : " | " ++ outports;
+
+        let newEdgeString = "e" ++ string_of_int(i) ++ "[shape=Mrecord; label=\"{" ++
+        instring ++ l ++ outstring
+        ++ "}\"]"
+
+        newEdgeString
+}
+
+let generateFormalGraphvizCode = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
 
     let edgeString = ref("");
     let inputVertexString = ref("");
     let outputVertexString = ref("");
 
+    let normalSources = snd(s);
+    let normalTargets = snd(t);
+
     for(i in 0 to (e - 1)) {
-
-        /*let inports = generatePorts(ins, false);
-        let outports = generatePorts(outs, true);
-        
-        let instring = inports == "{}" ? "" : inports ++ " | ";
-        let outstring = outports == "{}" ? "" : " | " ++ outports; */
-
-        let instring = "";
-        let outstring = "";
-
-        let newEdgeString = "e" ++ string_of_int(i) ++ "[shape=Mrecord; label=\"" ++
-        instring ++ f[i] ++ outstring
-        ++ "}\"]"
-
-        edgeString := edgeString^ ++ tab ++ newEdgeString;
-
+        let newEdgeString = generateFormalGraphvizEdge(i,normalSources[i], normalTargets[i], fu[i]);
+        edgeString := tab ++ newEdgeString ++ nl ++ edgeString^;
     }
 
+    let inputEdge = generateFormalGraphvizEdge(e, [], fst(t), alpha);
+    let outputEdge = generateFormalGraphvizEdge(e+1, fst(s), [], omega);
 
+    edgeString := tab ++ outputEdge ++ nl ++ edgeString^ ++  tab ++ inputEdge;
 
-}*/
+    Js.log(edgeString^);
+    edgeString^;
+
+}

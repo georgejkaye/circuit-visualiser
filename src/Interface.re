@@ -49,6 +49,7 @@ type state = {
     net: hypernet,          /* The corresponding hypernet */
     dot: string,            /* The corresponding dot string */
     alg: string,            /* The corresponding algebraic notation */
+    form: string,           /* The corresponding formal dot string */
     error: bool             /* If there's a parse error */
 }
 
@@ -124,9 +125,10 @@ let make = () => {
                                     } else { 
                                         let generatedCircuit = generateCircuit(state, text);
                                         let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
-                                        
                                         let generatedDot = generateGraphvizCode(generatedHypernet);
-                                        let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(generatedHypernet));
+                                        let generatedAlg = generateAlgebraicDefinition(generatedHypernet);
+                                        let algebraicLatex = algebraicNetLatex(generatedAlg);
+                                        let formalDot = generateFormalGraphvizCode(generatedAlg);
                                         {circ: fst(snd(generatedCircuit)), 
                                         old: text,
                                         lat: state.lat, 
@@ -135,12 +137,15 @@ let make = () => {
                                         macs: state.macs,
                                         net: generatedHypernet,
                                         dot: generatedDot,
-                                        alg: generatedAlg,
+                                        alg: algebraicLatex,
+                                        form: formalDot,
                                         error:fst(generatedCircuit)}
                                     }
         | MinimiseHypergraph =>     let minimisedHypernet = minimise(state.net);
                                     let generatedDot = generateGraphvizCode(minimisedHypernet);
-                                let generatedAlg = algebraicNetLatex(generateAlgebraicDefinition(minimisedHypernet));
+                                    let generatedAlg = generateAlgebraicDefinition(minimisedHypernet);
+                                    let algebraicLatex = algebraicNetLatex(generatedAlg);
+                                    let formalDot = generateFormalGraphvizCode(generatedAlg);
                                     {circ: state.circ, 
                                         old: "",
                                         lat: state.lat, 
@@ -149,7 +154,8 @@ let make = () => {
                                         macs: state.macs,
                                         net: minimisedHypernet,
                                         dot: generatedDot,
-                                        alg: generatedAlg,
+                                        alg: algebraicLatex,
+                                        form: formalDot,
                                         error:state.error
                                     }
         }
@@ -163,6 +169,7 @@ let make = () => {
         net: zeroNet,
         dot: zeroDot,
         alg: "",
+        form: "",
         error: false
     });
     <div className = "main">

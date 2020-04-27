@@ -20,8 +20,10 @@ type algebraicNet = {
     i : array(edgePlusTwo),
     o : array(edgePlusTwo),
     k : array(int),
-    l : list(string),
-    f : array(string),
+    lu : list(string),
+    ll : list(string),
+    fu : array(string),
+    fl : array(string),
     s : (list(int), array(list(int))),
     t : (list(int), array(list(int)))
 }
@@ -77,14 +79,14 @@ let printFunctionFromEdgesToListsLatex = (func, bonus, front) => {
 
 }
 
-let algebraicNetLatex = ({v,e,i,o,k,l,f,s,t}) => {
+let algebraicNetLatex = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
     let result = "V^I = V^O = " ++ generateFin("v", v) ++ "\\\\" ++
     "E = " ++ generateFin("e", e) ++ "\\\\" ++
     "i = " ++ printFunctionLatex(i, "v", edgePlusTwoLatex) ++ "\\\\" ++
     "o = " ++ printFunctionLatex(o, "v", edgePlusTwoLatex) ++ "\\\\" ++
     "\\kappa = " ++ printFunctionLatex(k, "v", vertexLatex) ++ "\\\\" ++
-    "L = \\{" ++ printListCommas(l, (x) => x) ++ "\\}\\\\" ++
-    "l = " ++ printFunctionLatex(f, "e", (x) => x) ++ "\\\\" ++
+    "L = \\{" ++ printListCommas(ll, (x) => x) ++ "\\}\\\\" ++
+    "l = " ++ printFunctionLatex(fl, "e", (x) => x) ++ "\\\\" ++
     "s = " ++ printFunctionFromEdgesToListsLatex(s, omegaLatex, false) ++ "\\\\" ++
     "t = " ++ printFunctionFromEdgesToListsLatex(t, alphaLatex, true)
 
@@ -119,9 +121,9 @@ and replaceEdgeMapSnd' = (valueMap, func, acc) => {
     }
 }
 
-let rec normaliseEdgeIds = (inid, outid, eds, is, os,f) => {
+let rec normaliseEdgeIds = (inid, outid, eds, is, os,fu,fl) => {
     let valueMap = normaliseEdgeIds'(inid,outid,0,eds,[]); 
-    (replaceEdgeMap(valueMap, eds), replaceEdgeMapSnd(valueMap,is), replaceEdgeMapSnd(valueMap,os), replaceEdgeMapFst(valueMap,f))
+    (replaceEdgeMap(valueMap, eds), replaceEdgeMapSnd(valueMap,is), replaceEdgeMapSnd(valueMap,os), replaceEdgeMapFst(valueMap,fu), replaceEdgeMapFst(valueMap,fl))
 } and normaliseEdgeIds' = (inid,outid,n,eds,valueMap) => {
     switch(eds){
     | []        =>  valueMap
@@ -163,8 +165,6 @@ let generateConnections = (edge, is, os) => {
 
     let ks = ref([]);
     let ous = List.filter((((_,e)) => e == id), is);
-    Js.log("ous: " ++ printListCommas(ous, (((x,y)) => "(" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ ")")))
-
 
     for(j in 0 to Array.length(targets) - 1){
         
@@ -172,7 +172,6 @@ let generateConnections = (edge, is, os) => {
         let (e, k) = targets[j];
 
         let ins = List.filter((((_,e')) => e^.id == e'), os);
-        Js.log("ins: " ++ printListCommas(ins, (((x,y)) => "(" ++ string_of_int(x) ++ ", " ++ string_of_int(y) ++ ")")))
         let v2 = fst(List.nth(ins,k))
        
         ks := [(v1, v2),...ks^]
@@ -212,11 +211,9 @@ let generateSourcesAndTargets = (eds, is, os) => {
 /* Generate the algebraic definition of a hypernet */
 let rec generateAlgebraicDefinition = (net) => {
     let allEdges = [net.inputs] @ net.edges @ [net.outputs];
-    let (i,eds,is,os,l,f) = generateAlgebraicDefinition' (allEdges);
+    let (i,eds,is,os,lu,ll,fu,fl) = generateAlgebraicDefinition' (allEdges);
     let ks = generateAllConnections(os,is,allEdges);
-    let (eds, is,os,f) = normaliseEdgeIds(net.inputs^.id, net.outputs^.id, eds, is, os, f);
-    
-    Js.log(printListCommas(eds, printEdgePlusTwo));
+    let (eds, is,os,fu,fl) = normaliseEdgeIds(net.inputs^.id, net.outputs^.id, eds, is, os, fu,fl);
     
     let (s,t) = generateSourcesAndTargets(eds, is, os);
     
@@ -225,26 +222,32 @@ let rec generateAlgebraicDefinition = (net) => {
      i:Array.of_list(List.map(snd,is)), 
      o:Array.of_list(List.map(snd,os)), 
      k:Array.of_list(List.map(snd,ks)), 
-     l:l, 
-     f:Array.of_list(List.map(snd,f)),
+     lu:lu,
+     ll:ll, 
+     fu:Array.of_list(List.map(snd,fu)),
+     fl:Array.of_list(List.map(snd,fl)),
      s: s,
      t: t
     }
 
-} and generateAlgebraicDefinition' = (edges) => generateAlgebraicDefinition''(edges, 0, 0, [], [], [], [], [])
-and generateAlgebraicDefinition'' = (edges, i, o, eds, is, os, l, f) => {
+} and generateAlgebraicDefinition' = (edges) => generateAlgebraicDefinition''(edges, 0, 0, [], [], [], [], [], [], [])
+and generateAlgebraicDefinition'' = (edges, i, o, eds, is, os, lu, ll, fu, fl) => {
     switch(edges){
-        | [] => (i, List.rev(eds), is, os, List.rev(l), List.rev(f))
+        | [] => (i, List.rev(eds), is, os, List.rev(lu), List.rev(ll), List.rev(fu), List.rev(fl))
         | [e,...es] => let (is', os') = generateInputsAndOutputs(i,o,e);
-                       let l' = List.mem(e^.latex, l) || e^.latex == alphaLatex || e^.latex == omegaLatex ? l : [e^.latex,...l];
-                       let f' = e^.latex == alphaLatex || e^.latex == omegaLatex ? f : [(e^.id, e^.latex),...f];
+                       let lu' = List.mem(e^.label, lu) || e^.label == alpha || e^.label == omega ? lu : [e^.label,...lu];
+                       let ll' = List.mem(e^.latex, ll) || e^.latex == alphaLatex || e^.latex == omegaLatex ? ll : [e^.latex,...ll];
+                       let fu' = e^.label == alpha || e^.label == omega ? fu : [(e^.id, e^.label),...fu];
+                       let fl' = e^.latex == alphaLatex || e^.latex == omegaLatex ? fl : [(e^.id, e^.latex),...fl];
                        generateAlgebraicDefinition'' (es, i + Array.length(e^.sources), 
                                                       o + Array.length(e^.targets), 
                                                       [e^.id,...eds], 
                                                       is @ is', 
                                                       os @ os', 
-                                                      l',
-                                                      f'
+                                                      lu',
+                                                      ll',
+                                                      fu',
+                                                      fl'
                                                      )
     }
 

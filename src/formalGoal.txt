@@ -1,0 +1,36 @@
+digraph{
+
+    rankdir=LR;
+    ranksep=0.75;
+    nodesep=0.25;
+
+    e7 [shape=Mrecord; label="{{<s0> • | <s1> •} | ω}"];
+    e4 [shape=Mrecord; label="{{<s0> •} | G | {<t0> •}}"];
+    e1 [shape=Mrecord; label="{{<s0> •} | F | {<t0> •}}"];
+    e0 [shape=Mrecord; label="{α | {<t0> • | <t1> •}}"];
+
+    v0_t0_e1_s0I[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=""];
+    v0_t1_e4_s0I[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=""];
+    v1_t0_e7_s0I[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=""];
+    v4_t0_e7_s1I[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=""];
+
+    v0_t0_e1_s0O[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=""];
+    v0_t1_e4_s0O[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=""];
+    v1_t0_e7_s0O[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=""];
+    v4_t0_e7_s1O[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=""];
+
+    e0:t0:e -> v0_t0_e1_s0I:w [arrowhead=vee; arrowsize=0.5; headlabel="0 → 1"; labeldistance=3; labelangle=180]
+    e0:t1:e -> v0_t1_e4_s0I:w [arrowhead=vee; arrowsize=0.5; headlabel="1 → 0"; labeldistance=3; labelangle=180]
+    e1:t0:e -> v1_t0_e7_s0I:w [arrowhead=vee; arrowsize=0.5; headlabel="2 → 3"; labeldistance=3; labelangle=180]
+    e4:t0:e -> v4_t0_e7_s1I:w [arrowhead=vee; arrowsize=0.5; headlabel="3 → "; labeldistance=3; labelangle=180]
+
+    v0_t0_e1_s0O:e -> e1:s0:w [arrowhead=vee; arrowsize=0.5; taillabel="0"; labeldistance=2; labelangle=180]
+    v0_t1_e4_s0O:e -> e4:s0:w [arrowhead=vee; arrowsize=0.5; taillabel="1"; labeldistance=2; labelangle=180]
+    v1_t0_e7_s0O:e -> e7:s0:w [arrowhead=vee; arrowsize=0.5; taillabel="2"; labeldistance=2; labelangle=180]
+    v4_t0_e7_s1O:e -> e7:s1:w [arrowhead=vee; arrowsize=0.5; taillabel="3"; labeldistance=2; labelangle=180]
+
+support[style=invis]
+support->e0[style=invis]
+
+
+}
