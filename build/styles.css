@@ -1,24 +1,89 @@
+@import url('https://fonts.googleapis.com/css?family=Source+Code+Pro:400,600&display=swap');
+
 body {
-    font: 14px "Century Gothic", Futura, sans-serif;
+    font: 14px "Source Code Pro", Futura, sans-serif;
+    color: #d6d3cd;
+    background-color: #282A36;
+    margin: 0px;
 }
 
-div {
-    margin-bottom: 10px;
+table {
+    margin: 10px 0px 0px 10px;
 }
+
+h1 {
+    margin: 0px 0px 0px 0px;
+    font-size: 48px;
+    font-weight: light;
+}
+
+td {
+    vertical-align: top;
+    padding: 1px;
+}
+
+input[type=text] {
+
+    background-color: #d6d3cd;
+    height: 36px;
+    border: none;
+    padding: 5px 10px 5px 10px;
+    font-size: 18px;
+
+}
+
+/* SVG stuff */
+
+polygon {
+    opacity: 0;
+}
+
+path {
+    stroke: #d6d3cd;
+}
+
+text {
+    fill: #d6d3cd;
+}
+
+ellipse {
+    fill: #d6d3cd;
+    stroke: #d6d3cd;
+}
+
+polyline {
+    stroke: #d6d3cd;
+}
+
+g g polygon {
+    stroke: #d6d3cd;
+    opacity: 1;
+}
+
+/* Classes */
 
 .code {
     font: 14px "Courier New", monospace;
-    background-color: #2e2e2e;
-    color: #ffffff;
+    background-color: #383a59;
+    color: #f8f8f2;
     border-radius: 3px;
     padding: .2em .4em;
+}
+
+.latex {
+    margin: 0px 10px;
 }
 
 .right {
     float: right
 }
 
-td {
-    vertical-align: top;
-    padding: 1px;
+.title {
+    background-color: #383a59;
+    color: #fff;
+    padding: 10px;
+}
+
+.darker {
+    background-color: #21222c;
 }

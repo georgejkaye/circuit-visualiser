@@ -30,7 +30,7 @@ type algebraicNet = {
 
 let rec generateFin = (x, n) => {
     let strn = generateFin' (x, n, 0, "");
-    (String.length(strn) > 0) ? "\\{" ++ String.sub(strn, 0, String.length(strn) - 1) ++ "\\}" : strn
+    (String.length(strn) > 0) ? "\\{" ++ String.sub(strn, 0, String.length(strn) - 1) ++ "\\}" : "\\{\\}"
 } and generateFin' = (x, n, i, acc) => {
     n == 0 ? acc 
            : generateFin' (x, n-1, i+1, acc ++ x ++ "_{" ++ string_of_int(i) ++ "}" ++ ",")

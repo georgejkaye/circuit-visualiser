@@ -119,9 +119,14 @@ and trim' = (xs, b, n) => {
 /*******************/
 
 let printArray = (a, f) => {
-    let string = ref("{" ++ f(a[0]));
-    for(i in 1 to Array.length(a) - 1) {
-        string := string^ ++ ", " ++ f(a[i]);
+
+    if(Array.length(a) == 0) {
+        "{}";
+    } else {
+        let string = ref("{" ++ f(a[0]));
+        for(i in 1 to Array.length(a) - 1) {
+            string := string^ ++ ", " ++ f(a[i]);
+        }
+        string^ ++ "}"
     }
-    string^ ++ "}"
 }

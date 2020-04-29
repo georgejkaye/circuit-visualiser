@@ -8,7 +8,7 @@ let arrow = {js|→|js}
 let tab = "    "
 let nl = "\n"
 
-let graphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.5;" ++ nl ++ tab ++ "nodesep=0.5;" ++ nl;
+let graphOptions = nl ++ tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.5;" ++ nl ++ tab ++ "nodesep=0.5;" ++ nl;
 let formalGraphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.75;" ++ nl ++ tab ++ "nodesep=0.25;" ++ nl;
 let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=\"\"];"
 let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
@@ -17,7 +17,7 @@ let invisibleWireOptions = "[style=invis]"
 /*let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false]"*/
 let traceVertexOptions = "[shape=circle, fillcolor=black; fixedsize=true; width=0.05; label=\"\"]"
 
-let formalInputWireOptions = (iv, ov) => "[arrowhead=vee; arrowsize=0.5; headlabel=\"" ++ string_of_int(iv) ++ arrow ++  string_of_int(ov) ++ "\"; labeldistance=3; labelangle=180]";
+let formalInputWireOptions = (iv, ov) => "[arrowhead=vee; arrowsize=0.5; headlabel=\"" ++ string_of_int(iv) ++ " " ++ arrow ++ " " ++ string_of_int(ov) ++ "\"; labeldistance=3; labelangle=180]";
 let formalOutputWireOptions = (ov) => "[arrowhead=vee; arrowsize=0.5; taillabel=\"" ++ string_of_int(ov) ++ "\"; labeldistance=2; labelangle=180]";
 
 let getTraceText = (x, e, left) => {
@@ -55,7 +55,7 @@ let rec generateGraphvizCode = (net) => {
 
     let inputOutputWires = (List.length(net.edges) == 0) ? nl ++ tab ++ "e" ++ string_of_int(net.inputs^.id) ++ "->" ++ "e" ++ string_of_int(net.outputs^.id) ++ invisibleWireOptions ++ nl : "";
 
-    let finalGraph = "digraph{" ++ nl ++ nl ++ graphOptions ++ graph ++ inputWires ++ outputWires ++ inputOutputWires ++ nl ++ "}"
+    let finalGraph = "digraph {" ++ nl ++ nl ++ graphOptions ++ graph ++ inputWires ++ outputWires ++ inputOutputWires ++ nl ++ "}"
 
     Js.log(finalGraph);
 

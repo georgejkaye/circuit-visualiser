@@ -30,9 +30,9 @@ module MathJax = {
     [@react.component]
     let make = (~string) => {
         <MathJaxContext input="tex">
-            <div>
+            <span className="latex">
                 <MathJaxNode inline=true>string</MathJaxNode>
-            </div>
+            </span>
         </MathJaxContext>
     }
 }
@@ -60,7 +60,7 @@ let printLatexOrError = (string, error) => {
     if(error){
         <MathJax string=string />
     } else {
-        string
+        <span className= "latex">string</span>
     }
 }
 
@@ -127,7 +127,7 @@ let make = () => {
                                         let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
                                         let generatedDot = generateGraphvizCode(generatedHypernet);
                                         let generatedAlg = generateAlgebraicDefinition(generatedHypernet);
-                                        let algebraicLatex = algebraicNetLatex(generatedAlg);
+                                        let algebraicLatex = (fst(generatedCircuit) ? algebraicNetLatex(generatedAlg) : "");
                                         let formalDot = generateFormalGraphvizCode(generatedAlg);
                                         {circ: fst(snd(generatedCircuit)), 
                                         old: text,
@@ -176,11 +176,13 @@ let make = () => {
         <div className = "title">
             <h1>(str("Circuit visualiser "))</h1>
         </div>
-        <div className = "input">
-            <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) /> <button onClick={_ => dispatch(MinimiseHypergraph)}>{str("Minimise")}</button>
-        </div>
-        <div>
+        <div className = "darker">
+            <span className = "input">
+                <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) /> /*<button onClick={_ => dispatch(MinimiseHypergraph)}>{str("Minimise")}</button>*/
+            </span>
+           <span className = "darker-wide">
                 (printLatexOrError(str(strn), error))
+            </span>
         </div>
         <table>
         <tbody>
