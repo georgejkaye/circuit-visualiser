@@ -24,8 +24,8 @@ type algebraicNet = {
     ll : list(string),
     fu : array(string),
     fl : array(string),
-    s : (list(int), array(list(int))),
-    t : (list(int), array(list(int)))
+    s : (array(int), array(array(int))),
+    t : (array(int), array(array(int)))
 }
 
 let rec generateFin = (x, n) => {
@@ -60,16 +60,16 @@ let printFunctionLatex = (func, x, prnt) => {
 }
 
 
-let printFunctionFromEdgesToListsLatex = (func, bonus, front) => {
+let printFunctionFromEdgesToArraysLatex = (func, bonus, front) => {
 
     let string = ref("");
-    let bonusString = bonus ++ "\\mapsto [" ++ printListCommas(fst(func), vertexLatex) ++ "],"
+    let bonusString = bonus ++ "\\mapsto [" ++ printArray(fst(func), vertexLatex) ++ "],"
 
     let func = snd(func);
 
     for(i in 0 to Array.length(func) - 1) {
 
-        string := string^ ++ edgeLatex(i) ++ "\\mapsto [" ++ printListCommas(func[i], vertexLatex) ++ "],"
+        string := string^ ++ edgeLatex(i) ++ "\\mapsto [" ++ printArray(func[i], vertexLatex) ++ "],"
 
     }
 
@@ -87,8 +87,8 @@ let algebraicNetLatex = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
     "\\kappa = " ++ printFunctionLatex(k, "v", vertexLatex) ++ "\\\\" ++
     "L = \\{" ++ printListCommas(ll, (x) => x) ++ "\\}\\\\" ++
     "l = " ++ printFunctionLatex(fl, "e", (x) => x) ++ "\\\\" ++
-    "s = " ++ printFunctionFromEdgesToListsLatex(s, omegaLatex, false) ++ "\\\\" ++
-    "t = " ++ printFunctionFromEdgesToListsLatex(t, alphaLatex, true)
+    "s = " ++ printFunctionFromEdgesToArraysLatex(s, omegaLatex, false) ++ "\\\\" ++
+    "t = " ++ printFunctionFromEdgesToArraysLatex(t, alphaLatex, true)
 
     Js.log(result);
     result
@@ -226,8 +226,8 @@ let rec generateAlgebraicDefinition = (net) => {
      ll:ll, 
      fu:Array.of_list(List.map(snd,fu)),
      fl:Array.of_list(List.map(snd,fl)),
-     s: s,
-     t: t
+     s: (Array.of_list(fst(s)), Array.map(Array.of_list, snd(s))),
+     t: (Array.of_list(fst(t)), Array.map(Array.of_list, snd(t))),
     }
 
 } and generateAlgebraicDefinition' = (edges) => generateAlgebraicDefinition''(edges, 0, 0, [], [], [], [], [], [], [])
