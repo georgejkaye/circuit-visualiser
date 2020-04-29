@@ -15,7 +15,7 @@
   "namespace": true,
   "bs-dependencies": [
     "reason-react",
-    "react-mathjax2"
+    "bs-webapi"
   ],
   "refmt": 3
 }
