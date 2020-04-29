@@ -250,7 +250,6 @@ and generateAlgebraicDefinition'' = (edges, i, o, eds, is, os, lu, ll, fu, fl) =
                                                       fl'
                                                      )
     }
-
-
-
 }
+
+let zeroAlg = algebraicNetLatex(generateAlgebraicDefinition(zeroNet));

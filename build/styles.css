@@ -32,6 +32,10 @@ input[type=text] {
 
 }
 
+textarea {
+    background-color: #d6d3cd;
+}
+
 /* SVG stuff */
 
 polygon {

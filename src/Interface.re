@@ -23,13 +23,13 @@ module MathJaxNode = {
 
 module MathJaxContext = {
     [@bs.module "react-mathjax2"][@react.component]
-    external make : (~input : string, ~children : React.element) => React.element = "Context"
+    external make : (~input : string, ~delay : int, ~children : React.element) => React.element = "Context"
 }
 
 module MathJax = {
     [@react.component]
     let make = (~string) => {
-        <MathJaxContext input="tex">
+        <MathJaxContext input="tex" delay=2>
             <span className="latex">
                 <MathJaxNode inline=true>string</MathJaxNode>
             </span>
@@ -103,6 +103,7 @@ module Input = {
     let make = (~onSubmit) => {
         let (text, setText) = React.useReducer((_, newText) => newText, "");
         <input
+            style = (ReactDOMRe.Style.make(~width="400px", ()))
             value = text
             type_ = "text"
             placeholder = "Type in a circuit!"
@@ -168,7 +169,7 @@ let make = () => {
         macs: Examples.exampleMacros,
         net: zeroNet,
         dot: zeroDot,
-        alg: "",
+        alg: zeroAlg,
         form: "",
         error: false
     });
@@ -187,7 +188,126 @@ let make = () => {
         <table>
         <tbody>
         <tr>
-            <td width="500px">
+            <td>
+                <table width="400px">
+                    <tr>
+                        <td>
+                            <span className = "code">(str("f . g"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Horizontal composition"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("f * g"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Vertical composition"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("f^n"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Indexed tensor"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("/\\"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Fork"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("\\/"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Join"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("/\\{n}"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Diagonal fork"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("\\/{n}"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Diagonal join"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("~"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Stub"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("x{m,n}"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Swap"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("Tr{x}(f)"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Trace"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("iter(f)"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Iteration"))</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className = "code">(str("\\xy.f"))</span> 
+                        </td>
+                        <td>
+                            <b>(str("Link"))</b>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <div>
+                    <MathJax string=str(alg) />
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            </td>
+            <td>
+                <Graphviz dot=dot options = {fit: true, height: 500, width: 1000}/>   
+            </td>
+        </tr>
+        </tbody>
+        </table> 
+    </div>
+    
+}
+
+/* <td width="500px">
                 <div className = "instructions">
                 <div> <span className = "code">(str("a . b"))</span> <b>(str(" Horizontal composition"))</b> (str(" left to right"))</div>
                 <div> <span className = "code">(str("a * b"))</span> <b>(str(" Vertical composition (tensor)"))</b></div>
@@ -203,20 +323,10 @@ let make = () => {
                 <div> <span className = "code">(str("\\xy."))</span> (str(" or ")) <span className = "code">(str("\\x,y."))</span><b>(str(" Link"))</b> (str(" outlink x with inlink y"))</div>
             </div>
             </td>
-            <td>
-                <div>
-                <MathJax string=str(alg) />
-                </div>
-            </td>
+
             <td>
                 <div>
                 <textarea rows=15 cols=100 value=dot readOnly=true></textarea>
                 </div>
             </td>
-        </tr>
-        </tbody>
-        </table>
-        <Graphviz dot=dot options = {fit: true, height: 500, width: 1000}/>    
-    </div>
-    
-}
+            */
