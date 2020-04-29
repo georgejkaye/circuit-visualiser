@@ -5,6 +5,8 @@ open Hypernets;
 open Algebraic;
 open Drawing;
 
+open Webapi.Dom
+
 type options = {
     fit: bool,
     height: int,
@@ -86,21 +88,25 @@ let generateCircuit = (state, text) => {
 }
 }
 
-let minimiseHypergraph = (state) => {
-
-}
-
 let getWindowSize = () => {
-    let window = Webapi.Dom.window;
-    let width = Webapi.Dom.Window.innerWidth(window);
-    let height = Webapi.Dom.Window.innerHeight(window);
+    let width = Window.innerWidth(window);
+    let height = Window.innerHeight(window);
 
     (width, height)
 }
 
+let getWidth = () => {
+    Window.innerWidth(window);
+}
+
+let getHeight = () => {
+    Window.innerHeight(window);
+}
+
 type action =
   | ParseNewCircuit(string)
-  | MinimiseHypergraph;
+  | MinimiseHypergraph
+  | Refresh
 
 let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
 
@@ -126,61 +132,76 @@ module Input = {
             )
         />
     }
-}
+};
+
+
+let reducer = (state, action) => {
+    switch(action) {
+    | ParseNewCircuit(text) =>  if(state.old == text){
+                                    state;
+                                } else { 
+                                    let generatedCircuit = generateCircuit(state, text);
+                                    let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
+                                    let generatedDot = generateGraphvizCode(generatedHypernet);
+                                    let generatedAlg = generateAlgebraicDefinition(generatedHypernet);
+                                    let algebraicLatex = (fst(generatedCircuit) ? algebraicNetLatex(generatedAlg) : "");
+                                    let formalDot = generateFormalGraphvizCode(generatedAlg);
+                                    {circ: fst(snd(generatedCircuit)), 
+                                    old: text,
+                                    lat: state.lat, 
+                                    strn: snd(snd(generatedCircuit)), 
+                                    funs: state.funs, 
+                                    macs: state.macs,
+                                    net: generatedHypernet,
+                                    dot: generatedDot,
+                                    alg: algebraicLatex,
+                                    form: formalDot,
+                                    error:fst(generatedCircuit),
+                                    width:getWidth(),
+                                    height:getHeight()}
+                                }
+    | MinimiseHypergraph =>     let minimisedHypernet = minimise(state.net);
+                                let generatedDot = generateGraphvizCode(minimisedHypernet);
+                                let generatedAlg = generateAlgebraicDefinition(minimisedHypernet);
+                                let algebraicLatex = algebraicNetLatex(generatedAlg);
+                                let formalDot = generateFormalGraphvizCode(generatedAlg);
+                                {circ: state.circ, 
+                                    old: "",
+                                    lat: state.lat, 
+                                    strn: state.strn,
+                                    funs: state.funs, 
+                                    macs: state.macs,
+                                    net: minimisedHypernet,
+                                    dot: generatedDot,
+                                    alg: algebraicLatex,
+                                    form: formalDot,
+                                    error:state.error,
+                                    width: getWidth(),
+                                    height: getHeight(),
+                                }
+                                | Refresh => {circ: state.circ, 
+                                    old: "",
+                                    lat: state.lat, 
+                                    strn: state.strn,
+                                    funs: state.funs, 
+                                    macs: state.macs,
+                                    net: state.net,
+                                    dot: state.dot,
+                                    alg: state.alg,
+                                    form: state.form,
+                                    error:state.error,
+                                    width: getWidth(),
+                                    height: getHeight(),
+                                }
+    }
+};
 
 [@react.component]
 let make = () => {
 
     let (width, height) = getWindowSize();
 
-    let({strn,dot,alg,error},dispatch) = React.useReducer((state,action) => {
-        switch(action) {
-        | ParseNewCircuit(text) =>  if(state.old == text){
-                                        state;
-                                    } else { 
-                                        let generatedCircuit = generateCircuit(state, text);
-                                        let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
-                                        let generatedDot = generateGraphvizCode(generatedHypernet);
-                                        let generatedAlg = generateAlgebraicDefinition(generatedHypernet);
-                                        let algebraicLatex = (fst(generatedCircuit) ? algebraicNetLatex(generatedAlg) : "");
-                                        let formalDot = generateFormalGraphvizCode(generatedAlg);
-                                        let (width, height) = getWindowSize();
-                                        {circ: fst(snd(generatedCircuit)), 
-                                        old: text,
-                                        lat: state.lat, 
-                                        strn: snd(snd(generatedCircuit)), 
-                                        funs: state.funs, 
-                                        macs: state.macs,
-                                        net: generatedHypernet,
-                                        dot: generatedDot,
-                                        alg: algebraicLatex,
-                                        form: formalDot,
-                                        error:fst(generatedCircuit),
-                                        width:width,
-                                        height:height}
-                                    }
-        | MinimiseHypergraph =>     let minimisedHypernet = minimise(state.net);
-                                    let generatedDot = generateGraphvizCode(minimisedHypernet);
-                                    let generatedAlg = generateAlgebraicDefinition(minimisedHypernet);
-                                    let algebraicLatex = algebraicNetLatex(generatedAlg);
-                                    let formalDot = generateFormalGraphvizCode(generatedAlg);
-                                    let (width, height) = getWindowSize();
-                                    {circ: state.circ, 
-                                        old: "",
-                                        lat: state.lat, 
-                                        strn: state.strn,
-                                        funs: state.funs, 
-                                        macs: state.macs,
-                                        net: minimisedHypernet,
-                                        dot: generatedDot,
-                                        alg: algebraicLatex,
-                                        form: formalDot,
-                                        error:state.error,
-                                        width: width,
-                                        height: height,
-                                    }
-        }
-    }, {
+    let ({strn,dot,alg,error},dispatch) = React.useReducer(reducer, {
         old: "",
         lat: simpleLattice,
         circ: zero(simpleLattice),
@@ -193,8 +214,9 @@ let make = () => {
         form: "",
         error: false,
         width: width,
-        height: height,
+        height: height,  
     });
+
     <div className = "main">
         <div className = "title">
             <h1>(str("Circuit visualiser "))</h1>
@@ -210,8 +232,8 @@ let make = () => {
         <table>
         <tbody>
         <tr>
-            <td>
-                <table width="400px">
+            <td className="darker">
+                <table width="419px">
                 <tbody>
                     <tr>
                         <td>
@@ -319,7 +341,6 @@ let make = () => {
         </tbody>
         </table> 
     </div>
-    
 }
 
 /* <td width="500px">

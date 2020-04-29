@@ -8,7 +8,8 @@ body {
 }
 
 table {
-    margin: 10px 0px 0px 10px;
+    border: none;
+    border-collapse: collapse;
 }
 
 h1 {
@@ -20,6 +21,11 @@ h1 {
 td {
     vertical-align: top;
     padding: 1px;
+}
+
+tbody {
+    width: 100%;
+    display: table;
 }
 
 input[type=text] {
