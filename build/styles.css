@@ -97,3 +97,7 @@ g g polygon {
 .darker {
     background-color: #21222c;
 }
+
+.scroll {
+    overflow: auto;
+}

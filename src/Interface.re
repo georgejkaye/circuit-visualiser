@@ -134,6 +134,48 @@ module Input = {
     }
 };
 
+module Constant = {
+    [@react.component]
+    let make = (~func) => {
+
+
+    switch(func.c){
+    | Function(id,latex,ins,outs,_) => 
+        <table width="100%">
+            <tbody>
+                <tr>
+                    <td width="25%">
+                        (str(id))
+                    </td>
+                    <td width="25%">
+                        (str(latex))
+                    </td>
+                    <td width="50%">
+                        (str(string_of_int(ins) ++ "->" ++ string_of_int(outs))) 
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+
+
+
+
+
+
+    | _ => failwith("bad function")
+    }
+       
+    };
+};
+
+let generateConstants = (funs, macros) => {
+
+    <div>
+        (React.array(Array.of_list(List.map((func) => <Constant func = func />, funs))))
+    </div>
+
+}
 
 let reducer = (state, action) => {
     switch(action) {
@@ -201,7 +243,7 @@ let make = () => {
 
     let (width, height) = getWindowSize();
 
-    let ({strn,dot,alg,error},dispatch) = React.useReducer(reducer, {
+    let ({strn,funs,macs,dot,alg,error},dispatch) = React.useReducer(reducer, {
         old: "",
         lat: simpleLattice,
         circ: zero(simpleLattice),
@@ -230,115 +272,126 @@ let make = () => {
             </span>
         </div>
         <table>
-        <tbody>
-        <tr>
-            <td className="darker">
-                <table width="419px">
-                <tbody>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("f . g"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Horizontal composition"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("f * g"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Vertical composition"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("f^n"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Indexed tensor"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("/\\"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Fork"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("\\/"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Join"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("/\\{n}"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Diagonal fork"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("\\/{n}"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Diagonal join"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("~"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Stub"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("x{m,n}"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Swap"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("Tr{x}(f)"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Trace"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("iter(f)"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Iteration"))</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span className = "code">(str("\\xy.f"))</span> 
-                        </td>
-                        <td>
-                            <b>(str("Link"))</b>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </td>
-            <td>
-                <Graphviz dot=dot options = {fit: true, height: height-100, width: width-500}/>   
-            </td>
-        </tr>
-        </tbody>
+            <tbody>
+                <tr>
+                    <td className="darker">
+                        <table width="419px">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <table width="100%">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("f . g"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Horizontal composition"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("f * g"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Vertical composition"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("f^n"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Indexed tensor"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("/\\"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Fork"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("\\/"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Join"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("/\\{n}"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Diagonal fork"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("\\/{n}"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Diagonal join"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("~"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Stub"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("x{m,n}"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Swap"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("Tr{x}(f)"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Trace"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("iter(f)"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Iteration"))</b>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span className = "code">(str("\\xy.f"))</span> 
+                                                </td>
+                                                <td>
+                                                    <b>(str("Link"))</b>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                (generateConstants(funs, macs))
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+                <td>
+                    <Graphviz dot=dot options = {fit: true, height: height-100, width: width-500}/>   
+                </td>
+                </tr>
+            </tbody>
         </table> 
     </div>
 }
