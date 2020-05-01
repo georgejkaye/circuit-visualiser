@@ -46,6 +46,7 @@ type state = {
     lat: lattice,           /* The lattice being used */
     circ: circuit,          /* The current circuit */
     strn: string,           /* The string of the current circuit, or a parse error message */
+    spec: list(circuit),    /* The special morphisms */
     funs: list(circuit),    /* The library of functions available */
     macs: list(circuit),    /* The library of macros available */
     net: hypernet,          /* The corresponding hypernet */
@@ -141,17 +142,17 @@ module Constant = {
 
     switch(func.c){
     | Function(id,latex,ins,outs,_) => 
-        <table width="100%">
+        <table className="function-table" width="100%">
             <tbody>
                 <tr>
                     <td width="25%">
-                        (str(id))
+                        (<MathJax string=str(latex) />)
+                    </td>
+                    <td width="20%">
+                        (str(string_of_int(ins) ++ " " ++ arrow ++ " " ++ string_of_int(outs))) 
                     </td>
                     <td width="25%">
-                        (str(latex))
-                    </td>
-                    <td width="50%">
-                        (str(string_of_int(ins) ++ "->" ++ string_of_int(outs))) 
+                        <span className="code"> (str(id))</span>
                     </td>
                 </tr>
             </tbody>
@@ -171,7 +172,7 @@ module Constant = {
 
 let generateConstants = (funs, macros) => {
 
-    <div>
+    <div className = "function-div">
         (React.array(Array.of_list(List.map((func) => <Constant func = func />, funs))))
     </div>
 
@@ -192,6 +193,7 @@ let reducer = (state, action) => {
                                     old: text,
                                     lat: state.lat, 
                                     strn: snd(snd(generatedCircuit)), 
+                                    spec: state.spec,
                                     funs: state.funs, 
                                     macs: state.macs,
                                     net: generatedHypernet,
@@ -211,6 +213,7 @@ let reducer = (state, action) => {
                                     old: "",
                                     lat: state.lat, 
                                     strn: state.strn,
+                                    spec: state.spec,
                                     funs: state.funs, 
                                     macs: state.macs,
                                     net: minimisedHypernet,
@@ -225,6 +228,7 @@ let reducer = (state, action) => {
                                     old: "",
                                     lat: state.lat, 
                                     strn: state.strn,
+                                    spec: state.spec,
                                     funs: state.funs, 
                                     macs: state.macs,
                                     net: state.net,
@@ -248,6 +252,7 @@ let make = () => {
         lat: simpleLattice,
         circ: zero(simpleLattice),
         strn: "",
+        spec: Circuits.specialMorphisms(simpleLattice),
         funs: Examples.exampleFunctions,
         macs: Examples.exampleMacros,
         net: zeroNet,
@@ -263,7 +268,7 @@ let make = () => {
         <div className = "title">
             <h1>(str("Circuit visualiser "))</h1>
         </div>
-        <div className = "darker">
+        <div className = "darker large-latex">
             <span className = "input">
                 <Input onSubmit=((text) => dispatch(ParseNewCircuit((text)))) /> /*<button onClick={_ => dispatch(MinimiseHypergraph)}>{str("Minimise")}</button>*/
             </span>

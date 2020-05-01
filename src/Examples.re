@@ -56,20 +56,18 @@ let halfAdderApplied = composemany([
                             halfAdder
                        ])
 
-let exampleFunctions = List.concat([specialMorphisms(v), 
-            [id(v,1),
+let exampleFunctions = List.concat([ 
+            [
                 funcBlackBox(v, "k", "\\text{k}", 1, 1),
                 funcBlackBox(v, "F", "\\text{F}", 1, 1),
                 funcBlackBox(v, "G", "\\text{G}", 1, 1), 
                 funcBlackBox(v, "A", "\\text{A}", 2, 2), 
                 funcBlackBox(v, "H", "\\text{H}", 1, 1), 
-                funcBlackBox(v, "test", "\\text{test}", 3, 2), 
                 funcBlackBox(v, "a", "\\text{a}", 1, 1),
                 funcBlackBox(v, "b", "\\text{b}", 1, 1),
                 funcBlackBox(v, "c", "\\text{c}", 1, 1),
                 funcBlackBox(v, "d", "\\text{d}", 1, 1),
                 funcBlackBox(v, "e", "\\text{e}", 2, 1),
-                funcBlackBox(v, "bee", "\\text{b1}", 1, 3),
                 andGate(v),
                 orGate(v),
                 xorGate(v),
@@ -77,7 +75,6 @@ let exampleFunctions = List.concat([specialMorphisms(v),
                 multiplexer(v),
                 first(v),
                 second(v),
-                id(v,2),
 ]])
 
 let exampleMacros = [halfAdder, fullAdder, flipFlop];
