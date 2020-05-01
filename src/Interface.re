@@ -53,10 +53,10 @@ type state = {
     dot: string,            /* The corresponding dot string */
     alg: string,            /* The corresponding algebraic notation */
     form: string,           /* The corresponding formal dot string */
-    error: bool,             /* If there's a parse error */
+    error: bool,            /* If there's a parse error */
 
     width: int,             /* width of the window */
-    height: int,             /* height of the window */
+    height: int,            /* height of the window */
 }
 
 /*
@@ -387,6 +387,7 @@ let make = () => {
                                 </td>
                             </tr>
                             <tr>
+                                <div className="centre lighter"> <h2> (str("Constants")) </h2> </div>
                                 (generateConstants(funs, macs, height - 100))
                             </tr>
                         </tbody>

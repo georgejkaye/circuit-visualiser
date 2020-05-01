@@ -18,6 +18,10 @@ h1 {
     font-weight: light;
 }
 
+h2 {
+    padding: 5px 0px 5px 0px;
+}
+
 td {
     vertical-align: top;
     padding: 1px;
@@ -98,6 +102,10 @@ g g polygon {
     background-color: #21222c;
 }
 
+.lighter {
+    background-color: #383a59;
+}
+
 .scroll {
     overflow: auto;
 }
@@ -119,4 +127,8 @@ g g polygon {
     margin: 10px 0px 10px 0px;
     overflow-y: scroll;
     max-height: 50vh;
+}
+
+.centre {
+    text-align: center;
 }

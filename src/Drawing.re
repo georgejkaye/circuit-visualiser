@@ -8,7 +8,7 @@ let arrow = {js|→|js}
 let tab = "    "
 let nl = "\n"
 
-let graphOptions = nl ++ tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.5;" ++ nl ++ tab ++ "nodesep=0.5;" ++ nl;
+let graphOptions = nl ++ tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.5;" ++ nl ++ tab ++ "nodesep=0.25;" ++ nl;
 let formalGraphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.75;" ++ nl ++ tab ++ "nodesep=0.25;" ++ nl;
 let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=\"\"];"
 let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
