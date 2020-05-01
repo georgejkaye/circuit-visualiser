@@ -1,30 +1,30 @@
 Arguments: 
-  /usr/bin/node /usr/share/yarn/bin/yarn.js run start
+  /usr/local/bin/node /usr/share/yarn/bin/yarn.js add bs-webbapi
 
 PATH: 
-  /home/george/.cabal/bin:/home/george/gems/bin:/home/george/.opam/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+  /home/george/.cabal/bin:/home/george/.opam/4.08.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 
 Yarn version: 
-  1.22.4
+  1.21.1
 
 Node version: 
-  10.15.2
+  12.13.1
 
 Platform: 
   linux x64
 
 Trace: 
-  Error: write EIO
-      at afterWriteDispatched (internal/stream_base_commons.js:78:25)
-      at writeGeneric (internal/stream_base_commons.js:73:3)
-      at WriteStream.Socket._writeGeneric (net.js:707:5)
-      at WriteStream.Socket._write (net.js:719:8)
-      at doWrite (_stream_writable.js:410:12)
-      at writeOrBuffer (_stream_writable.js:394:5)
-      at WriteStream.Writable.write (_stream_writable.js:294:11)
-      at Object.clearLine (readline.js:1122:12)
-      at clearLine (/usr/share/yarn/lib/cli.js:49657:12)
-      at ConsoleReporter._log (/usr/share/yarn/lib/cli.js:96768:43)
+  Error: https://registry.yarnpkg.com/bs-webbapi: Not found
+      at Request.params.callback [as _callback] (/usr/share/yarn/lib/cli.js:66947:18)
+      at Request.self.callback (/usr/share/yarn/lib/cli.js:140665:22)
+      at Request.emit (events.js:210:5)
+      at Request.<anonymous> (/usr/share/yarn/lib/cli.js:141637:10)
+      at Request.emit (events.js:210:5)
+      at IncomingMessage.<anonymous> (/usr/share/yarn/lib/cli.js:141559:12)
+      at Object.onceWrapper (events.js:299:28)
+      at IncomingMessage.emit (events.js:215:7)
+      at endReadableNT (_stream_readable.js:1184:12)
+      at processTicksAndRejections (internal/process/task_queues.js:80:21)
 
 npm manifest: 
   {
@@ -51,6 +51,7 @@ npm manifest:
       "acorn": "^6.4.1",
       "autoflow-graphviz": "^0.7.0",
       "babel-loader": "^8.0.6",
+      "bs-webapi": "^0.15.9",
       "css-loader": "^3.3.0",
       "graphviz-react": "^1.0.4",
       "minimist": "^1.2.2",
@@ -1424,6 +1425,11 @@ Lockfile:
     version "7.0.1"
     resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-7.0.1.tgz#1d7b0ef6088b998dceee5db74a7cd8f01c20a3bd"
     integrity sha512-UjStdtHhbtC/l6vKJ1XRDqrPk7rFf5PLYHtRX3akDXEYVnTbN36z0g4DEr5mU8S0N945e33HYts9x+i7hKKpZQ==
+  
+  bs-webapi@^0.15.9:
+    version "0.15.9"
+    resolved "https://registry.yarnpkg.com/bs-webapi/-/bs-webapi-0.15.9.tgz#d1dcfbd40499a3b0914daacc4ceef47a0f3c906f"
+    integrity sha512-bmzO6na2HmK01a34qB7afMwfVSrPxkP3EGzUslWObuxbHIlLC0PAMDu4lA8ZL5NasBUctlwnA1QZxox+1aNWWw==
   
   buffer-from@^1.0.0:
     version "1.1.1"

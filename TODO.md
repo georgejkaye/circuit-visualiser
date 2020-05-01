@@ -16,6 +16,7 @@
 
 ## Interface
 
+* Show signature to show the constants in scope
 * Ability to directly download circuit svgs
 * Make it look prettier
 

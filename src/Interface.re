@@ -170,7 +170,7 @@ module Constant = {
     };
 };
 
-let generateConstants = (funs, macros) => {
+let generateConstants = (funs, macros, height) => {
 
     <div className = "function-div">
         (React.array(Array.of_list(List.map((func) => <Constant func = func />, funs))))
@@ -387,7 +387,7 @@ let make = () => {
                                 </td>
                             </tr>
                             <tr>
-                                (generateConstants(funs, macs))
+                                (generateConstants(funs, macs, height - 100))
                             </tr>
                         </tbody>
                     </table>
