@@ -32,6 +32,10 @@ tbody {
     display: table;
 }
 
+button {
+    border: none;
+}
+
 input[type=text] {
 
     background-color: #d6d3cd;

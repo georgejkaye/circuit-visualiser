@@ -53,6 +53,7 @@ type state = {
     dot: string,            /* The corresponding dot string */
     alg: string,            /* The corresponding algebraic notation */
     form: string,           /* The corresponding formal dot string */
+    style: bool,             /* The type of graph to display */
     error: bool,            /* If there's a parse error */
 
     width: int,             /* width of the window */
@@ -81,12 +82,19 @@ let generateCircuit = (state, text) => {
         (true, (zero(state.lat), ""))
     } else {
 
-    switch(parseFromString(state.lat, state.funs, state.macs, text)){ /* hello */
-    | item => (true, (item, printCircuitLatex(item)))
-    | exception ParseError(e) => (false, (zero(state.lat), e))
-    | exception SemanticsError(e) => (false, (zero(state.lat), e))
+        switch(parseFromString(state.lat, state.funs, state.macs, text)){ /* hello */
+        | item => (true, (item, printCircuitLatex(item)))
+        | exception ParseError(e) => (false, (zero(state.lat), e))
+        | exception SemanticsError(e) => (false, (zero(state.lat), e))
+        }
     }
 }
+
+let drawHypergraph(style, informal, formal, height, width){
+
+    let graph = (style ? formal : informal);
+
+    <Graphviz dot=graph options = {fit: true, height: height-100, width: width-500}/>   
 }
 
 let getWindowSize = () => {
@@ -107,6 +115,7 @@ let getHeight = () => {
 type action =
   | ParseNewCircuit(string)
   | MinimiseHypergraph
+  | ChangeNotation
   | Refresh
 
 let valueFromEvent = (evt) : string => evt->ReactEvent.Form.target##value;
@@ -200,6 +209,7 @@ let reducer = (state, action) => {
                                     dot: generatedDot,
                                     alg: algebraicLatex,
                                     form: formalDot,
+                                    style: state.style,
                                     error:fst(generatedCircuit),
                                     width:getWidth(),
                                     height:getHeight()}
@@ -220,11 +230,12 @@ let reducer = (state, action) => {
                                     dot: generatedDot,
                                     alg: algebraicLatex,
                                     form: formalDot,
+                                    style: state.style,
                                     error:state.error,
                                     width: getWidth(),
                                     height: getHeight(),
                                 }
-                                | Refresh => {circ: state.circ, 
+    | Refresh => {circ: state.circ, 
                                     old: "",
                                     lat: state.lat, 
                                     strn: state.strn,
@@ -235,10 +246,27 @@ let reducer = (state, action) => {
                                     dot: state.dot,
                                     alg: state.alg,
                                     form: state.form,
+                                    style: state.style,
                                     error:state.error,
                                     width: getWidth(),
                                     height: getHeight(),
                                 }
+    | ChangeNotation => {circ: state.circ, 
+                                old: "",
+                                lat: state.lat, 
+                                strn: state.strn,
+                                spec: state.spec,
+                                funs: state.funs, 
+                                macs: state.macs,
+                                net: state.net,
+                                dot: state.dot,
+                                alg: state.alg,
+                                form: state.form,
+                                style: !state.style,
+                                error:state.error,
+                                width: getWidth(),
+                                height: getHeight(),
+                            }
     }
 };
 
@@ -247,7 +275,7 @@ let make = () => {
 
     let (width, height) = getWindowSize();
 
-    let ({strn,funs,macs,dot,alg,error},dispatch) = React.useReducer(reducer, {
+    let ({strn,funs,macs,dot,alg,form,style,error},dispatch) = React.useReducer(reducer, {
         old: "",
         lat: simpleLattice,
         circ: zero(simpleLattice),
@@ -257,8 +285,9 @@ let make = () => {
         macs: Examples.exampleMacros,
         net: zeroNet,
         dot: zeroDot,
-        alg: zeroAlg,
-        form: "",
+        alg: zeroAlgLatex,
+        form: zeroFormal,
+        style: true,
         error: false,
         width: width,
         height: height,  
@@ -394,7 +423,8 @@ let make = () => {
                     </table>
                 </td>
                 <td>
-                    <Graphviz dot=dot options = {fit: true, height: height-100, width: width-500}/>   
+                   <div className="lighter"> <button onClick={_ => dispatch(ChangeNotation)}>{str("Switch notation")}</button></div>
+                   (drawHypergraph(style, dot, form, height, width))
                 </td>
                 </tr>
             </tbody>

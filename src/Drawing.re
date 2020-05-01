@@ -246,3 +246,5 @@ let generateFormalGraphvizCode = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
     graphString
 
 }
+
+let zeroFormal = generateFormalGraphvizCode(zeroAlg);
