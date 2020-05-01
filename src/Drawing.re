@@ -163,6 +163,8 @@ let generateFormalGraphvizVertices = (e, k, s, t) => {
     let inputWireString = ref("");
     let outputWireString = ref("");
 
+    let supportVertexString = ref("");
+
     for(i in 0 to Array.length(t) - 1){
 
         let vertexId = "v" ++ string_of_int(t[i]) ++ "_I";
@@ -173,6 +175,12 @@ let generateFormalGraphvizVertices = (e, k, s, t) => {
         let newInWireString = "e" ++ string_of_int(e) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ vertexId ++ formalInputWireOptions(t[i], (k[t[i]])) ++ ";";
         inputWireString := inputWireString^ ++ nl ++ tab ++ newInWireString;
     };
+
+    if(Array.length(s) == 0){
+        let supportId = string_of_int(e) ++ "_support_o";
+        supportVertexString := tab ++ supportId ++ invisibleVertexOptions;
+        inputWireString := tab ++ supportId ++ "-> e" ++ string_of_int(e);
+    }
 
     for(i in 0 to Array.length(s) - 1){
 
