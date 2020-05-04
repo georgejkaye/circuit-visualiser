@@ -294,16 +294,19 @@ and parse' = (v, i, tokens, stack, lastterm, tensor, nextlink, defs, links) => {
                         Value(snd(sym)) : 
                         switch(int_of_string(a)){
                         | item        => Identity(item)
-                        | exception _ => switch(functionLookup(a,fst(defs))){
-                                        | Some(x) => x
-                                        | None    => switch(macroLookup(a, snd(defs))){
-                                                        | Some(x) => x
-                                                        | None    => switch(linkLookup(a, links)){
-                                                                        | Some(x) => x
-                                                                        | None    => parseError(i,"unable to parse " ++ a)
-                                                                        }
-                                                        }
-                                        }
+                        | exception _ => switch(functionLookup(a,specialMorphisms(v))){
+                                         | Some(x) => x
+                                         | None    => switch(functionLookup(a,fst(defs))){
+                                                      | Some(x) => x
+                                                      | None    => switch(macroLookup(a, snd(defs))){
+                                                                   | Some(x) => x
+                                                                   | None    => switch(linkLookup(a, links)){
+                                                                                | Some(x) => x
+                                                                                | None    => parseError(i,"unable to parse " ++ a)
+                                                                                    }
+                                                                    }
+                                                    }
+                                    }
                         }
         let subterm = circ(v,subterm,links);
         parse'(v, i+String.length(a)+1, xs, stack @ [subterm], [subterm], tensor, nextlink, defs, links)

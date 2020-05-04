@@ -14,6 +14,7 @@ let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=tru
 let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
 let inputWireOptions = "[arrowhead=none; arrowsize=0.5]"
 let invisibleWireOptions = "[style=invis]"
+let invisibleVertexOptions = "[style=invis]"
 /*let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false]"*/
 let traceVertexOptions = "[shape=circle, fillcolor=black; fixedsize=true; width=0.05; label=\"\"]"
 
@@ -176,11 +177,11 @@ let generateFormalGraphvizVertices = (e, k, s, t) => {
         inputWireString := inputWireString^ ++ nl ++ tab ++ newInWireString;
     };
 
-    if(Array.length(s) == 0){
-        let supportId = string_of_int(e) ++ "_support_o";
+    /*if(Array.length(s) == 0){
+       /* let supportId = string_of_int(e) ++ "_support_o";
         supportVertexString := tab ++ supportId ++ invisibleVertexOptions;
-        inputWireString := tab ++ supportId ++ "-> e" ++ string_of_int(e);
-    }
+        inputWireString := tab ++ supportId ++ " -> e" ++ string_of_int(e); */
+    };*/
 
     for(i in 0 to Array.length(s) - 1){
 
