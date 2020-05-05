@@ -144,45 +144,61 @@ module Input = {
     }
 };
 
-module Constant = {
+module LevelBox = {
     [@react.component]
-    let make = (~func) => {
+    let make = (~lat, ~level) => {
 
-
-    switch(func.c){
-    | Function(id,latex,ins,outs,_) => 
-        <table className="function-table" width="100%">
-            <tbody>
-                <tr>
-                    <td width="25%">
-                        (<MathJax string=str(latex) />)
-                    </td>
-                    <td width="20%">
-                        (str(string_of_int(ins) ++ " " ++ arrow ++ " " ++ string_of_int(outs))) 
-                    </td>
-                    <td width="25%">
-                        <span className="code"> (str(id))</span>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-
-
-
-
-
-
-    | _ => failwith("bad function")
-    }
-       
+            <table className="function-table" width="100%">
+                <tbody>
+                    <tr>
+                        <td width="25%">
+                            (<MathJax string=str(lat.printLatex(level)) />)
+                        </td>
+                        <td width="20%">
+                            (str(string_of_int(0) ++ " " ++ arrow ++ " " ++ string_of_int(1))) 
+                        </td>
+                        <td width="25%">
+                            <span className="code"> (str(lat.printKeyb(level)))</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
     };
 };
 
-let generateConstants = (funs, macros, height) => {
+module FunctionBox = {
+    [@react.component]
+    let make = (~func) => {
+
+        switch(func.c){
+        | Function(id,latex,ins,outs,_) => 
+            <table className="function-table" width="100%">
+                <tbody>
+                    <tr>
+                        <td width="25%">
+                            (<MathJax string=str(latex) />)
+                        </td>
+                        <td width="20%">
+                            (str(string_of_int(ins) ++ " " ++ arrow ++ " " ++ string_of_int(outs))) 
+                        </td>
+                        <td width="25%">
+                            <span className="code"> (str(id))</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        | _ => failwith("bad function")
+        } 
+    };
+};
+
+let generateConstants = (lat, funs, macros, height) => {
+
+    let levels = lat.elems;
 
     <div className = "function-div">
-        (React.array(Array.of_list(List.map((func) => <Constant func = func />, funs))))
+        (React.array(Array.of_list(List.map((level) => <LevelBox lat = lat level = level />, levels))))
+        (React.array(Array.of_list(List.map((func) => <FunctionBox func = func />, funs))))
     </div>
 
 }
@@ -275,7 +291,7 @@ let make = () => {
 
     let (width, height) = getWindowSize();
 
-    let ({strn,funs,macs,dot,alg,form,style,error},dispatch) = React.useReducer(reducer, {
+    let ({lat,strn,funs,macs,dot,alg,form,style,error},dispatch) = React.useReducer(reducer, {
         old: "",
         lat: simpleLattice,
         circ: zero(simpleLattice),
@@ -287,7 +303,7 @@ let make = () => {
         dot: zeroDot,
         alg: zeroAlgLatex,
         form: zeroFormal,
-        style: true,
+        style: false,
         error: false,
         width: width,
         height: height,  
@@ -417,7 +433,7 @@ let make = () => {
                             </tr>
                             <tr>
                                 <div className="centre lighter"> <h2> (str("Constants")) </h2> </div>
-                                (generateConstants(funs, macs, height - 100))
+                                (generateConstants(lat, funs, macs, height - 100))
                             </tr>
                         </tbody>
                     </table>

@@ -21,6 +21,7 @@ type lattice = {
     notOp       : (latticeElement) => latticeElement,                   /* Not operation */
     print       : (latticeElement) => string,                           /* Print operation */
     printLatex  : (latticeElement) => string,                           /* Print operation but latex */
+    printKeyb   : (latticeElement) => string,                         /* Print operation but keyboard letters */
     parse       : string => (bool, latticeElement)                      /* Parse a string and determine if it is a value, and if so which one */
 }
 
@@ -57,7 +58,7 @@ let simpleLeq = (a, b) => {
 
 let printSimpleLattice = (elem) => {
     switch (elem) {
-    | (0,0) => "⊥"
+    | (0,0) => {js|⊥|js}
     | (1,0) => "f"
     | (1,1) => "t"
     | (2,0) => "T"
@@ -68,10 +69,20 @@ let printSimpleLattice = (elem) => {
 let printSimpleLatticeLatex = (elem) => {
     switch (elem) {
         | (0,0) => "\\bot"
-        | (1,0) => "f"
-        | (1,1) => "t"
+        | (1,0) => "\\text{f}"
+        | (1,1) => "\\text{t}"
         | (2,0) => "\\top"
         | _     => latticeError("not a lattice element")
+    }
+}
+
+let printSimpleLatticeKeyboard = (elem) => {
+    switch (elem) {
+    | (0,0) => "_"
+    | (1,0) => "f"
+    | (1,1) => "t"
+    | (2,0) => "T"
+    | _     => latticeError("not a lattice element")
     }
 }
 
@@ -140,7 +151,7 @@ let simpleParse = (str) => {
     | "T" => (true, (2,0))
     | "t" => (true, (1,1))
     | "f" => (true, (1,0))
-    | "B" => (true, (0,0))
+    | "_" => (true, (0,0))
     | _   => (false, (2,0))
     };
     
@@ -157,6 +168,7 @@ let simpleLattice: lattice = {
     notOp:      simpleNot,
     print:      printSimpleLattice,
     printLatex: printSimpleLatticeLatex,
+    printKeyb:  printSimpleLatticeKeyboard,
     parse:      simpleParse
 }
 
