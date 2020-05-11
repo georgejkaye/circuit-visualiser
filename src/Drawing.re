@@ -8,11 +8,11 @@ let arrow = {js|→|js}
 let tab = "    "
 let nl = "\n"
 
-let graphOptions = nl ++ tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.5;" ++ nl ++ tab ++ "nodesep=0.25;" ++ nl;
+let graphOptions = nl ++ tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=1;" ++ nl ++ tab ++ "nodesep=0.75;" ++ nl;
 let formalGraphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.75;" ++ nl ++ tab ++ "nodesep=0.25;" ++ nl;
 let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=\"\"];"
 let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
-let inputWireOptions = "[arrowhead=none; arrowsize=0.5]"
+let inputWireOptions = "[arrowhead=none; dir=back; arrowtail=vee; arrowsize=0.5]"
 let invisibleWireOptions = "[style=invis]"
 let invisibleVertexOptions = "[style=invis]"
 /*let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false]"*/
@@ -59,7 +59,6 @@ let rec generateGraphvizCode = (net) => {
     let finalGraph = "digraph {" ++ nl ++ nl ++ graphOptions ++ graph ++ inputWires ++ outputWires ++ inputOutputWires ++ nl ++ "}"
 
     Js.log(finalGraph);
-
     finalGraph
 
 } and generateGraphvizCodeEdges = (inputs, outputs, es, ranks, edges, traces, vertices, inputWires, outputWires, traceWires) => {
@@ -109,8 +108,8 @@ let rec generateGraphvizCode = (net) => {
     let y = out ? "t" : "s"
     switch(n){
     | 0 => ""
-    | 1 => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js}
-    | n => "<" ++ y ++ string_of_int(x) ++ "> " ++ {js|•|js} ++ " | " ++ generatePorts'(x+1,n-1,out)
+    | 1 => "<" ++ y ++ string_of_int(x) ++ "> "
+    | n => "<" ++ y ++ string_of_int(x) ++ "> " ++ " | " ++ generatePorts'(x+1,n-1,out)
     }
 } and generateTransitions = (x, inid, outid, targets) => {
     let vertexString = ref("");
