@@ -51,9 +51,10 @@ type state = {
     macs: list(circuit),    /* The library of macros available */
     net: hypernet,          /* The corresponding hypernet */
     dot: string,            /* The corresponding dot string */
-    alg: string,            /* The corresponding algebraic notation */
+    algi: string,           /* The corresponding algebraic notation in inline latex */
+    algb: string,           /* The corresponding algebraic notation in block latex */
     form: string,           /* The corresponding formal dot string */
-    style: bool,             /* The type of graph to display */
+    style: bool,            /* The type of graph to display */
     error: bool,            /* If there's a parse error */
 
     width: int,             /* width of the window */
@@ -83,7 +84,7 @@ let generateCircuit = (state, text) => {
     } else {
 
         switch(parseFromString(state.lat, state.funs, state.macs, text)){ /* hello */
-        | item => (true, (item, printCircuitLatex(item)))
+        | item => Js.log(printCircuit(item)); (true, (item, printCircuitLatex(item)))
         | exception ParseError(e) => (false, (zero(state.lat), e))
         | exception SemanticsError(e) => (false, (zero(state.lat), e))
         }
@@ -212,7 +213,8 @@ let reducer = (state, action) => {
                                     let generatedHypernet = convertCircuitToHypernet(fst(snd(generatedCircuit)));
                                     let generatedDot = generateGraphvizCode(generatedHypernet);
                                     let generatedAlg = generateAlgebraicDefinition(generatedHypernet);
-                                    let algebraicLatex = (fst(generatedCircuit) ? algebraicNetLatex(generatedAlg) : "");
+                                    let algebraicLatexInline = (fst(generatedCircuit) ? algebraicNetLatexInline(generatedAlg) : "");
+                                    let algebraicLatexBlock = (fst(generatedCircuit) ? algebraicNetLatexBlock(generatedAlg) : "");
                                     let formalDot = generateFormalGraphvizCode(generatedAlg);
                                     {circ: fst(snd(generatedCircuit)), 
                                     old: text,
@@ -223,7 +225,8 @@ let reducer = (state, action) => {
                                     macs: state.macs,
                                     net: generatedHypernet,
                                     dot: generatedDot,
-                                    alg: algebraicLatex,
+                                    algi: algebraicLatexInline,
+                                    algb: algebraicLatexBlock,
                                     form: formalDot,
                                     style: state.style,
                                     error:fst(generatedCircuit),
@@ -233,7 +236,8 @@ let reducer = (state, action) => {
     | MinimiseHypergraph =>     let minimisedHypernet = minimise(state.net);
                                 let generatedDot = generateGraphvizCode(minimisedHypernet);
                                 let generatedAlg = generateAlgebraicDefinition(minimisedHypernet);
-                                let algebraicLatex = algebraicNetLatex(generatedAlg);
+                                let algebraicLatexInline = algebraicNetLatexInline(generatedAlg);
+                                let algebraicLatexBlock = algebraicNetLatexBlock(generatedAlg);
                                 let formalDot = generateFormalGraphvizCode(generatedAlg);
                                 {circ: state.circ, 
                                     old: "",
@@ -244,7 +248,8 @@ let reducer = (state, action) => {
                                     macs: state.macs,
                                     net: minimisedHypernet,
                                     dot: generatedDot,
-                                    alg: algebraicLatex,
+                                    algi: algebraicLatexInline,
+                                    algb: algebraicLatexBlock,
                                     form: formalDot,
                                     style: state.style,
                                     error:state.error,
@@ -260,7 +265,8 @@ let reducer = (state, action) => {
                                     macs: state.macs,
                                     net: state.net,
                                     dot: state.dot,
-                                    alg: state.alg,
+                                    algi: state.algi,
+                                    algb: state.algb,
                                     form: state.form,
                                     style: state.style,
                                     error:state.error,
@@ -276,7 +282,8 @@ let reducer = (state, action) => {
                                 macs: state.macs,
                                 net: state.net,
                                 dot: state.dot,
-                                alg: state.alg,
+                                algi: state.algi,
+                                algb: state.algb,
                                 form: state.form,
                                 style: !state.style,
                                 error:state.error,
@@ -291,7 +298,7 @@ let make = () => {
 
     let (width, height) = getWindowSize();
 
-    let ({lat,strn,funs,macs,dot,alg,form,style,error},dispatch) = React.useReducer(reducer, {
+    let ({lat,strn,funs,macs,dot,algi,algb,form,style,error},dispatch) = React.useReducer(reducer, {
         old: "",
         lat: simpleLattice,
         circ: zero(simpleLattice),
@@ -301,7 +308,8 @@ let make = () => {
         macs: Examples.exampleMacros,
         net: zeroNet,
         dot: zeroDot,
-        alg: zeroAlgLatex,
+        algi: zeroAlgLatexInline,
+        algb: zeroAlgLatexBlock,
         form: zeroFormal,
         style: false,
         error: false,

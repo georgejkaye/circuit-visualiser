@@ -66,14 +66,17 @@ and removeEdge' = (edge, edges, acc) => {
     }
 }
 
-let composeSequential = (f,g) => {
+let composeSequential = (f,g,i) => {
 
     assert(Array.length(f.outputs^.sources) == Array.length(g.inputs^.targets));
+
+    let newInputs = {id: 0, sources: [||], targets: [||], label: alpha, latex: alphaLatex};
+    let newOutputs = {id: i+1, sources: [||], targets: [||], label: omega, latex: omegaLatex};
 
     for (i in 0 to Array.length(f.outputs^.sources) - 1){
         let (e,k) = f.outputs^.sources[i];
         let (e',k') = g.inputs^.targets[i];
-    
+        
         e^.targets[k] = (e',k');
         e'^.sources[k'] = (e,k);
 
@@ -151,34 +154,42 @@ let traceHypernet = (x, h) => {
         e^.sources[k] = (e',k');
     };
 
-    let newInputs = {id: 0, sources: [||], targets:Array.sub(h.inputs^.targets, x, (Array.length(h.inputs^.targets) - x)), label:alpha, latex:alphaLatex};
-    let newOutputs = {id: h.outputs^.id, sources: Array.sub(h.outputs^.sources, x, (Array.length(h.outputs^.sources) - x)), targets: [||], label:omega, latex: omegaLatex};
 
-    for(i in 0 to Array.length(newInputs.targets) - 1){
-        let (e, k) = newInputs.targets[i];
-        let k = (e^.label == omega) ? k - x : k;
-        newInputs.targets[i] = (e,k)
+    let newInputs = ref({id: 0, sources: [||], targets:Array.sub(h.inputs^.targets, x, (Array.length(h.inputs^.targets) - x)), label:alpha, latex:alphaLatex});
+    let newOutputs = ref({id: h.outputs^.id, sources: Array.sub(h.outputs^.sources, x, (Array.length(h.outputs^.sources) - x)), targets: [||], label:omega, latex: omegaLatex});
+
+    for(i in 0 to Array.length(newInputs^.targets) - 1){
+        let (e, k) = newInputs^.targets[i];
+        
+        if(e^.id == h.outputs^.id) {
+            newInputs^.targets[i] = (newOutputs, k - x);
+            newOutputs^.sources[k - x] = (newInputs, i);
+        } else {
+            newInputs^.targets[i] = (e,k);
+            let (e',k') = e^.sources[k];
+            e^.sources[k] = (e',k'-x);
+        }
     };
 
-    for(i in 0 to Array.length(newOutputs.targets) - 1){
-        let (e, k) = newInputs.sources[i];
-        let k = (e^.label == alpha) ? k - x : k;
-        newInputs.sources[i] = (e,k)
+    for(i in 0 to Array.length(newOutputs^.sources) - 1){
+        let (e, k) = newOutputs^.sources[i];
+
+        if(e^.id == h.inputs^.id) {
+            newOutputs^.sources[i] = (newInputs, k - x);
+            newInputs^.targets[k - x] = (newOutputs, i);
+        } else {
+            newOutputs^.sources[i] = (e,k);
+            let (e',k') = e^.targets[k];
+            e^.targets[k] = (e',k'-x);
+        }
     };
 
-    for(i in 0 to Array.length(newInputs.targets) - 1){
-        let (e, k) = newInputs.targets[i];
-        let (e',k') = e^.sources[k];
-        e^.sources[k] = (e',k'-x);
+    for(i in 0 to Array.length(newOutputs^.sources) - 1){
+        let (e, k) = newOutputs^.sources[i];
+
     };
 
-    for(i in 0 to Array.length(newOutputs.sources) - 1){
-        let (e, k) = newOutputs.sources[i];
-        let (e',k') = e^.targets[k];
-        e^.targets[k] = (e',k'-x);
-    };
-
-    {inputs: ref(newInputs), edges: h.edges, outputs: ref(newOutputs)}
+    {inputs: newInputs, edges: h.edges, outputs: newOutputs}
     
 }
 
@@ -221,8 +232,8 @@ let iterHypernet = (circuit, i) => {
 
     let n = Array.length(circuit.outputs^.sources);
     let nfork = dforkNet(i, n)
-    let newCircuit = composeSequential(circuit, fst(nfork));
-    (traceHypernet(n, newCircuit), snd(nfork));    
+    let newCircuit = composeSequential(circuit, fst(nfork), snd(nfork));
+    (traceHypernet(n, newCircuit), snd(nfork) + 2);    
 
 }
 
@@ -257,7 +268,7 @@ and convertCircuitToHypernet' = (circuit, i) => {
                                    ({inputs:ine, edges: [], outputs: oute},i+2)
     | Composition(f,g)          => let fh = convertCircuitToHypernet'(f,i);
                                    let gh = convertCircuitToHypernet'(g,snd(fh));
-                                   (composeSequential(fst(fh),fst(gh)), snd(gh))
+                                   (composeSequential(fst(fh),fst(gh),snd(gh)), snd(gh) + 2)
     | Tensor([x,...xs])         => List.fold_left((f,g) => { let gh = convertCircuitToHypernet'(g,snd(f));
                                                  (composeParallel(fst(f),fst(gh),snd(gh)), snd(gh) + 2);}, 
                                                  (convertCircuitToHypernet'(x, i)), xs)

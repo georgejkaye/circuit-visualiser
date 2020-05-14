@@ -79,16 +79,32 @@ let printFunctionFromEdgesToArraysLatex = (func, bonus, front) => {
 
 }
 
-let algebraicNetLatex = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
+let algebraicNetLatexInline = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
     let result = "V^I = V^O = " ++ generateFin("v", v) ++ "\\\\" ++
     "E = " ++ generateFin("e", e) ++ "\\\\" ++
-    "i = " ++ printFunctionLatex(i, "v", edgePlusTwoLatex) ++ "\\\\" ++
-    "o = " ++ printFunctionLatex(o, "v", edgePlusTwoLatex) ++ "\\\\" ++
+    "\\lambda = " ++ printFunctionLatex(i, "v", edgePlusTwoLatex) ++ "\\\\" ++
+    "\\rho = " ++ printFunctionLatex(o, "v", edgePlusTwoLatex) ++ "\\\\" ++
     "\\kappa = " ++ printFunctionLatex(k, "v", vertexLatex) ++ "\\\\" ++
     "L = \\{" ++ printListCommas(ll, (x) => x) ++ "\\}\\\\" ++
-    "l = " ++ printFunctionLatex(fl, "e", (x) => x) ++ "\\\\" ++
+    "\\nu = " ++ printFunctionLatex(fl, "e", (x) => x) ++ "\\\\" ++
     "s = " ++ printFunctionFromEdgesToArraysLatex(s, omegaLatex, false) ++ "\\\\" ++
     "t = " ++ printFunctionFromEdgesToArraysLatex(t, alphaLatex, true)
+
+    Js.log(result);
+    result
+}
+
+let algebraicNetLatexBlock =  ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
+    let result = 
+        "$$V^I = V^O = " ++ generateFin("v", v) ++ "$$" ++
+        "$$E = " ++ generateFin("e", e) ++ "$$" ++
+        "$$\\lambda = " ++ printFunctionLatex(i, "v", edgePlusTwoLatex) ++ "$$" ++
+        "$$\\rho = " ++ printFunctionLatex(o, "v", edgePlusTwoLatex) ++ "$$" ++
+        "$$\\kappa = " ++ printFunctionLatex(k, "v", vertexLatex) ++ "$$" ++
+        "$$L = \\{" ++ printListCommas(ll, (x) => x) ++ "\\} $$" ++
+        "$$\\nu = " ++ printFunctionLatex(fl, "e", (x) => x) ++ "$$" ++
+        "$$s = " ++ printFunctionFromEdgesToArraysLatex(s, omegaLatex, false) ++ "$$" ++
+        "$$t = " ++ printFunctionFromEdgesToArraysLatex(t, alphaLatex, true) ++ "$$"
 
     Js.log(result);
     result
@@ -253,4 +269,5 @@ and generateAlgebraicDefinition'' = (edges, i, o, eds, is, os, lu, ll, fu, fl) =
 }
 
 let zeroAlg = generateAlgebraicDefinition(zeroNet);
-let zeroAlgLatex = algebraicNetLatex(generateAlgebraicDefinition(zeroNet));
+let zeroAlgLatexInline = algebraicNetLatexInline(zeroAlg);
+let zeroAlgLatexBlock = algebraicNetLatexBlock(zeroAlg);

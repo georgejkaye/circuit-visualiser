@@ -130,3 +130,7 @@ let printArray = (a, f) => {
         string^ ++ "}"
     }
 }
+
+let sliceArray = (a, x, y) => {
+    Array.init(y - x, ((i) => a[x + i]));
+}
