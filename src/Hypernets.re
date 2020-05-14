@@ -163,7 +163,6 @@ let traceHypernet = (x, h) => {
         
         if(e^.id == h.outputs^.id) {
             newInputs^.targets[i] = (newOutputs, k - x);
-            newOutputs^.sources[k - x] = (newInputs, i);
         } else {
             newInputs^.targets[i] = (e,k);
             let (e',k') = e^.sources[k];
@@ -176,19 +175,13 @@ let traceHypernet = (x, h) => {
 
         if(e^.id == h.inputs^.id) {
             newOutputs^.sources[i] = (newInputs, k - x);
-            newInputs^.targets[k - x] = (newOutputs, i);
         } else {
             newOutputs^.sources[i] = (e,k);
             let (e',k') = e^.targets[k];
             e^.targets[k] = (e',k'-x);
         }
     };
-
-    for(i in 0 to Array.length(newOutputs^.sources) - 1){
-        let (e, k) = newOutputs^.sources[i];
-
-    };
-
+    
     {inputs: newInputs, edges: h.edges, outputs: newOutputs}
     
 }

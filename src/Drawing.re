@@ -15,7 +15,7 @@ let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
 let inputWireOptions = "[arrowhead=none; dir=back; arrowtail=vee; arrowsize=0.5]"
 let invisibleWireOptions = "[style=invis]"
 let invisibleVertexOptions = "[style=invis]"
-/*let traceWireOptions = "[arrowhead=none; arrowsize=0.5; constraint=false]"*/
+let traceWireOptions = "[arrowhead=vee; arrowsize=0.5]"
 let traceVertexOptions = "[shape=circle, fillcolor=black; fixedsize=true; width=0.05; label=\"\"]"
 
 let formalInputWireOptions = (iv, ov) => "[arrowhead=vee; arrowsize=0.5; headlabel=\"" ++ string_of_int(iv) ++ " " ++ arrow ++ " " ++ string_of_int(ov) ++ "\"; labeldistance=3; labelangle=180]";
@@ -133,7 +133,7 @@ let rec generateGraphvizCode = (net) => {
             let traceVertexOutId = vertexId ++ "_Tr_o";
             let inport = (e^.id == x) ? ":n" : ""; 
             
-            inputWireString := inputWireString^ ++ tab ++ vertexId ++ " -> e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e " ++ inputWireOptions ++ nl;
+            inputWireString := inputWireString^ ++ tab ++ vertexId ++ " -> e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e " ++ traceWireOptions ++ nl;
             outputWireString := outputWireString^ ++ tab ++ vertexId ++ " -> e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl;
 
 
