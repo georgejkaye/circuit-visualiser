@@ -8,7 +8,8 @@ let arrow = {js|→|js}
 let tab = "    "
 let nl = "\n"
 
-let graphOptions = nl ++ tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=1;" ++ nl ++ tab ++ "nodesep=0.75;" ++ nl;
+let graphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=1;" ++ nl ++ tab ++ "nodesep=0.75;" ++ nl;
+let edgeOptions = tab ++ "edge[headclip=false; tailclip=false];"; 
 let formalGraphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.75;" ++ nl ++ tab ++ "nodesep=0.25;" ++ nl;
 let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=\"\"];"
 let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
@@ -18,7 +19,7 @@ let invisibleVertexOptions = "[style=invis]"
 let traceWireOptions = "[arrowhead=vee; arrowsize=0.5]"
 let traceVertexOptions = "[shape=circle, fillcolor=black; fixedsize=true; width=0.05; label=\"\"]"
 
-let formalInputWireOptions = (iv, ov) => "[arrowhead=vee; arrowsize=0.5; headlabel=\"" ++ string_of_int(iv) ++ " " ++ arrow ++ " " ++ string_of_int(ov) ++ "\"; labeldistance=3; labelangle=180]";
+let formalInputWireOptions = (iv, ov) => "[arrowhead=none; dir=back; arrowtail=vee; arrowsize=0.5; headlabel=\"" ++ string_of_int(iv) ++ " " ++ arrow ++ " " ++ string_of_int(ov) ++ "\"; labeldistance=3; labelangle=180]";
 let formalOutputWireOptions = (ov) => "[arrowhead=vee; arrowsize=0.5; taillabel=\"" ++ string_of_int(ov) ++ "\"; labeldistance=2; labelangle=180]";
 
 let getTraceText = (x, e, left) => {
@@ -54,9 +55,9 @@ let rec generateGraphvizCode = (net) => {
     let inputWires = !emptyGraph ? ((Array.length(net.inputs^.targets) == 0) ? nl ++ makeTransitionToAllEdgesWithNoSources(net.inputs^.id, derefedEdges) : "") : "";
     let outputWires = !emptyGraph ? ((Array.length(net.outputs^.sources) == 0) ? nl ++ makeTransitionToAllEdgesWithNoTargets(net.outputs^.id, derefedEdges) : "") : "";
 
-    let inputOutputWires = (List.length(net.edges) == 0) ? nl ++ tab ++ "e" ++ string_of_int(net.inputs^.id) ++ "->" ++ "e" ++ string_of_int(net.outputs^.id) ++ invisibleWireOptions ++ nl : "";
+    let inputOutputWires = (Array.length(net.inputs^.targets) == 0) && Array.length(net.outputs^.sources) == 0 ? nl ++ tab ++ "e" ++ string_of_int(net.inputs^.id) ++ "->" ++ "e" ++ string_of_int(net.outputs^.id) ++ invisibleWireOptions ++ nl : "";
 
-    let finalGraph = "digraph {" ++ nl ++ nl ++ graphOptions ++ graph ++ inputWires ++ outputWires ++ inputOutputWires ++ nl ++ "}"
+    let finalGraph = "digraph {" ++ nl ++ graphOptions ++ nl ++ edgeOptions ++ nl ++ graph ++ inputWires ++ outputWires ++ inputOutputWires ++ nl ++ "}"
 
     Js.log(finalGraph);
     finalGraph
@@ -133,14 +134,14 @@ let rec generateGraphvizCode = (net) => {
             let traceVertexOutId = vertexId ++ "_Tr_o";
             let inport = (e^.id == x) ? ":n" : ""; 
             
-            inputWireString := inputWireString^ ++ tab ++ vertexId ++ " -> e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e " ++ traceWireOptions ++ nl;
-            outputWireString := outputWireString^ ++ tab ++ vertexId ++ " -> e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl;
+            inputWireString := inputWireString^ ++ tab ++ vertexId ++ ":w -> e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":c " ++ traceWireOptions ++ nl;
+            outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":c " ++ outputWireOptions ++ nl;
 
 
         } else {
 
-            inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ vertexId ++ ":w " ++ inputWireOptions ++ nl
-            outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl
+            inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":c -> " ++ vertexId ++ ":w " ++ inputWireOptions ++ nl
+            outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":c " ++ outputWireOptions ++ nl
         }
         
     };
@@ -172,7 +173,7 @@ let generateFormalGraphvizVertices = (e, k, s, t) => {
         let newInVertexString = vertexId ++ vertexOptions;
         inputVertexString := inputVertexString^ ++ nl ++ tab ++ newInVertexString;
 
-        let newInWireString = "e" ++ string_of_int(e) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ vertexId ++ formalInputWireOptions(t[i], (k[t[i]])) ++ ";";
+        let newInWireString = "e" ++ string_of_int(e) ++ ":t" ++ string_of_int(i) ++ ":c -> " ++ vertexId ++ formalInputWireOptions(t[i], (k[t[i]])) ++ ";";
         inputWireString := inputWireString^ ++ nl ++ tab ++ newInWireString;
     };
 
@@ -189,7 +190,7 @@ let generateFormalGraphvizVertices = (e, k, s, t) => {
         let newOutVertexString =  vertexId ++ vertexOptions;
         outputVertexString := outputVertexString^ ++ nl ++ tab ++ newOutVertexString;
 
-        let newOutWireString = vertexId ++ ":e -> " ++ "e" ++ string_of_int(e) ++ ":s" ++ string_of_int(i) ++ ":w " ++ formalOutputWireOptions(s[i]) ++ ";";
+        let newOutWireString = vertexId ++ ":e -> " ++ "e" ++ string_of_int(e) ++ ":s" ++ string_of_int(i) ++ ":c " ++ formalOutputWireOptions(s[i]) ++ ";";
         outputWireString := outputWireString^ ++ nl ++ tab ++ newOutWireString;
     };
 
@@ -197,7 +198,7 @@ let generateFormalGraphvizVertices = (e, k, s, t) => {
 
 }
 
-let generateFormalGraphvizEdge = (i,k,s,t,l) => {
+let generateFormalGraphvizEdge = (i,k,s,t,l,num) => {
     
         let ins = Array.length(s);
         let outs = Array.length(t);
@@ -208,8 +209,10 @@ let generateFormalGraphvizEdge = (i,k,s,t,l) => {
         let instring = inports == "{}" ? "" : inports ++ " | ";
         let outstring = outports == "{}" ? "" : " | " ++ outports;
 
+        let number = num ? string_of_int(i) ++ "\\n" : ""
+
         let newEdgeString = "e" ++ string_of_int(i) ++ "[shape=Mrecord; label=\"{" ++
-        instring ++ l ++ outstring
+        instring ++ number ++ l ++ outstring
         ++ "}\"];"
 
         let (inputVertexString, outputVertexString, inputWireString, outputWireString) = generateFormalGraphvizVertices(i, k, s, t);
@@ -229,7 +232,7 @@ let generateFormalGraphvizCode = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
     let normalTargets = snd(t);
 
     for(j in 0 to (e - 1)) {
-        let (newEdgeString, newInputVertexString, newOutputVertexString, newInputWireString, newOutputWireString) = generateFormalGraphvizEdge(j, k, normalSources[j], normalTargets[j], fu[j]);
+        let (newEdgeString, newInputVertexString, newOutputVertexString, newInputWireString, newOutputWireString) = generateFormalGraphvizEdge(j, k, normalSources[j], normalTargets[j], fu[j], true);
         edgeString := tab ++ newEdgeString ++ nl ++ edgeString^;
         inputVertexString := tab ++ newInputVertexString ++ inputVertexString^;
         outputVertexString := tab ++ newOutputVertexString ++ outputVertexString^;
@@ -237,8 +240,8 @@ let generateFormalGraphvizCode = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
         outputWireString := tab ++ newOutputWireString ++ outputWireString^;
     };
 
-    let (inputEdgeString, inputInputString, _, inputInWireString, _) = generateFormalGraphvizEdge(e, k, [||], fst(t), alpha);
-    let (outputEdgeString, _, outputOutputString, _, outputOutWireString) = generateFormalGraphvizEdge(e+1, k, fst(s), [||], omega);
+    let (inputEdgeString, inputInputString, _, inputInWireString, _) = generateFormalGraphvizEdge(e, k, [||], fst(t), alpha, false);
+    let (outputEdgeString, _, outputOutputString, _, outputOutWireString) = generateFormalGraphvizEdge(e+1, k, fst(s), [||], omega, false);
 
     edgeString := tab ++ outputEdgeString ++ nl ++ edgeString^ ++ tab ++ inputEdgeString;
     inputVertexString := inputVertexString^ ++ tab ++ inputInputString;
@@ -248,7 +251,7 @@ let generateFormalGraphvizCode = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
 
     let supportString = tab ++ "support [style=invis];" ++ nl ++ tab ++ "support -> e" ++ string_of_int(e) ++ " [style=invis];" ++ nl;
 
-    let graphString = "digraph{" ++ nl ++ nl ++ formalGraphOptions ++ nl ++ edgeString^ ++ nl ++ inputVertexString^ ++ nl ++ outputVertexString^ ++ nl ++ inputWireString^ ++ nl ++ outputWireString^ ++ nl ++ nl ++ supportString ++ nl ++ "}";
+    let graphString = "digraph{" ++ nl ++ nl ++ formalGraphOptions ++ nl ++ edgeOptions ++ nl ++ edgeString^ ++ nl ++ inputVertexString^ ++ nl ++ outputVertexString^ ++ nl ++ inputWireString^ ++ nl ++ outputWireString^ ++ nl ++ nl ++ supportString ++ nl ++ "}";
     
     Js.log(graphString);
     graphString
