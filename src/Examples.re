@@ -62,7 +62,7 @@ let exampleFunctions = List.concat([
                 funcBlackBox(v, "F", "\\text{F}", 1, 1),
                 funcBlackBox(v, "G", "\\text{G}", 1, 1), 
                 funcBlackBox(v, "A", "\\text{A}", 2, 2), 
-                funcBlackBox(v, "H", "\\text{H}", 1, 1), 
+                funcBlackBox(v, "H", "\\text{H}", 3, 3), 
                 funcBlackBox(v, "a", "\\text{a}", 1, 1),
                 funcBlackBox(v, "b", "\\text{b}", 1, 1),
                 funcBlackBox(v, "c", "\\text{c}", 1, 1),

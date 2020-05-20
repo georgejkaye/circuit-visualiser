@@ -9,7 +9,7 @@ let tab = "    "
 let nl = "\n"
 
 let graphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=1;" ++ nl ++ tab ++ "nodesep=0.75;" ++ nl;
-let edgeOptions = tab ++ "edge[headclip=false; tailclip=false];"; 
+let edgeOptions = tab ++ ""; 
 let formalGraphOptions = tab ++ "rankdir=LR;" ++ nl ++ tab ++ "ranksep=0.75;" ++ nl ++ tab ++ "nodesep=0.25;" ++ nl;
 let vertexOptions = "[style=filled, shape=circle, fillcolor=black; fixedsize=true; width=0.1; label=\"\"];"
 let outputWireOptions = "[arrowhead=vee; arrowsize=0.5]"
@@ -134,14 +134,14 @@ let rec generateGraphvizCode = (net) => {
             let traceVertexOutId = vertexId ++ "_Tr_o";
             let inport = (e^.id == x) ? ":n" : ""; 
             
-            inputWireString := inputWireString^ ++ tab ++ vertexId ++ ":w -> e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":c " ++ traceWireOptions ++ nl;
-            outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":c " ++ outputWireOptions ++ nl;
+            inputWireString := inputWireString^ ++ tab ++ vertexId ++ ":w -> e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e " ++ traceWireOptions ++ nl;
+            outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl;
 
 
         } else {
 
-            inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":c -> " ++ vertexId ++ ":w " ++ inputWireOptions ++ nl
-            outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":c " ++ outputWireOptions ++ nl
+            inputWireString := inputWireString^ ++ tab ++ "e" ++ string_of_int(x) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ vertexId ++ ":w " ++ inputWireOptions ++ nl
+            outputWireString := outputWireString^ ++ tab ++ vertexId ++ ":e -> " ++ "e" ++ string_of_int(e^.id) ++ ":s" ++ string_of_int(k) ++ ":w " ++ outputWireOptions ++ nl
         }
         
     };
@@ -173,7 +173,7 @@ let generateFormalGraphvizVertices = (e, k, s, t) => {
         let newInVertexString = vertexId ++ vertexOptions;
         inputVertexString := inputVertexString^ ++ nl ++ tab ++ newInVertexString;
 
-        let newInWireString = "e" ++ string_of_int(e) ++ ":t" ++ string_of_int(i) ++ ":c -> " ++ vertexId ++ formalInputWireOptions(t[i], (k[t[i]])) ++ ";";
+        let newInWireString = "e" ++ string_of_int(e) ++ ":t" ++ string_of_int(i) ++ ":e -> " ++ vertexId ++ formalInputWireOptions(t[i], (k[t[i]])) ++ ";";
         inputWireString := inputWireString^ ++ nl ++ tab ++ newInWireString;
     };
 
@@ -190,7 +190,7 @@ let generateFormalGraphvizVertices = (e, k, s, t) => {
         let newOutVertexString =  vertexId ++ vertexOptions;
         outputVertexString := outputVertexString^ ++ nl ++ tab ++ newOutVertexString;
 
-        let newOutWireString = vertexId ++ ":e -> " ++ "e" ++ string_of_int(e) ++ ":s" ++ string_of_int(i) ++ ":c " ++ formalOutputWireOptions(s[i]) ++ ";";
+        let newOutWireString = vertexId ++ ":e -> " ++ "e" ++ string_of_int(e) ++ ":s" ++ string_of_int(i) ++ ":w " ++ formalOutputWireOptions(s[i]) ++ ";";
         outputWireString := outputWireString^ ++ nl ++ tab ++ newOutWireString;
     };
 
