@@ -220,7 +220,7 @@ let generateFormalGraphvizEdge = (i,k,s,t,l,num) => {
         (newEdgeString, inputVertexString, outputVertexString, inputWireString, outputWireString)
 }
 
-let generateFormalGraphvizCode = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
+let generateFormalGraphvizCode = ({v,e,l,r,k,uc,tx,nuc,ntx,s,t}) => {
 
     let edgeString = ref("");
     let inputVertexString = ref("");
@@ -232,7 +232,7 @@ let generateFormalGraphvizCode = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
     let normalTargets = snd(t);
 
     for(j in 0 to (e - 1)) {
-        let (newEdgeString, newInputVertexString, newOutputVertexString, newInputWireString, newOutputWireString) = generateFormalGraphvizEdge(j, k, normalSources[j], normalTargets[j], fu[j], true);
+        let (newEdgeString, newInputVertexString, newOutputVertexString, newInputWireString, newOutputWireString) = generateFormalGraphvizEdge(j, k, normalSources[j], normalTargets[j], nuc[j], true);
         edgeString := tab ++ newEdgeString ++ nl ++ edgeString^;
         inputVertexString := tab ++ newInputVertexString ++ inputVertexString^;
         outputVertexString := tab ++ newOutputVertexString ++ outputVertexString^;

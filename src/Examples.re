@@ -29,15 +29,15 @@ let flipFlop = {
         composemany([
             tensor([
                 composemany([
+                    swap(v,1,1),
                     norGate(v),
-                    fork(v)
+                    fork(v),
                 ]),
                 idcirc(v,1)
             ]),
             tensor([
                 idcirc(v,1),
                 composemany([
-                    swap(v,1,1),
                     norGate(v),
                     fork(v)
                 ])
@@ -46,8 +46,7 @@ let flipFlop = {
                 swap(v,1,1),
                 idcirc(v,1)
             ])
-        ])),
-        swap(v,1,1)
+        ]))
     ]), [])
 }
 

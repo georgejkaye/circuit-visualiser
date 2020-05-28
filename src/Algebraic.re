@@ -15,17 +15,17 @@ let printEdgePlusTwo = (ept) => {
 }
 
 type algebraicNet = {
-    v : int,
-    e : int,
-    i : array(edgePlusTwo),
-    o : array(edgePlusTwo),
-    k : array(int),
-    lu : list(string),
-    ll : list(string),
-    fu : array(string),
-    fl : array(string),
-    s : (array(int), array(array(int))),
-    t : (array(int), array(array(int)))
+    v : int,                                /* number of vertices */
+    e : int,                                /* number of edges */
+    l : array(edgePlusTwo),                 /* left function */
+    r : array(edgePlusTwo),                 /* right function */
+    k : array(int),                         /* connections function */
+    uc : list(string),                      /* labels - unicode */
+    tx : list(string),                      /* labels - latex */
+    nuc : array(string),                     /* names function - unicode */
+    ntx : array(string),                     /* names function - latex */
+    s : (array(int), array(array(int))),    /* sources function (output * regular) */
+    t : (array(int), array(array(int)))     /* targets function (input * regular)  */
 }
 
 let rec generateFin = (x, n) => {
@@ -79,14 +79,14 @@ let printFunctionFromEdgesToArraysLatex = (func, bonus, front) => {
 
 }
 
-let algebraicNetLatexInline = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
+let algebraicNetLatexInline = ({v,e,l,r,k,uc,tx,nuc,ntx,s,t}) => {
     let result = "V^I = V^O = " ++ generateFin("v", v) ++ "\\\\" ++
     "E = " ++ generateFin("e", e) ++ "\\\\" ++
-    "\\lambda = " ++ printFunctionLatex(i, "v", edgePlusTwoLatex) ++ "\\\\" ++
-    "\\rho = " ++ printFunctionLatex(o, "v", edgePlusTwoLatex) ++ "\\\\" ++
+    "\\lambda = " ++ printFunctionLatex(l, "v", edgePlusTwoLatex) ++ "\\\\" ++
+    "\\rho = " ++ printFunctionLatex(r, "v", edgePlusTwoLatex) ++ "\\\\" ++
     "\\kappa = " ++ printFunctionLatex(k, "v", vertexLatex) ++ "\\\\" ++
-    "L = \\{" ++ printListCommas(ll, (x) => x) ++ "\\}\\\\" ++
-    "\\nu = " ++ printFunctionLatex(fl, "e", (x) => x) ++ "\\\\" ++
+    "L = \\{" ++ printListCommas(tx, (x) => x) ++ "\\}\\\\" ++
+    "\\nu = " ++ printFunctionLatex(ntx, "e", (x) => x) ++ "\\\\" ++
     "s = " ++ printFunctionFromEdgesToArraysLatex(s, omegaLatex, false) ++ "\\\\" ++
     "t = " ++ printFunctionFromEdgesToArraysLatex(t, alphaLatex, true)
 
@@ -94,15 +94,15 @@ let algebraicNetLatexInline = ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
     result
 }
 
-let algebraicNetLatexBlock =  ({v,e,i,o,k,lu,ll,fu,fl,s,t}) => {
+let algebraicNetLatexBlock =  ({v,e,r,l,k,uc,tx,nuc,ntx,s,t}) => {
     let result = 
         "$$V^I = V^O = " ++ generateFin("v", v) ++ "$$" ++
         "$$E = " ++ generateFin("e", e) ++ "$$" ++
-        "$$\\lambda = " ++ printFunctionLatex(i, "v", edgePlusTwoLatex) ++ "$$" ++
-        "$$\\rho = " ++ printFunctionLatex(o, "v", edgePlusTwoLatex) ++ "$$" ++
+        "$$\\lambda = " ++ printFunctionLatex(l, "v", edgePlusTwoLatex) ++ "$$" ++
+        "$$\\rho = " ++ printFunctionLatex(r, "v", edgePlusTwoLatex) ++ "$$" ++
         "$$\\kappa = " ++ printFunctionLatex(k, "v", vertexLatex) ++ "$$" ++
-        "$$L = \\{" ++ printListCommas(ll, (x) => x) ++ "\\} $$" ++
-        "$$\\nu = " ++ printFunctionLatex(fl, "e", (x) => x) ++ "$$" ++
+        "$$L = \\{" ++ printListCommas(tx, (x) => x) ++ "\\} $$" ++
+        "$$\\nu = " ++ printFunctionLatex(ntx, "e", (x) => x) ++ "$$" ++
         "$$s = " ++ printFunctionFromEdgesToArraysLatex(s, omegaLatex, false) ++ "$$" ++
         "$$t = " ++ printFunctionFromEdgesToArraysLatex(t, alphaLatex, true) ++ "$$"
 
@@ -235,13 +235,13 @@ let rec generateAlgebraicDefinition = (net) => {
     
     {v: i, 
      e: List.length(eds) - 2, 
-     i:Array.of_list(List.map(snd,is)), 
-     o:Array.of_list(List.map(snd,os)), 
+     l:Array.of_list(List.map(snd,is)), 
+     r:Array.of_list(List.map(snd,os)), 
      k:Array.of_list(List.map(snd,ks)), 
-     lu:lu,
-     ll:ll, 
-     fu:Array.of_list(List.map(snd,fu)),
-     fl:Array.of_list(List.map(snd,fl)),
+     tx:lu,
+     uc:ll, 
+     nuc:Array.of_list(List.map(snd,fu)),
+     ntx:Array.of_list(List.map(snd,fl)),
      s: (Array.of_list(fst(s)), Array.map(Array.of_list, snd(s))),
      t: (Array.of_list(fst(t)), Array.map(Array.of_list, snd(t))),
     }
