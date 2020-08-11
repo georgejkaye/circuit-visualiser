@@ -447,8 +447,38 @@ let make = () => {
                     </table>
                 </td>
                 <td>
-                   <div className="lighter"> <button onClick={_ => dispatch(ChangeNotation)}>{str("Switch notation")}</button></div>
-                   (drawHypergraph(style, dot, form, height, width))
+                    <table>
+                    <tbody>
+                    <tr>
+                        <td>
+                        <div className="lighter"> <button onClick={_ => dispatch(ChangeNotation)}>{str("Switch notation")}</button></div>
+                        (drawHypergraph(style, dot, form, height, width))
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        <table width="100%">
+                            <tbody>
+                                <tr>
+                                    <td width="50%">
+                                        (str("Informal"))
+                                        <textarea id="informal-graphviz" className="dotbox" rows=10 readOnly=true>
+                                            (str(dot))
+                                        </textarea>
+                                    </td>
+                                    <td width="50%">
+                                        (str("Formal"))
+                                        <textarea id="formal-graphviz" className="dotbox" rows=10 readOnly=true>
+                                            (str(form))
+                                        </textarea>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        </td>
+                    </tr>
+                    </tbody>
+                    </table>
                 </td>
                 </tr>
             </tbody>

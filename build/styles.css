@@ -136,3 +136,11 @@ g g polygon {
 .centre {
     text-align: center;
 }
+
+.dotbox {
+    width: 95%;
+    height: 95%;
+    resize: none;
+    margin: 10px;
+    border: none;
+}
