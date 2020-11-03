@@ -19,8 +19,8 @@ let invisibleVertexOptions = "[style=invis]"
 let traceWireOptions = "[arrowhead=vee; arrowsize=0.5]"
 let traceVertexOptions = "[shape=circle, fillcolor=black; fixedsize=true; width=0.05; label=\"\"]"
 
-let formalInputWireOptions = (iv, ov) => "[arrowhead=none; dir=back; arrowtail=vee; arrowsize=0.5; headlabel=\"" ++ string_of_int(iv) ++ " " ++ arrow ++ " " ++ string_of_int(ov) ++ "\"; labeldistance=3; labelangle=180]";
-let formalOutputWireOptions = (ov) => "[arrowhead=vee; arrowsize=0.5; taillabel=\"" ++ string_of_int(ov) ++ "\"; labeldistance=2; labelangle=180]";
+let formalInputWireOptions = (iv, ov) => "[arrowhead=none; dir=back; arrowtail=vee; arrowsize=0.5; headlabel=\"$v_" ++ string_of_int(iv) ++ " \\to v_" ++ string_of_int(ov) ++ "$\"; labeldistance=5; labelangle=180]";
+let formalOutputWireOptions = (ov) => "[arrowhead=vee; arrowsize=0.5; taillabel=\"$v_" ++ string_of_int(ov) ++ "$\"; labeldistance=2; labelangle=180]";
 
 let getTraceText = (x, e, left) => {
     let dir = left ? "l" : "r";
