@@ -24,6 +24,7 @@
     "babel-loader": "^8.0.6",
     "bs-webapi": "^0.15.9",
     "css-loader": "^3.3.0",
+    "glob-parent": "^5.1.2",
     "graphviz-react": "^1.0.4",
     "lodash": "4.17.21",
     "minimist": "^1.2.2",
