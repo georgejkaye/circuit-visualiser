@@ -27,7 +27,7 @@
     "glob-parent": "^5.1.2",
     "graphviz-react": "^1.0.4",
     "lodash": "4.17.23",
-    "minimist": "^1.2.2",
+    "minimist": "^1.2.6",
     "node-forge": "^1.4.0",
     "react": "^16.8.1",
     "react-dom": "^16.8.1",
